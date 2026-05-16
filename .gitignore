@@ -8,7 +8,6 @@ build/
 tmp/
 temp/
 out-tsc/
-coverage/
 public/build/
 
 # Angular specific
@@ -73,6 +72,13 @@ coverage/
 *.tgz
 *.gz
 *.zip
+
+# Database scripts and migrations (good practice)
+server/src/models/*.sql
+server/src/models/migrations/
+server/src/models/seeds/
+server/src/db/
+*.sql
 
 # Optional: lock Angular CLI analytics
 .angular-analytics.json
