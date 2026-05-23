@@ -1,9 +1,11 @@
 {
   "name": "server",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Lloa Reforestation API - Backend server",
+  "main": "src/index.js",
   "scripts": {
+    "start": "node src/index.js",
+    "lint": "eslint src/",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -16,10 +18,17 @@
       "onFail": "download"
     }
   },
-  "type": "module",
   "dependencies": {
+    "@supabase/supabase-js": "^2.106.1",
     "cors": "^2.8.6",
+    "dotenv": "^16.4.7",
     "express": "^5.2.1",
-    "pg": "^8.20.0"
+    "helmet": "^8.1.0",
+    "pg": "^8.20.0",
+    "pino": "^10.3.1"
+  },
+  "devDependencies": {
+    "eslint": "^9.26.0",
+    "pino-pretty": "^13.1.3"
   }
 }
