@@ -1,0 +1,12 @@
+{
+  "name": "app-reforestation-project",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Lloa Reforestation - Plataforma para trazabilidad ambiental de reforestación",
+  "scripts": {
+    "dev:server": "pnpm --dir server start",
+    "dev:client": "npm --prefix client start",
+    "lint:server": "pnpm --dir server lint",
+    "install:all": "pnpm --dir server install && npm --prefix client install"
+  }
+}
