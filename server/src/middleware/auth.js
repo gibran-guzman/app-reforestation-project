@@ -1,4 +1,5 @@
 const supabase = require('../config/supabase');
+const db = require('../config/db');
 const { AppError } = require('../errors/AppError');
 
 const authenticate = async (req, res, next) => {
@@ -25,15 +26,16 @@ const authenticate = async (req, res, next) => {
 const authorize = (...allowedRoles) => {
   return async (req, res, next) => {
     try {
-      const { data: profile, error } = await supabase
-        .from('profiles')
-        .select('role, full_name')
-        .eq('id', req.user.id)
-        .single();
+      const result = await db.query(
+        'SELECT role, full_name FROM profiles WHERE id = $1',
+        [req.user.id]
+      );
 
-      if (error || !profile) {
+      if (result.rows.length === 0) {
         throw new AppError('User profile not found', 403);
       }
+
+      const profile = result.rows[0];
 
       if (!allowedRoles.includes(profile.role)) {
         throw new AppError('Insufficient permissions. Required role: ' + allowedRoles.join(' or '), 403);
