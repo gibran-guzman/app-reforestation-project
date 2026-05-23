@@ -1,17 +1,11 @@
 const { Pool } = require('pg');
 const logger = require('../utils/logger');
 
-const url = new URL(process.env.DATABASE_URL);
 const pool = new Pool({
-  host: url.hostname,
-  port: parseInt(url.port, 10),
-  database: url.pathname.slice(1),
-  user: url.username,
-  password: url.password,
+  connectionString: process.env.DATABASE_URL,
   max: 20,
   idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 5000,
-  family: 4,
+  connectionTimeoutMillis: 10000,
   ssl: { rejectUnauthorized: false },
 });
 
