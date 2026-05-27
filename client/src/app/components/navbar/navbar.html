@@ -1,28 +1,34 @@
-<nav class="navbar navbar-expand navbar-dark bg-success px-3">
+<nav class="navbar navbar-expand-lg navbar-dark bg-success px-3">
   <a class="navbar-brand" routerLink="/dashboard">Lloa Reforestación</a>
 
-  <ul class="navbar-nav me-auto">
-    <li class="nav-item">
-      <a class="nav-link" routerLink="/species" routerLinkActive="active">Especies</a>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link" routerLink="/zones" routerLinkActive="active">Zonas</a>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link" routerLink="/plantings/new" routerLinkActive="active">Plantar</a>
-    </li>
-  </ul>
+  <button class="navbar-toggler border-0" type="button" (click)="toggleCollapse()" aria-controls="navbarNav" [attr.aria-expanded]="!collapsed" aria-label="Menú de navegación">
+    <span class="navbar-toggler-icon"></span>
+  </button>
 
-  <ul class="navbar-nav">
-    <li class="nav-item dropdown">
-      <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button">
-        {{ auth.user()?.full_name || auth.user()?.email }}
-      </a>
-      <ul class="dropdown-menu dropdown-menu-end">
-        <li><span class="dropdown-item-text small text-muted">{{ auth.user()?.role }}</span></li>
-        <li><hr class="dropdown-divider"></li>
-        <li><a class="dropdown-item" (click)="auth.logout()" routerLink="/login">Cerrar sesión</a></li>
-      </ul>
-    </li>
-  </ul>
+  <div class="collapse navbar-collapse" [class.show]="!collapsed" id="navbarNav">
+    <ul class="navbar-nav me-auto">
+      <li class="nav-item">
+        <a class="nav-link" routerLink="/species" routerLinkActive="active" (click)="collapsed = true">Especies</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" routerLink="/zones" routerLinkActive="active" (click)="collapsed = true">Zonas</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" routerLink="/plantings/new" routerLinkActive="active" (click)="collapsed = true">Plantar</a>
+      </li>
+    </ul>
+
+    <ul class="navbar-nav">
+      <li class="nav-item dropdown" [class.show]="dropdownOpen">
+        <a class="nav-link dropdown-toggle" (click)="toggleDropdown($event)" role="button">
+          {{ auth.user()?.full_name || auth.user()?.email }}
+        </a>
+        <ul class="dropdown-menu dropdown-menu-end" [class.show]="dropdownOpen">
+          <li><span class="dropdown-item-text small text-muted">{{ auth.user()?.role }}</span></li>
+          <li><hr class="dropdown-divider"></li>
+          <li><a class="dropdown-item" (click)="auth.logout()" routerLink="/login">Cerrar sesión</a></li>
+        </ul>
+      </li>
+    </ul>
+  </div>
 </nav>

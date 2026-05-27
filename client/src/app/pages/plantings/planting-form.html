@@ -1,4 +1,4 @@
-<div class="p-4" style="max-width: 720px;">
+<div class="p-3 p-md-4 form-container">
   <h2 class="mb-4">Registrar nueva plántula</h2>
 
   @if (error) {
@@ -29,25 +29,36 @@
     </div>
 
     <div class="mb-3">
-      <label class="form-label">Ubicación *</label>
-      <div class="d-flex gap-2 mb-2">
+      <label class="form-label fw-semibold">Ubicación *</label>
+
+      <div class="d-grid d-md-flex gap-2 mb-2">
         <button type="button" class="btn btn-outline-primary" (click)="captureGps()">
           Capturar GPS
         </button>
       </div>
+
       @if (gpsStatus) {
         <div class="small text-muted mb-2">{{ gpsStatus }}</div>
       }
+
       <div class="row g-2 mb-2">
-        <div class="col">
-          <input type="number" class="form-control form-control-sm" placeholder="Latitud" [(ngModel)]="form.lat" name="lat" step="any" (input)="updateMarkerFromCoords()">
+        <div class="col-6">
+          <input type="number" class="form-control" placeholder="Latitud" [(ngModel)]="form.lat" name="lat" step="any" (change)="updateMarkerFromCoords()">
         </div>
-        <div class="col">
-          <input type="number" class="form-control form-control-sm" placeholder="Longitud" [(ngModel)]="form.lng" name="lng" step="any" (input)="updateMarkerFromCoords()">
+        <div class="col-6">
+          <input type="number" class="form-control" placeholder="Longitud" [(ngModel)]="form.lng" name="lng" step="any" (change)="updateMarkerFromCoords()">
         </div>
       </div>
-      <div #mapContainer style="height: 300px; border-radius: 6px;" class="border"></div>
-      <div class="form-text">Haz clic en el mapa o captura tu ubicación con GPS.</div>
+
+      <div #mapContainer class="map-container border"></div>
+      <div class="form-text d-flex flex-wrap gap-2 mt-1">
+        <span>Haz clic en el mapa, arrastra el marcador, o captura tu ubicación con GPS.</span>
+        @if (form.lat !== 0 && form.lng !== 0) {
+          <span class="text-success fw-medium">
+            {{ form.lat.toFixed(6) }}, {{ form.lng.toFixed(6) }}
+          </span>
+        }
+      </div>
     </div>
 
     <div class="row">
@@ -56,12 +67,12 @@
         <input id="planted_at" type="date" class="form-control" [(ngModel)]="form.planted_at" name="planted_at">
       </div>
 
-      <div class="col-md-3 mb-3">
+      <div class="col-6 col-md-3 mb-3">
         <label for="initial_ph" class="form-label">pH del suelo</label>
         <input id="initial_ph" type="number" class="form-control" [(ngModel)]="form.initial_ph" name="initial_ph" min="0" max="14" step="0.1" placeholder="0–14">
       </div>
 
-      <div class="col-md-3 mb-3">
+      <div class="col-6 col-md-3 mb-3">
         <label for="initial_humidity" class="form-label">Humedad (%)</label>
         <input id="initial_humidity" type="number" class="form-control" [(ngModel)]="form.initial_humidity" name="initial_humidity" min="0" max="100" step="0.1" placeholder="0–100">
       </div>
@@ -77,7 +88,7 @@
       </select>
     </div>
 
-    <div class="d-flex gap-2">
+    <div class="d-flex flex-column flex-md-row gap-2">
       <button type="submit" class="btn btn-success" [disabled]="saving || !form.species_id || !form.zone_id || !form.lat || !form.lng">
         @if (saving) {
           <span class="spinner-border spinner-border-sm me-1"></span>

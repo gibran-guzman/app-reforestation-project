@@ -1,4 +1,4 @@
-<div class="p-4" style="max-width: 600px;">
+<div class="p-3 p-md-4 form-container" style="max-width: 600px;">
   <h2 class="mb-4">{{ isEdit ? 'Editar especie' : 'Nueva especie' }}</h2>
 
   @if (loading) {
@@ -32,17 +32,17 @@
       </div>
 
       <div class="row mb-4">
-        <div class="col">
+        <div class="col-6">
           <label for="alt_min" class="form-label">Altitud mín (m)</label>
           <input id="alt_min" type="number" class="form-control" [(ngModel)]="form.recommended_altitude_min" name="recommended_altitude_min" min="0" max="6000">
         </div>
-        <div class="col">
+        <div class="col-6">
           <label for="alt_max" class="form-label">Altitud máx (m)</label>
           <input id="alt_max" type="number" class="form-control" [(ngModel)]="form.recommended_altitude_max" name="recommended_altitude_max" min="0" max="6000">
         </div>
       </div>
 
-      <div class="d-flex gap-2">
+      <div class="d-flex flex-column flex-md-row gap-2">
         <button type="submit" class="btn btn-success" [disabled]="saving">
           @if (saving) {
             <span class="spinner-border spinner-border-sm me-1"></span>

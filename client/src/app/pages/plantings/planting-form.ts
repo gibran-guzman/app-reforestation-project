@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, AfterViewInit, ViewChild, ElementRef, OnDestroy } from '@angular/core';
+import { Component, inject, NgZone, OnInit, AfterViewInit, ViewChild, ElementRef, OnDestroy } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { PlantingService } from '../../services/planting.service';
@@ -27,12 +27,14 @@ const SOIL_TEXTURES = [
   selector: 'app-planting-form',
   imports: [FormsModule, RouterLink],
   templateUrl: './planting-form.html',
+  styleUrl: './planting-form.scss',
 })
 export default class PlantingForm implements OnInit, AfterViewInit, OnDestroy {
   private plantingService = inject(PlantingService);
   private speciesService = inject(SpeciesService);
   private zoneService = inject(ZoneService);
   private router = inject(Router);
+  private ngZone = inject(NgZone);
 
   @ViewChild('mapContainer') mapContainer!: ElementRef;
 
@@ -76,6 +78,7 @@ export default class PlantingForm implements OnInit, AfterViewInit, OnDestroy {
       center: [-0.229, -78.524],
       zoom: 12,
       attributionControl: false,
+      scrollWheelZoom: false,
     });
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -84,7 +87,7 @@ export default class PlantingForm implements OnInit, AfterViewInit, OnDestroy {
     }).addTo(this.map);
 
     this.map.on('click', (e: L.LeafletMouseEvent) => {
-      this.setPosition(e.latlng.lat, e.latlng.lng);
+      this.ngZone.run(() => this.setPosition(e.latlng.lat, e.latlng.lng));
     });
 
     setTimeout(() => this.map?.invalidateSize(), 200);
@@ -104,19 +107,23 @@ export default class PlantingForm implements OnInit, AfterViewInit, OnDestroy {
 
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        this.setPosition(pos.coords.latitude, pos.coords.longitude);
-        this.gpsStatus = 'Ubicación capturada correctamente';
+        this.ngZone.run(() => {
+          this.setPosition(pos.coords.latitude, pos.coords.longitude);
+          this.gpsStatus = 'Ubicación capturada correctamente';
+        });
       },
       () => {
-        this.gpsStatus = 'No se pudo obtener la ubicación. Ingresa las coordenadas manualmente.';
+        this.ngZone.run(() => {
+          this.gpsStatus = 'No se pudo obtener la ubicación. Ingresa las coordenadas manualmente.';
+        });
       },
       { enableHighAccuracy: true, timeout: 10000 },
     );
   }
 
   private setPosition(lat: number, lng: number) {
-    this.form.lat = Math.round(lat * 6) / 6;
-    this.form.lng = Math.round(lng * 6) / 6;
+    this.form.lat = Math.round(lat * 1000000) / 1000000;
+    this.form.lng = Math.round(lng * 1000000) / 1000000;
 
     if (this.marker) {
       this.marker.setLatLng([this.form.lat, this.form.lng]);
@@ -124,8 +131,10 @@ export default class PlantingForm implements OnInit, AfterViewInit, OnDestroy {
       this.marker = L.marker([this.form.lat, this.form.lng], { draggable: true }).addTo(this.map);
       this.marker.on('dragend', () => {
         const pos = this.marker!.getLatLng();
-        this.form.lat = Math.round(pos.lat * 6) / 6;
-        this.form.lng = Math.round(pos.lng * 6) / 6;
+        this.ngZone.run(() => {
+          this.form.lat = Math.round(pos.lat * 1000000) / 1000000;
+          this.form.lng = Math.round(pos.lng * 1000000) / 1000000;
+        });
       });
     }
 
@@ -133,9 +142,22 @@ export default class PlantingForm implements OnInit, AfterViewInit, OnDestroy {
   }
 
   updateMarkerFromCoords() {
-    if (this.form.lat && this.form.lng) {
-      this.setPosition(this.form.lat, this.form.lng);
+    if (this.form.lat === null || this.form.lng === null || isNaN(this.form.lat) || isNaN(this.form.lng)) return;
+
+    if (this.marker) {
+      this.marker.setLatLng([this.form.lat, this.form.lng]);
+    } else if (this.map) {
+      this.marker = L.marker([this.form.lat, this.form.lng], { draggable: true }).addTo(this.map);
+      this.marker.on('dragend', () => {
+        const pos = this.marker!.getLatLng();
+        this.ngZone.run(() => {
+          this.form.lat = Math.round(pos.lat * 1000000) / 1000000;
+          this.form.lng = Math.round(pos.lng * 1000000) / 1000000;
+        });
+      });
     }
+
+    this.map?.setView([this.form.lat, this.form.lng], 16);
   }
 
   submit() {
