@@ -39,5 +39,10 @@ export const routes: Routes = [
     canActivate: [authGuard, adminGuard],
     loadComponent: () => import('./pages/zones/zone-form'),
   },
+  {
+    path: 'plantings/new',
+    canActivate: [authGuard],
+    loadComponent: () => import('./pages/plantings/planting-form'),
+  },
   { path: '', redirectTo: '/dashboard', pathMatch: 'full' },
 ];
