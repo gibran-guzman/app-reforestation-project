@@ -10,6 +10,8 @@ export interface PlantingSite {
   initial_soil_texture: string | null;
   photo_url: string | null;
   created_at: string;
+  species_name?: string;
+  zone_name?: string;
 }
 
 export interface CreatePlantingRequest {

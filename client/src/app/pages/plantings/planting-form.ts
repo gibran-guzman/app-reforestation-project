@@ -23,6 +23,36 @@ const SOIL_TEXTURES = [
   { value: 'chalky', label: 'Calcáreo' },
 ];
 
+const MAX_IMAGE_WIDTH = 1200;
+const COMPRESS_QUALITY = 0.8;
+
+function compressImage(file: File): Promise<File> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const canvas = document.createElement('canvas');
+      let { width, height } = img;
+      if (width > MAX_IMAGE_WIDTH) {
+        height = Math.round(height * MAX_IMAGE_WIDTH / width);
+        width = MAX_IMAGE_WIDTH;
+      }
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d')!;
+      ctx.drawImage(img, 0, 0, width, height);
+      canvas.toBlob((blob) => {
+        if (!blob) { reject(new Error('Error al comprimir la imagen')); return; }
+        const name = file.name.replace(/\.[^.]+$/, '.webp');
+        resolve(new File([blob], name, { type: 'image/webp' }));
+      }, 'image/webp', COMPRESS_QUALITY);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Error al cargar la imagen')); };
+    img.src = url;
+  });
+}
+
 @Component({
   selector: 'app-planting-form',
   imports: [FormsModule, RouterLink],
@@ -42,9 +72,19 @@ export default class PlantingForm implements OnInit, AfterViewInit, OnDestroy {
   zonesList: Zone[] = [];
   loadingSpecies = true;
   loadingZones = true;
+  speciesError = '';
+  zoneError = '';
   saving = false;
+  uploading = false;
   error = '';
   gpsStatus = '';
+  gpsFailed = false;
+
+  photoFile: File | null = null;
+  photoPreview: string | null = null;
+  compressing = false;
+
+  touched = { lat: false, lng: false };
 
   form = {
     species_id: 0,
@@ -62,14 +102,21 @@ export default class PlantingForm implements OnInit, AfterViewInit, OnDestroy {
 
   readonly soilTextures = SOIL_TEXTURES;
 
+  get latInvalid(): boolean {
+    return this.touched.lat && (isNaN(this.form.lat) || this.form.lat < -90 || this.form.lat > 90 || this.form.lat === 0);
+  }
+  get lngInvalid(): boolean {
+    return this.touched.lng && (isNaN(this.form.lng) || this.form.lng < -180 || this.form.lng > 180 || this.form.lng === 0);
+  }
+
   ngOnInit() {
     this.speciesService.list().subscribe({
       next: (res) => { this.speciesList = res.data; this.loadingSpecies = false; },
-      error: () => { this.loadingSpecies = false; },
+      error: () => { this.speciesError = 'No se pudieron cargar las especies'; this.loadingSpecies = false; },
     });
     this.zoneService.list().subscribe({
       next: (res) => { this.zonesList = res.data; this.loadingZones = false; },
-      error: () => { this.loadingZones = false; },
+      error: () => { this.zoneError = 'No se pudieron cargar las zonas'; this.loadingZones = false; },
     });
   }
 
@@ -104,20 +151,24 @@ export default class PlantingForm implements OnInit, AfterViewInit, OnDestroy {
     }
 
     this.gpsStatus = 'Obteniendo ubicación...';
+    this.gpsFailed = false;
 
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         this.ngZone.run(() => {
           this.setPosition(pos.coords.latitude, pos.coords.longitude);
+          this.touched.lat = true;
+          this.touched.lng = true;
           this.gpsStatus = 'Ubicación capturada correctamente';
         });
       },
       () => {
         this.ngZone.run(() => {
-          this.gpsStatus = 'No se pudo obtener la ubicación. Ingresa las coordenadas manualmente.';
+          this.gpsFailed = true;
+          this.gpsStatus = 'No se pudo obtener la ubicación. Ingresa las coordenadas manualmente o intenta de nuevo.';
         });
       },
-      { enableHighAccuracy: true, timeout: 10000 },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 },
     );
   }
 
@@ -160,9 +211,49 @@ export default class PlantingForm implements OnInit, AfterViewInit, OnDestroy {
     this.map?.setView([this.form.lat, this.form.lng], 16);
   }
 
+  touchLat() { this.touched.lat = true; }
+  touchLng() { this.touched.lng = true; }
+
+  async onFileSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      this.error = 'La foto no puede superar los 5 MB';
+      input.value = '';
+      return;
+    }
+
+    this.error = '';
+    this.compressing = true;
+
+    try {
+      const compressed = await compressImage(file);
+      this.photoFile = compressed;
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        this.photoPreview = reader.result as string;
+        this.compressing = false;
+      };
+      reader.readAsDataURL(compressed);
+    } catch {
+      this.error = 'Error al procesar la imagen';
+      this.compressing = false;
+    }
+  }
+
+  removePhoto() {
+    this.photoFile = null;
+    this.photoPreview = null;
+  }
+
   submit() {
     this.error = '';
     this.saving = true;
+
+    this.updateMarkerFromCoords();
 
     this.plantingService.create({
       zone_id: this.form.zone_id,
@@ -173,7 +264,17 @@ export default class PlantingForm implements OnInit, AfterViewInit, OnDestroy {
       initial_humidity: this.form.initial_humidity ?? undefined,
       initial_soil_texture: this.form.initial_soil_texture || undefined,
     }).subscribe({
-      next: () => this.router.navigate(['/dashboard']),
+      next: (res) => {
+        if (this.photoFile && res.data?.id) {
+          this.uploading = true;
+          this.plantingService.uploadPhoto(res.data.id, this.photoFile).subscribe({
+            next: () => this.router.navigate(['/dashboard'], { state: { success: 'Plántula registrada con foto' } }),
+            error: () => this.router.navigate(['/dashboard'], { state: { success: 'Plántula registrada' } }),
+          });
+        } else {
+          this.router.navigate(['/dashboard'], { state: { success: 'Plántula registrada correctamente' } });
+        }
+      },
       error: (err) => {
         this.error = err.error?.error || err.error?.details?.[0]?.message || 'Error al registrar plántula';
         this.saving = false;

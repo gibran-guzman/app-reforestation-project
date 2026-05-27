@@ -9,4 +9,13 @@ const create = async (req, res, next) => {
   }
 };
 
-module.exports = { create };
+const getAll = async (req, res, next) => {
+  try {
+    const plantings = await plantingService.getAll();
+    res.json({ data: plantings });
+  } catch (error) {
+    next(error);
+  }
+};
+
+module.exports = { create, getAll };

@@ -7,8 +7,10 @@ const speciesRoutes = require('./routes/speciesRoutes');
 const authRoutes = require('./routes/authRoutes');
 const zoneRoutes = require('./routes/zoneRoutes');
 const plantingRoutes = require('./routes/plantingRoutes');
+const photoRoutes = require('./routes/photoRoutes');
 const errorHandler = require('./middleware/errorHandler');
 const logger = require('./utils/logger');
+const { ensureBucket } = require('./services/photoService');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -29,9 +31,16 @@ app.use('/api/auth', authRoutes);
 app.use('/api/species', speciesRoutes);
 app.use('/api/zones', zoneRoutes);
 app.use('/api/plantings', plantingRoutes);
+app.use('/api/plantings/:id/photo', photoRoutes);
 
 app.use(errorHandler);
 
-app.listen(PORT, () => {
-  logger.info({ port: PORT }, 'Server started');
+app.listen(PORT, async () => {
+  logger.info({ port: PORT }, 'Servidor iniciado');
+  try {
+    await ensureBucket();
+    logger.info('Bucket de almacenamiento listo');
+  } catch (err) {
+    logger.warn({ err }, 'No se pudo inicializar el bucket de almacenamiento');
+  }
 });

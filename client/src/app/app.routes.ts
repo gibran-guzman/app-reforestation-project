@@ -40,6 +40,11 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/zones/zone-form'),
   },
   {
+    path: 'plantings',
+    canActivate: [authGuard],
+    loadComponent: () => import('./pages/plantings/planting-list'),
+  },
+  {
     path: 'plantings/new',
     canActivate: [authGuard],
     loadComponent: () => import('./pages/plantings/planting-form'),

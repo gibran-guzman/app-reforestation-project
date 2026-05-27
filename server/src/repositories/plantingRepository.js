@@ -52,4 +52,33 @@ const isPointInZone = async (lat, lng, zoneId) => {
   return result.rows[0]?.valid || false;
 };
 
-module.exports = { create, findById, findByZoneId, isPointInZone };
+const listColumns = [
+  'ps.id', 'ps.zone_id', 'ps.species_id',
+  'ST_AsGeoJSON(ps.location)::jsonb AS location',
+  'ps.planted_at', 'ps.planted_by',
+  'ps.initial_ph', 'ps.initial_humidity', 'ps.initial_soil_texture',
+  'ps.photo_url', 'ps.created_at',
+  'sc.common_name AS species_name',
+  'iz.name AS zone_name',
+];
+
+const findAll = async () => {
+  const result = await db.query(`
+    SELECT ${listColumns.join(', ')}
+    FROM planting_sites ps
+    LEFT JOIN species_catalog sc ON sc.id = ps.species_id
+    LEFT JOIN intervention_zones iz ON iz.id = ps.zone_id
+    ORDER BY ps.created_at DESC
+  `);
+  return result.rows;
+};
+
+const updatePhotoUrl = async (id, photoUrl) => {
+  const result = await db.query(`
+    UPDATE planting_sites SET photo_url = $1 WHERE id = $2
+    RETURNING ${columns.join(', ')}
+  `, [photoUrl, id]);
+  return result.rows[0];
+};
+
+module.exports = { create, findAll, findById, findByZoneId, isPointInZone, updatePhotoUrl };

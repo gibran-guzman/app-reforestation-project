@@ -38,6 +38,10 @@ const create = async (body, userId) => {
   return planting;
 };
 
+const getAll = async () => {
+  return plantingRepository.findAll();
+};
+
 const getById = async (id) => {
   const planting = await plantingRepository.findById(id);
   if (!planting) {
@@ -46,4 +50,4 @@ const getById = async (id) => {
   return planting;
 };
 
-module.exports = { create, getById };
+module.exports = { create, getAll, getById };
