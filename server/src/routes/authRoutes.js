@@ -10,15 +10,15 @@ router.post('/signup', async (req, res, next) => {
 
     if (!email || !password || !full_name) {
       throw new ValidationError([
-        { field: 'email', message: !email ? 'Email is required' : null },
-        { field: 'password', message: !password ? 'Password is required' : null },
-        { field: 'full_name', message: !full_name ? 'Full name is required' : null },
+        { field: 'email', message: !email ? 'El correo electrónico es requerido' : null },
+        { field: 'password', message: !password ? 'La contraseña es requerida' : null },
+        { field: 'full_name', message: !full_name ? 'El nombre completo es requerido' : null },
       ].filter(e => e.message));
     }
 
     if (password.length < 8) {
       throw new ValidationError([
-        { field: 'password', message: 'Password must be at least 8 characters' },
+        { field: 'password', message: 'La contraseña debe tener al menos 8 caracteres' },
       ]);
     }
 
@@ -33,7 +33,7 @@ router.post('/signup', async (req, res, next) => {
 
     if (authError) {
       if (authError.message.includes('already registered')) {
-        throw new AppError('A user with this email already exists', 409);
+        throw new AppError('Ya existe un usuario con este correo electrónico', 409);
       }
       throw authError;
     }
@@ -54,7 +54,7 @@ router.post('/signup', async (req, res, next) => {
     logger.info({ user_id: authData.user.id, role: userRole }, 'User registered');
 
     res.status(201).json({
-      message: 'User registered successfully',
+      message: 'Usuario registrado correctamente',
       data: { id: authData.user.id, email, full_name, role: userRole },
     });
   } catch (error) {
@@ -68,8 +68,8 @@ router.post('/login', async (req, res, next) => {
 
     if (!email || !password) {
       throw new ValidationError([
-        { field: 'email', message: !email ? 'Email is required' : null },
-        { field: 'password', message: !password ? 'Password is required' : null },
+        { field: 'email', message: !email ? 'El correo electrónico es requerido' : null },
+        { field: 'password', message: !password ? 'La contraseña es requerida' : null },
       ].filter(e => e.message));
     }
 
@@ -77,7 +77,7 @@ router.post('/login', async (req, res, next) => {
 
     if (error) {
       if (error.message.includes('Invalid login credentials')) {
-        throw new AppError('Invalid email or password', 401);
+        throw new AppError('Correo o contraseña incorrectos', 401);
       }
       throw error;
     }
@@ -91,7 +91,7 @@ router.post('/login', async (req, res, next) => {
     logger.info({ user_id: data.user.id }, 'User logged in');
 
     res.json({
-      message: 'Login successful',
+      message: 'Inicio de sesión exitoso',
       data: {
         session: {
           access_token: data.session.access_token,
@@ -115,14 +115,14 @@ router.get('/me', async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      throw new AppError('Missing or invalid authorization header', 401);
+      throw new AppError('Encabezado de autorización faltante o inválido', 401);
     }
 
     const token = authHeader.split(' ')[1];
     const { data: { user }, error } = await supabase.auth.getUser(token);
 
     if (error || !user) {
-      throw new AppError('Invalid or expired token', 401);
+      throw new AppError('Token inválido o expirado', 401);
     }
 
     const { data: profile } = await supabase

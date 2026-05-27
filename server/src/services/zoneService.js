@@ -10,7 +10,7 @@ const list = async () => {
 const getById = async (id) => {
   const zone = await zoneRepository.findById(id);
   if (!zone) {
-    throw new NotFoundError('Intervention zone not found');
+    throw new NotFoundError('Zona de intervención no encontrada');
   }
   return zone;
 };

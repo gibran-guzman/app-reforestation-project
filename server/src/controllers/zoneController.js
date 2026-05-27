@@ -12,17 +12,17 @@ const getById = async (req, res) => {
 
 const create = async (req, res) => {
   const zone = await zoneService.create(req.body);
-  res.status(201).json({ message: 'Intervention zone created successfully', data: zone });
+  res.status(201).json({ message: 'Zona de intervención creada correctamente', data: zone });
 };
 
 const update = async (req, res) => {
   const zone = await zoneService.update(Number(req.params.id), req.body);
-  res.json({ message: 'Intervention zone updated successfully', data: zone });
+  res.json({ message: 'Zona de intervención actualizada correctamente', data: zone });
 };
 
 const remove = async (req, res) => {
   await zoneService.remove(Number(req.params.id));
-  res.json({ message: 'Intervention zone deleted successfully' });
+  res.json({ message: 'Zona de intervención eliminada correctamente' });
 };
 
 module.exports = { list, getById, create, update, remove };

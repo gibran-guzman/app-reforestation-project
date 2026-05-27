@@ -6,14 +6,14 @@ const authenticate = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      throw new AppError('Missing or invalid authorization header', 401);
+      throw new AppError('Encabezado de autorización faltante o inválido', 401);
     }
 
     const token = authHeader.split(' ')[1];
     const { data: { user }, error } = await supabase.auth.getUser(token);
 
     if (error || !user) {
-      throw new AppError('Invalid or expired token', 401);
+      throw new AppError('Token inválido o expirado', 401);
     }
 
     req.user = user;
@@ -32,13 +32,13 @@ const authorize = (...allowedRoles) => {
       );
 
       if (result.rows.length === 0) {
-        throw new AppError('User profile not found', 403);
+        throw new AppError('Perfil de usuario no encontrado', 403);
       }
 
       const profile = result.rows[0];
 
       if (!allowedRoles.includes(profile.role)) {
-        throw new AppError('Insufficient permissions. Required role: ' + allowedRoles.join(' or '), 403);
+        throw new AppError('Permisos insuficientes. Se requiere rol: ' + allowedRoles.join(' o '), 403);
       }
 
       req.user.role = profile.role;
