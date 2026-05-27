@@ -5,7 +5,14 @@ import { PlantingService } from '../../services/planting.service';
 import { SpeciesService } from '../../services/species.service';
 import { ZoneService } from '../../services/zone.service';
 import type { Species, Zone } from '../../models';
-import * as L from 'leaflet';
+import L from 'leaflet';
+
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+});
 
 const SOIL_TEXTURES = [
   { value: 'sandy', label: 'Arenoso' },
@@ -73,11 +80,14 @@ export default class PlantingForm implements OnInit, AfterViewInit, OnDestroy {
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
+      attribution: '&copy; <a href="https://openstreetmap.org/copyright">OpenStreetMap</a>',
     }).addTo(this.map);
 
     this.map.on('click', (e: L.LeafletMouseEvent) => {
       this.setPosition(e.latlng.lat, e.latlng.lng);
     });
+
+    setTimeout(() => this.map?.invalidateSize(), 200);
   }
 
   ngOnDestroy() {
