@@ -22,17 +22,39 @@ Sistema de Control para Proyectos de Reforestación Ambiental en la Parroquia Ru
 
 ---
 
-## ⚙️ Estado Actual — Sprint 1 (Completado)
+## ⚙️ Estado Actual — Fase 1 Completa (Sprints 1-3)
 
+### Sprint 1 — Infraestructura ✅
 - [x] Estructura monorepo (client + server)
 - [x] Servidor Express 5 con capas: routes → controller → service → repository
 - [x] Pool de conexiones PostgreSQL configurado
 - [x] Endpoint `POST /api/species` con validación de entrada
 - [x] Logger estructurado (pino)
 - [x] Middleware global de errores con discriminación por tipo
-- [x] Seguridad básica: helmet, CORS restringido, rate-limit por payload
+- [x] Seguridad básica: helmet, CORS restringido
 - [x] Scaffold Angular 20 con Bootstrap 5 y routing
 - [x] Linter (ESLint) configurado y pasando en 0 warnings/errors
+
+### Sprint 2 — Autenticación + Modelo Geoespacial ✅
+- [x] Integración Supabase Auth (signup, login, refresh token, /me)
+- [x] Middleware de autenticación (`authenticate`) y autorización por roles (`authorize`)
+- [x] Roles: Admin y Técnico
+- [x] Protección de rutas backend con JWT
+- [x] Extensión PostGIS habilitada + migración `001_initial_schema.sql`
+- [x] Tabla `intervention_zones` con geometría `Polygon, SRID 4326` + índice GIST
+- [x] Tabla `planting_sites` con `location GEOMETRY(Point, 4326)` + índice GIST
+- [x] Tabla `monitoring_records` con control de supervivencia
+- [x] Tabla `profiles` extendida de Supabase Auth con RLS
+- [x] Funciones SQL: `is_point_in_zone()`, `find_zone_by_point()`
+- [x] CRUD completo `intervention_zones` (5 endpoints)
+- [x] Validación de entrada con `express-validator`
+
+### Sprint 3 — Gestión de Zonas y Especies ⚠️ (Parcial)
+- [x] CRUD `intervention_zones` — listar, obtener, crear, actualizar, eliminar
+- [x] `POST /api/species` — registro de especies con validación
+- [ ] `GET /api/species` — listar catálogo de especies
+- [ ] `PUT /api/species/:id` — actualizar especie
+- [ ] `DELETE /api/species/:id` — eliminar especie
 
 ---
 
@@ -43,26 +65,31 @@ Sistema de Control para Proyectos de Reforestación Ambiental en la Parroquia Ru
 | Sprint | Horas | Historias | Descripción |
 |--------|-------|-----------|-------------|
 | **1** ✅ | 20 | — | Infraestructura, monorepo, DB pool, API base, scaffold Angular |
-| **2** | 25 | HU5, HU4 | PostGIS + modelo geoespacial + autenticación JWT + roles |
-| **3** | 20 | HU5 (cont.) | CRUD zonas de intervención + CRUD catálogo de especies (admin) |
+| **2** ✅ | 25 | HU5, HU4 | PostGIS + modelo geoespacial + autenticación JWT + roles |
+| **3** ⚠️ | 20 | HU5 (cont.) | CRUD zonas de intervención + CRUD catálogo de especies (admin) |
 
 **HU4 — Autenticación segura**
-- [ ] Integrar Supabase Auth o JWT propio
-- [ ] Roles: Admin, Técnico
-- [ ] Login + refresh token + rate limiting
-- [ ] Protección de rutas (frontend y backend)
-- [ ] Registro de usuarios solo por Admin
+- [x] Integrar Supabase Auth
+- [x] Roles: Admin, Técnico
+- [x] Login + refresh token con Supabase
+- [ ] Rate limiting en auth endpoints
+- [x] Protección de rutas backend con middleware
+- [ ] Protección de rutas frontend (guards)
+- [ ] Registro de usuarios solo por Admin (endpoint existe sin restricción)
 
 **HU5 — Modelado geoespacial**
-- [ ] Activar extensión PostGIS
-- [ ] Tabla `intervention_zones` con geometría (Polygon, SRID 4326)
-- [ ] Tabla `planting_sites` con columna `location GEOMETRY(Point, 4326)`
-- [ ] Índice espacial (`GIST`)
-- [ ] Validación de coordenadas dentro de zonas permitidas
+- [x] Activar extensión PostGIS
+- [x] Tabla `intervention_zones` con geometría (Polygon, SRID 4326)
+- [x] Tabla `planting_sites` con columna `location GEOMETRY(Point, 4326)`
+- [x] Índice espacial (`GIST`)
+- [x] Validación de coordenadas (funciones SQL `is_point_in_zone`, `find_zone_by_point`)
 
 **Nuevo — Gestión de zonas y especies**
-- [ ] CRUD `intervention_zones` (nombre, polígono, responsable)
-- [ ] CRUD `species_catalog` (nombre científico, nombre común, altitud recomendada, tipo de suelo)
+- [x] CRUD `intervention_zones` (nombre, polígono, responsable)
+- [x] `POST /api/species` — registro de especies
+- [ ] `GET /api/species` — listar especies
+- [ ] `PUT /api/species/:id` — actualizar especie
+- [ ] `DELETE /api/species/:id` — eliminar especie
 
 ---
 
@@ -250,9 +277,18 @@ npm --prefix client start
 |--------|------|----|--------|
 | `GET` | `/health` | — | ✅ |
 | `POST` | `/api/species` | — | ✅ |
-| `POST` | `/api/auth/login` | HU4 | ❌ |
-| `POST` | `/api/auth/register` | HU4 | ❌ |
-| `GET/POST` | `/api/zones` | — | ❌ |
+| `POST` | `/api/auth/signup` | HU4 | ✅ |
+| `POST` | `/api/auth/login` | HU4 | ✅ |
+| `GET` | `/api/auth/me` | HU4 | ✅ |
+| `GET` | `/api/zones` | — | ✅ |
+| `GET` | `/api/zones/:id` | — | ✅ |
+| `POST` | `/api/zones` | — | ✅ |
+| `PUT` | `/api/zones/:id` | — | ✅ |
+| `DELETE` | `/api/zones/:id` | — | ✅ |
+| `GET` | `/api/species` | — | ✅ |
+| `GET` | `/api/species/:id` | — | ✅ |
+| `PUT` | `/api/species/:id` | — | ✅ |
+| `DELETE` | `/api/species/:id` | — | ✅ |
 | `GET/POST` | `/api/plantings` | HU1 | ❌ |
 | `GET` | `/api/plantings/:id` | HU3 | ❌ |
 | `POST` | `/api/plantings/sync` | HU2 | ❌ |
@@ -267,5 +303,6 @@ npm --prefix client start
 - [ ] Sincronización offline funcional en zonas sin cobertura
 - [ ] Reportes exportables (PDF/Excel) para rendición de cuentas del GAD
 - [ ] Mapa de calor operativo con datos de campo reales
-- [ ] Autenticación con roles y auditoría de cambios
+- [x] Autenticación con roles (backend)
+- [ ] Auditoría de cambios
 - [ ] 0 regresiones de seguridad (helmet, CORS, JWT, rate limiting)
