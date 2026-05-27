@@ -6,6 +6,7 @@ const helmet = require('helmet');
 const speciesRoutes = require('./routes/speciesRoutes');
 const authRoutes = require('./routes/authRoutes');
 const zoneRoutes = require('./routes/zoneRoutes');
+const plantingRoutes = require('./routes/plantingRoutes');
 const errorHandler = require('./middleware/errorHandler');
 const logger = require('./utils/logger');
 
@@ -27,6 +28,7 @@ app.get('/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/species', speciesRoutes);
 app.use('/api/zones', zoneRoutes);
+app.use('/api/plantings', plantingRoutes);
 
 app.use(errorHandler);
 
