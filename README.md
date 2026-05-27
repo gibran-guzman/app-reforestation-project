@@ -19,6 +19,8 @@ Sistema de Control para Proyectos de Reforestación Ambiental en la Parroquia Ru
 | Mapas | Leaflet | — |
 | Logger | Pino | — |
 | Autenticación | JWT (Supabase Auth) | — |
+| Almacenamiento | Supabase Storage | — |
+| Subida de archivos | Multer | 2.1 |
 
 ---
 
@@ -49,12 +51,9 @@ Sistema de Control para Proyectos de Reforestación Ambiental en la Parroquia Ru
 - [x] CRUD completo `intervention_zones` (5 endpoints)
 - [x] Validación de entrada con `express-validator`
 
-### Sprint 3 — Gestión de Zonas y Especies ⚠️ (Parcial)
+### Sprint 3 — Gestión de Zonas y Especies ✅
 - [x] CRUD `intervention_zones` — listar, obtener, crear, actualizar, eliminar
-- [x] `POST /api/species` — registro de especies con validación
-- [ ] `GET /api/species` — listar catálogo de especies
-- [ ] `PUT /api/species/:id` — actualizar especie
-- [ ] `DELETE /api/species/:id` — eliminar especie
+- [x] CRUD `species_catalog` — listar, obtener, crear, actualizar, eliminar
 
 ---
 
@@ -66,7 +65,7 @@ Sistema de Control para Proyectos de Reforestación Ambiental en la Parroquia Ru
 |--------|-------|-----------|-------------|
 | **1** ✅ | 20 | — | Infraestructura, monorepo, DB pool, API base, scaffold Angular |
 | **2** ✅ | 25 | HU5, HU4 | PostGIS + modelo geoespacial + autenticación JWT + roles |
-| **3** ⚠️ | 20 | HU5 (cont.) | CRUD zonas de intervención + CRUD catálogo de especies (admin) |
+| **3** ✅ | 20 | HU5 (cont.) | CRUD zonas de intervención + CRUD catálogo de especies (admin) |
 
 **HU4 — Autenticación segura**
 - [x] Integrar Supabase Auth
@@ -86,10 +85,7 @@ Sistema de Control para Proyectos de Reforestación Ambiental en la Parroquia Ru
 
 **Nuevo — Gestión de zonas y especies**
 - [x] CRUD `intervention_zones` (nombre, polígono, responsable)
-- [x] `POST /api/species` — registro de especies
-- [ ] `GET /api/species` — listar especies
-- [ ] `PUT /api/species/:id` — actualizar especie
-- [ ] `DELETE /api/species/:id` — eliminar especie
+- [x] CRUD `species_catalog` — listar, obtener, crear, actualizar, eliminar
 
 ---
 
@@ -97,23 +93,23 @@ Sistema de Control para Proyectos de Reforestación Ambiental en la Parroquia Ru
 
 | Sprint | Horas | Historias | Descripción |
 |--------|-------|-----------|-------------|
-| **4** | 25 | HU1 | Formulario de registro de plántula + geolocalización GPS |
+| **4** ✅ | 25 | HU1 | Formulario de registro de plántula + geolocalización GPS + galería de plantaciones |
 | **5** | 20 | HU2 | Service Worker + IndexedDB + detección de conectividad |
 | **6** | 20 | HU2 | Sincronización automática + resolución de conflictos |
-| **7** | 15 | HU1 | Captura de foto + almacenamiento (local → servidor) |
+| **7** ✅ | 15 | HU1 | Captura de foto + almacenamiento (Supabase Storage) + compresión client-side |
 | **8** | 20 | HU3 | Consulta de historial con filtros y trazabilidad |
 
 **HU1 — Registro de nueva plántula**
-- [ ] Formulario con campos:
+- [x] Formulario con campos:
   - Especie (selector desde `species_catalog`)
   - Zona de intervención
   - Variables edafológicas: pH, textura, humedad
-  - Estado de supervivencia + vigor
   - Fecha de siembra
-- [ ] Captura GPS automática (Geolocation API)
-- [ ] Fallback: ingreso manual de coordenadas
-- [ ] Foto de la plántula (opcional)
-- [ ] Validación completa del lado cliente y servidor
+- [x] Captura GPS automática (Geolocation API) con reintento
+- [x] Fallback: ingreso manual de coordenadas + clic/arrastre en mapa Leaflet
+- [x] Foto de la plántula (opcional) con compresión client-side (Canvas → WebP)
+- [x] Validación completa del lado cliente y servidor
+- [x] Vista de galería con thumbnails de todas las plantaciones
 
 **HU2 — Sincronización offline**
 - [ ] Service Worker con estrategia "Network First, fallback to Cache"
@@ -289,7 +285,9 @@ npm --prefix client start
 | `GET` | `/api/species/:id` | — | ✅ |
 | `PUT` | `/api/species/:id` | — | ✅ |
 | `DELETE` | `/api/species/:id` | — | ✅ |
-| `GET/POST` | `/api/plantings` | HU1 | ❌ |
+| `GET` | `/api/plantings` | HU1 | ✅ |
+| `POST` | `/api/plantings` | HU1 | ✅ |
+| `POST` | `/api/plantings/:id/photo` | HU1 | ✅ |
 | `GET` | `/api/plantings/:id` | HU3 | ❌ |
 | `POST` | `/api/plantings/sync` | HU2 | ❌ |
 | `GET` | `/api/reports/survival-rate` | HU6 | ❌ |
