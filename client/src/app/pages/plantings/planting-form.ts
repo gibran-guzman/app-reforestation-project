@@ -4,6 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { PlantingService } from '../../services/planting.service';
 import { SpeciesService } from '../../services/species.service';
 import { ZoneService } from '../../services/zone.service';
+import { ConnectivityService } from '../../services/connectivity.service';
+import { OfflineService } from '../../services/offline.service';
 import type { Species, Zone } from '../../models';
 import L from 'leaflet';
 
@@ -63,6 +65,8 @@ export default class PlantingForm implements OnInit, AfterViewInit, OnDestroy {
   private plantingService = inject(PlantingService);
   private speciesService = inject(SpeciesService);
   private zoneService = inject(ZoneService);
+  private connectivity = inject(ConnectivityService);
+  private offline = inject(OfflineService);
   private router = inject(Router);
   private ngZone = inject(NgZone);
 
@@ -76,6 +80,7 @@ export default class PlantingForm implements OnInit, AfterViewInit, OnDestroy {
   zoneError = '';
   saving = false;
   uploading = false;
+  offlineSave = false;
   error = '';
   gpsStatus = '';
   gpsFailed = false;
@@ -252,10 +257,11 @@ export default class PlantingForm implements OnInit, AfterViewInit, OnDestroy {
   submit() {
     this.error = '';
     this.saving = true;
+    this.offlineSave = false;
 
     this.updateMarkerFromCoords();
 
-    this.plantingService.create({
+    const payload = {
       zone_id: this.form.zone_id,
       species_id: this.form.species_id,
       location: { lat: this.form.lat, lng: this.form.lng },
@@ -263,7 +269,18 @@ export default class PlantingForm implements OnInit, AfterViewInit, OnDestroy {
       initial_ph: this.form.initial_ph ?? undefined,
       initial_humidity: this.form.initial_humidity ?? undefined,
       initial_soil_texture: this.form.initial_soil_texture || undefined,
-    }).subscribe({
+    };
+
+    if (!this.connectivity.online()) {
+      this.offline.savePlanting(payload, this.photoFile ?? undefined).then(() => {
+        this.offlineSave = true;
+        this.saving = false;
+        this.router.navigate(['/dashboard'], { state: { success: 'Plántula guardada offline. Se sincronizará al recuperar conexión.' } });
+      });
+      return;
+    }
+
+    this.plantingService.create(payload).subscribe({
       next: (res) => {
         if (this.photoFile && res.data?.id) {
           this.uploading = true;

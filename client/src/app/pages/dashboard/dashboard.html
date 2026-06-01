@@ -8,6 +8,59 @@
     </div>
   }
 
+  <div class="d-flex flex-wrap gap-2 mb-4">
+    @if (connectivity.online()) {
+      <span class="badge bg-success fs-6 px-3 py-2 d-flex align-items-center gap-2">
+        <span class="rounded-circle d-inline-block" style="width: 10px; height: 10px; background: #fff;"></span>
+        Online
+      </span>
+    } @else {
+      <span class="badge bg-warning text-dark fs-6 px-3 py-2 d-flex align-items-center gap-2">
+        <span class="rounded-circle d-inline-block" style="width: 10px; height: 10px; background: #000;"></span>
+        Offline
+      </span>
+    }
+    @if (offline.pendingCount() > 0) {
+      <span class="badge bg-danger fs-6 px-3 py-2">
+        {{ offline.pendingCount() }} registro(s) pendiente(s) de sincronizar
+      </span>
+    }
+    @if (pendingList.length > 0 && connectivity.online()) {
+      <button type="button" class="btn btn-primary btn-sm" (click)="doSync()" [disabled]="syncService.syncing">
+        @if (syncService.syncing) {
+          <span class="spinner-border spinner-border-sm me-1"></span>
+        }
+        Sincronizar ahora
+      </button>
+    }
+    @if (syncError) {
+      <span class="text-danger small">{{ syncError }}</span>
+    }
+  </div>
+
+  @if (pendingList.length > 0) {
+    <div class="card shadow-sm mb-4">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span>Registros pendientes de sincronizar</span>
+        <span class="badge bg-warning text-dark">{{ pendingList.length }}</span>
+      </div>
+      <div class="list-group list-group-flush">
+        @for (item of pendingList; track item.id) {
+          <div class="list-group-item d-flex justify-content-between align-items-center">
+            <div class="d-flex flex-column">
+              <small class="text-muted">Zona #{{ item.payload.zone_id }} · Especie #{{ item.payload.species_id }}</small>
+              <small class="text-muted">{{ item.created_at | date:'short' }}</small>
+              @if (item.photo) {
+                <small class="text-success">📷 Foto incluida</small>
+              }
+            </div>
+            <small class="text-muted">{{ item.retries > 0 ? 'Reintento ' + item.retries : 'Pendiente' }}</small>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
   <div class="row g-3">
     <div class="col-md-4">
       <div class="card shadow-sm h-100">

@@ -1,6 +1,8 @@
 import { Component, inject, HostListener } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
+import { ConnectivityService } from '../../services/connectivity.service';
+import { OfflineService } from '../../services/offline.service';
 
 @Component({
   selector: 'app-navbar',
@@ -9,6 +11,8 @@ import { AuthService } from '../../services/auth.service';
 })
 export class Navbar {
   protected auth = inject(AuthService);
+  protected connectivity = inject(ConnectivityService);
+  protected offline = inject(OfflineService);
   collapsed = true;
   dropdownOpen = false;
 
