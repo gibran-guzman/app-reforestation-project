@@ -8,6 +8,7 @@ const authRoutes = require('./routes/authRoutes');
 const zoneRoutes = require('./routes/zoneRoutes');
 const plantingRoutes = require('./routes/plantingRoutes');
 const photoRoutes = require('./routes/photoRoutes');
+const { authLimiter, signupLimiter } = require('./middleware/rateLimiter');
 const errorHandler = require('./middleware/errorHandler');
 const logger = require('./utils/logger');
 const { ensureBucket } = require('./services/photoService');
@@ -27,6 +28,8 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', service: 'Lloa Reforestation API' });
 });
 
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/signup', signupLimiter);
 app.use('/api/auth', authRoutes);
 app.use('/api/species', speciesRoutes);
 app.use('/api/zones', zoneRoutes);

@@ -3,8 +3,9 @@ const router = express.Router();
 const supabase = require('../config/supabase');
 const logger = require('../utils/logger');
 const { AppError, ValidationError } = require('../errors/AppError');
+const { authenticate, authorize } = require('../middleware/auth');
 
-router.post('/signup', async (req, res, next) => {
+router.post('/signup', authenticate, authorize('admin'), async (req, res, next) => {
   try {
     const { email, password, full_name, role } = req.body;
 
