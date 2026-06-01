@@ -29,8 +29,11 @@ const create = async (data) => {
 
 const findById = async (id) => {
   const result = await db.query(`
-    SELECT ${columns.join(', ')}, zone_id, species_id
-    FROM planting_sites WHERE id = $1
+    SELECT ${listColumns.join(', ')}
+    FROM planting_sites ps
+    LEFT JOIN species sc ON sc.id = ps.species_id
+    LEFT JOIN intervention_zones iz ON iz.id = ps.zone_id
+    WHERE ps.id = $1
   `, [id]);
   return result.rows[0] || null;
 };
@@ -66,7 +69,7 @@ const findAll = async () => {
   const result = await db.query(`
     SELECT ${listColumns.join(', ')}
     FROM planting_sites ps
-    LEFT JOIN species_catalog sc ON sc.id = ps.species_id
+    LEFT JOIN species sc ON sc.id = ps.species_id
     LEFT JOIN intervention_zones iz ON iz.id = ps.zone_id
     ORDER BY ps.created_at DESC
   `);

@@ -18,4 +18,13 @@ const getAll = async (req, res, next) => {
   }
 };
 
-module.exports = { create, getAll };
+const getById = async (req, res, next) => {
+  try {
+    const planting = await plantingService.getById(req.params.id);
+    res.json({ data: planting });
+  } catch (error) {
+    next(error);
+  }
+};
+
+module.exports = { create, getAll, getById };

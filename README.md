@@ -288,7 +288,7 @@ npm --prefix client start
 | `GET` | `/api/plantings` | HU1 | ✅ |
 | `POST` | `/api/plantings` | HU1 | ✅ |
 | `POST` | `/api/plantings/:id/photo` | HU1 | ✅ |
-| `GET` | `/api/plantings/:id` | HU3 | ❌ |
+| `GET` | `/api/plantings/:id` | HU3 | ✅ |
 | `POST` | `/api/plantings/sync` | HU2 | ❌ |
 | `GET` | `/api/reports/survival-rate` | HU6 | ❌ |
 | `GET` | `/api/analytics/heatmap` | HU7 | ❌ |
