@@ -15,6 +15,7 @@ export default class Register {
   email = '';
   password = '';
   full_name = '';
+  role: 'technician' | 'admin' = 'technician';
   error = '';
   success = '';
   loading = false;
@@ -24,13 +25,17 @@ export default class Register {
     this.success = '';
     this.loading = true;
 
-    this.auth.signup({ email: this.email, password: this.password, full_name: this.full_name }).subscribe({
+    this.auth.signup({ email: this.email, password: this.password, full_name: this.full_name, role: this.role }).subscribe({
       next: () => {
-        this.success = 'Cuenta creada correctamente. Ya puedes iniciar sesión.';
+        this.success = 'Usuario creado correctamente.';
+        this.email = '';
+        this.password = '';
+        this.full_name = '';
+        this.role = 'technician';
         this.loading = false;
       },
       error: (err) => {
-        this.error = err.error?.error || 'Error al registrarse';
+        this.error = err.error?.error || 'Error al crear usuario';
         this.loading = false;
       },
     });

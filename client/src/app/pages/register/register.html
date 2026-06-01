@@ -1,7 +1,8 @@
 <div class="container d-flex justify-content-center align-items-center min-vh-100">
   <div class="card shadow" style="max-width: 400px; width: 100%;">
     <div class="card-body p-4">
-      <h3 class="card-title text-center mb-4">Crear cuenta</h3>
+      <h3 class="card-title text-center mb-1">Crear usuario</h3>
+      <p class="text-muted text-center small mb-4">Solo administradores pueden crear nuevos usuarios</p>
 
       @if (error) {
         <div class="alert alert-danger py-2">{{ error }}</div>
@@ -27,16 +28,24 @@
           <div class="form-text">Mínimo 8 caracteres</div>
         </div>
 
+        <div class="mb-3">
+          <label for="role" class="form-label">Rol</label>
+          <select id="role" class="form-select" [(ngModel)]="role" name="role">
+            <option value="technician">Técnico</option>
+            <option value="admin">Administrador</option>
+          </select>
+        </div>
+
         <button type="submit" class="btn btn-primary w-100" [disabled]="loading">
           @if (loading) {
             <span class="spinner-border spinner-border-sm me-1"></span>
           }
-          Registrarse
+          Crear usuario
         </button>
       </form>
 
       <p class="text-center mt-3 mb-0">
-        <a routerLink="/login" class="text-decoration-none">¿Ya tienes cuenta?</a>
+        <a routerLink="/dashboard" class="text-decoration-none">Volver al panel</a>
       </p>
     </div>
   </div>
