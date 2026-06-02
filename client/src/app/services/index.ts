@@ -7,3 +7,5 @@ export * from './sync.service';
 export * from './config.service';
 export * from './image.service';
 export * from './geolocation.service';
+export * from './monitoring.service';
+export * from './reports.service';

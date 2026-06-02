@@ -1,6 +1,6 @@
 # Planificación — Lloa Reforestation
 
-> Progreso y tracking del desarrollo. Actualizado: 2026-06-01 — Semana 1 completada
+> Progreso y tracking del desarrollo. Actualizado: 2026-06-01 — Semanas 1-2 completadas, Sprint 9 completado
 
 ---
 
@@ -18,8 +18,8 @@
 | Fase | Sprints | Avance |
 |------|---------|--------|
 | **1 — Fundamentos de Datos** | 1, 2, 3 | ✅ **100%** |
-| **2 — Captura en Campo** | 4, 5, 6, 7, 8 | ⬜ ~75% (4, 5, 7 listos) |
-| **3 — Reportes y Analítica** | 9, 10, 11, 12, 13, 14 | ⬜ **0%** |
+| **2 — Captura en Campo** | 4, 5, 6, 7, 8 | ✅ **100%** |
+| **3 — Reportes y Analítica** | 9, 10, 11, 12, 13, 14 | ⬜ ~17% (Sprint 9 listo) |
 | **4 — Cierre y Documentación** | 15, 16, 17, 18 | ⬜ **0%** |
 
 ---
@@ -140,16 +140,17 @@ client/src/app/
 
 ---
 
-### Sprint 6 — Sincronización Automática (HU2)
+### Sprint 6 — Sincronización Automática (HU2) ✅
 **20h — Prioridad: 🔴 Alta (depende de Sprint 5)**
 
-- [ ] ⬜ Cola de sincronización con reintentos (backoff exponencial)
-- [ ] ⬜ `POST /api/plantings/sync` endpoint para sync batch
-- [ ] ⬜ Envío de fotos pendientes (background sync)
-- [ ] ⬜ Resolución de conflictos (último escritor gana + notificación)
-- [ ] ⬜ Badge visual de registros pendientes de sincronizar
-- [ ] ⬜ Trigger automático al recuperar conectividad
-- [ ] ⬜ Indicador de progreso de sync
+- [x] Cola de sincronización con reintentos (backoff exponencial, max 5 reintentos)
+- [x] `POST /api/plantings/sync` endpoint para sync batch con resultados por ítem
+- [x] Envío de fotos pendientes post-sync
+- [x] Resolución de conflictos (último escritor gana + notificación `conflict: 'resolved'`)
+- [x] Badge visual de registros pendientes de sincronizar (`pendingCount` signal)
+- [x] Trigger automático al recuperar conectividad (`effect()` en `sync.service.ts`)
+- [x] Indicador de progreso de sync (`progress` signal con barra en dashboard)
+- [x] Botón "Actualizar lista" en dashboard para refresco manual
 
 ---
 
@@ -162,20 +163,20 @@ client/src/app/
 
 ---
 
-### Sprint 8 — Historial con Filtros (HU3)
+### Sprint 8 — Historial con Filtros (HU3) ✅
 **20h — Prioridad: 🟡 Media**
 
-- [ ] ⬜ Vista de trazabilidad por plántula (línea de tiempo)
-- [ ] ⬜ Filtros: zona, especie, rango de fechas, estado de salud
-- [ ] ⬜ Paginación + búsqueda en `GET /api/plantings`
-- [ ] ⬜ Detalle de medición: foto, coordenadas, variables edafológicas, evolución
-- [ ] ⬜ Componente `PlantingDetail` con timeline de monitoreos
+- [x] Vista de trazabilidad por plántula (línea de tiempo vertical con indicador de estado)
+- [x] Filtros: zona, especie, rango de fechas (`zone_id`, `species_id`, `from`, `to`)
+- [x] Paginación en `GET /api/plantings` (page, limit, meta)
+- [x] Detalle de medición: foto, coordenadas, pH, humedad, textura, evolución
+- [x] Componente `PlantingDetail` con timeline de monitoreos
 
 #### Tareas técnicas
-- [ ] ⬜ Endpoint `GET /api/plantings?zone_id=&species_id=&from=&to=&page=&limit=`
-- [ ] ⬜ Servicio `MonitoringService` + repository
-- [ ] ⬜ Validación de filtros en el servidor
-- [ ] ⬜ Componente Timeline (visualización de visitas de monitoreo)
+- [x] Endpoint `GET /api/plantings?page=&limit=&zone_id=&species_id=&from=&to=` con WHERE dinámico
+- [x] Servicio `MonitoringService` + `monitoringRepository` (CRUD sobre `monitoring_records`)
+- [x] Validación de monitoreo en servidor (`monitoringValidator.js`)
+- [x] Componente Timeline con badges de supervivencia (vivo/estresado/muerto)
 
 ---
 
@@ -194,14 +195,19 @@ client/src/app/
 
 ## Fase 3: Reportes y Analítica
 
-### Sprint 9 — Estadísticas + PDF (HU6)
+### Sprint 9 — Estadísticas + PDF (HU6) ✅
 **20h — Prioridad: 🟡 Media**
 
-- [ ] ⬜ Endpoint `GET /api/reports/survival-rate` con filtros
-- [ ] ⬜ Endpoint `GET /api/reports/species-stats`
-- [ ] ⬜ Endpoint `GET /api/reports/zone-summary`
-- [ ] ⬜ Generación PDF server-side (pdfkit)
-- [ ] ⬜ Diseño de template PDF (logo GAD, tabla, gráfica)
+- [x] Endpoint `GET /api/reports/survival-rate` con filtros (zone_id, species_id, from, to) y CTE con última medición
+- [x] Endpoint `GET /api/reports/species-stats` — total y supervivencia por especie
+- [x] Endpoint `GET /api/reports/zone-summary` — total y supervivencia por zona
+- [x] Generación PDF server-side con pdfkit (resumen general + tabla detallada)
+- [x] Diseño de template PDF: branding GAD, gráfica de barras de supervivencia, footer con paginación
+- [x] Validación de filtros en servidor (`reportsValidator.js` + 7 tests)
+- [x] Chart.js instalado en frontend con gráficos doughnut (distribución) y barra apilada (por especie)
+- [x] Página `/reports` en frontend con cards resumen, barras de distribución, tablas por especie/zona
+- [x] Filtros por especie y zona en la vista de reportes
+- [x] Botón "Exportar PDF" con descarga tipo blob
 
 ### Sprint 10 — Exportación Excel + Dashboard (HU6)
 **15h — Prioridad: 🟡 Media**
@@ -282,15 +288,15 @@ client/src/app/
 
 ```
 Semana 1   (01-05 Jun) ████████████████████  ✅ HU4 pendants + Sprint 5 (SW + IndexedDB)
-Semana 2-3 (08-19 Jun) ████████████████████  Sprint 8 (Historial con filtros)
-Semana 3-4 (15-26 Jun) ████████████████████  Sprint 6 (Sync automático) ← paralelo
-Semana 5-6 (29-10 Jul) ████████████████████  Sprint 9-10 (Reportes)
-Semana 7-8 (13-24 Jul) ████████████████████  Sprint 11-12 (Mapas + Heatmap)
-Semana 9   (27-31 Jul) ████████░░░░░░░░░░░░  Sprint 13-14 (UI/UX)
-Semana 10-11 (03-14 Aug) ██████████████████  Sprint 15-18 (QA + Doc + Deploy)
+Semana 2   (08-12 Jun) ████████████████████  ✅ Sprint 6 (Sync automático) + Sprint 8 (Historial)
+Semana 3   (15-19 Jun) ████████████████████  ✅ Sprint 9 (Reportes + PDF)
+Semana 4-5 (22-03 Jul) ████████████████████  Sprint 10 (Exportación Excel + Dashboard)
+Semana 6-7 (06-17 Jul) ████████████████████  Sprint 11-12 (Mapas + Heatmap)
+Semana 8   (20-24 Jul) ████████░░░░░░░░░░░░  Sprint 13-14 (UI/UX)
+Semana 9-10 (27-07 Aug) ██████████████████  Sprint 15-18 (QA + Doc + Deploy)
 ```
 
-**Total estimado restante:** ~240 horas
+**Total estimado restante:** ~180 horas
 
 ---
 
@@ -309,8 +315,8 @@ Semana 10-11 (03-14 Aug) ██████████████████ 
 | Heatmap | Leaflet.heat | Plugin maduro para Leaflet |
 
 ### CRITICAL — Pendientes pre-deploy
-- [ ] ⬜ Rate limiting en auth (`express-rate-limit`)
+- [x] Rate limiting en auth (`express-rate-limit`) — 10 intentos/login cada 15min, 3 signup/hora
 - [ ] ⬜ Validar que `CORS_ORIGIN` en producción solo permita el dominio real
-- [ ] ⬜ Deshabilitar registro abierto (`POST /api/auth/signup` solo para admin)
+- [x] Deshabilitar registro abierto (`POST /api/auth/signup` solo para admin con middleware `authorize`)
 - [ ] ⬜ Agregar Helmet CSP en producción
 - [ ] ⬜ Revisar variables de entorno en `.env.example`

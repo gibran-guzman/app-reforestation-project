@@ -49,5 +49,15 @@ export const routes: Routes = [
     canActivate: [authGuard],
     loadComponent: () => import('./pages/plantings/planting-form'),
   },
+  {
+    path: 'plantings/:id',
+    canActivate: [authGuard],
+    loadComponent: () => import('./pages/plantings/planting-detail/planting-detail'),
+  },
+  {
+    path: 'reports',
+    canActivate: [authGuard],
+    loadComponent: () => import('./pages/reports/reports'),
+  },
   { path: '', redirectTo: '/dashboard', pathMatch: 'full' },
 ];

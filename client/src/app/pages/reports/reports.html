@@ -1,0 +1,171 @@
+<div class="p-3 p-md-4">
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2 mb-4">
+    <h2 class="mb-0">Reportes y Estadísticas</h2>
+    <button class="btn btn-outline-success" (click)="downloadPdf()" [disabled]="downloading()">
+      @if (downloading()) {
+        <span class="spinner-border spinner-border-sm me-1"></span>
+      }
+      Exportar PDF
+    </button>
+  </div>
+
+  <div class="card shadow-sm mb-4">
+    <div class="card-body d-flex flex-wrap gap-3 align-items-center">
+      <label class="fw-semibold small mb-0">Filtros:</label>
+      <select class="form-select form-select-sm" style="width:auto" [value]="filterSpecies()" (change)="filterSpecies.set($any($event.target).value); loadData()">
+        <option value="">Todas las especies</option>
+        @for (s of species(); track s.id) {
+          <option [value]="s.id">{{ s.common_name }}</option>
+        }
+      </select>
+      <select class="form-select form-select-sm" style="width:auto" [value]="filterZone()" (change)="filterZone.set($any($event.target).value); loadData()">
+        <option value="">Todas las zonas</option>
+        @for (z of zones(); track z.id) {
+          <option [value]="z.id">{{ z.name }}</option>
+        }
+      </select>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="text-center py-5">
+      <div class="spinner-border text-success" role="status"></div>
+    </div>
+  } @else if (error()) {
+    <div class="alert alert-danger">{{ error() }}</div>
+  } @else if (report(); as r) {
+    <div class="row g-4 mb-4">
+      <div class="col-6 col-md-3">
+        <div class="card shadow-sm text-center border-success">
+          <div class="card-body">
+            <h3 class="text-success mb-1">{{ r.overall.total }}</h3>
+            <small class="text-muted">Total plantaciones</small>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="card shadow-sm text-center border-success">
+          <div class="card-body">
+            <h3 class="text-success mb-1">{{ r.overall.monitored }}</h3>
+            <small class="text-muted">Monitoreadas</small>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="card shadow-sm text-center border-success">
+          <div class="card-body">
+            <h3 class="text-success mb-1">{{ rate(r.overall.alive, r.overall.monitored) }}%</h3>
+            <small class="text-muted">Tasa de supervivencia</small>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="card shadow-sm text-center border-success">
+          <div class="card-body">
+            <h3 class="text-success mb-1">{{ r.overall.unmonitored }}</h3>
+            <small class="text-muted">Sin monitoreo</small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+      <div class="col-md-6">
+        <div class="card shadow-sm h-100">
+          <div class="card-body">
+            <h5 class="card-title text-center">Distribución por estado</h5>
+            <div class="chart-container">
+              <canvas #survivalChart></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="card shadow-sm h-100">
+          <div class="card-body">
+            <h5 class="card-title text-center">Supervivencia por especie</h5>
+            <div class="chart-container">
+              <canvas #speciesChart></canvas>
+            </div>
+            @if (speciesStats().length === 0) {
+              <p class="text-muted text-center mb-0 small mt-2">Sin datos de especies.</p>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+      <div class="col-md-6">
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <h5 class="card-title">Por especie (detalle)</h5>
+            @if (speciesStats().length === 0) {
+              <p class="text-muted mb-0 small">Sin datos.</p>
+            } @else {
+              <div class="table-responsive">
+                <table class="table table-sm table-hover mb-0">
+                  <thead>
+                    <tr>
+                      <th>Especie</th>
+                      <th class="text-end">Total</th>
+                      <th class="text-end">Vivas</th>
+                      <th class="text-end">Estresadas</th>
+                      <th class="text-end">Muertas</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (s of speciesStats(); track s.id) {
+                      <tr>
+                        <td>{{ s.common_name }}</td>
+                        <td class="text-end">{{ s.total_planted }}</td>
+                        <td class="text-end text-success">{{ s.alive }}</td>
+                        <td class="text-end text-warning">{{ s.struggling }}</td>
+                        <td class="text-end text-danger">{{ s.dead }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <h5 class="card-title">Por zona (detalle)</h5>
+            @if (zoneSummary().length === 0) {
+              <p class="text-muted mb-0 small">Sin datos.</p>
+            } @else {
+              <div class="table-responsive">
+                <table class="table table-sm table-hover mb-0">
+                  <thead>
+                    <tr>
+                      <th>Zona</th>
+                      <th class="text-end">Total</th>
+                      <th class="text-end">Vivas</th>
+                      <th class="text-end">Estresadas</th>
+                      <th class="text-end">Muertas</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (z of zoneSummary(); track z.id) {
+                      <tr>
+                        <td>{{ z.name }}</td>
+                        <td class="text-end">{{ z.total_plantings }}</td>
+                        <td class="text-end text-success">{{ z.alive }}</td>
+                        <td class="text-end text-warning">{{ z.struggling }}</td>
+                        <td class="text-end text-danger">{{ z.dead }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>
