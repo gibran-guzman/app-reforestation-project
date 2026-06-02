@@ -123,12 +123,18 @@
 
         <div class="mb-0">
           <label for="initial_soil_texture" class="form-label">Textura del suelo</label>
-          <select id="initial_soil_texture" class="form-select" [(ngModel)]="form.initial_soil_texture" name="initial_soil_texture">
-            <option value="">Sin especificar</option>
-            @for (t of soilTextures; track t.value) {
-              <option [value]="t.value">{{ t.label }}</option>
-            }
-          </select>
+          @if (loadingTextures) {
+            <div class="form-control-plaintext">
+              <span class="spinner-border spinner-border-sm me-1"></span>Cargando...
+            </div>
+          } @else {
+            <select id="initial_soil_texture" class="form-select" [(ngModel)]="form.initial_soil_texture" name="initial_soil_texture">
+              <option value="">Sin especificar</option>
+              @for (t of soilTextures; track t.value) {
+                <option [value]="t.value">{{ t.label }}</option>
+              }
+            </select>
+          }
         </div>
       </div>
     </div>

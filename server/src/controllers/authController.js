@@ -20,10 +20,8 @@ const login = async (req, res, next) => {
 
 const getMe = async (req, res, next) => {
   try {
-    const authHeader = req.headers.authorization;
-    const token = authHeader?.startsWith('Bearer ') ? authHeader.split(' ')[1] : null;
-    const user = await authService.getMe(token);
-    res.json({ data: user });
+    const { id, email, role, full_name, created_at } = req.user;
+    res.json({ data: { id, email, role, full_name, created_at } });
   } catch (error) {
     next(error);
   }

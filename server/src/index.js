@@ -8,6 +8,7 @@ const authRoutes = require('./routes/authRoutes');
 const zoneRoutes = require('./routes/zoneRoutes');
 const plantingRoutes = require('./routes/plantingRoutes');
 const photoRoutes = require('./routes/photoRoutes');
+const configRoutes = require('./routes/configRoutes');
 const { authLimiter, signupLimiter } = require('./middleware/rateLimiter');
 const errorHandler = require('./middleware/errorHandler');
 const logger = require('./utils/logger');
@@ -35,6 +36,7 @@ app.use('/api/species', speciesRoutes);
 app.use('/api/zones', zoneRoutes);
 app.use('/api/plantings', plantingRoutes);
 app.use('/api/plantings/:id/photo', photoRoutes);
+app.use('/api/config', configRoutes);
 
 app.use(errorHandler);
 

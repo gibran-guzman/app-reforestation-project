@@ -68,30 +68,4 @@ const login = async (body) => {
   };
 };
 
-const getMe = async (token) => {
-  if (!token) {
-    throw new AppError('Encabezado de autorización faltante o inválido', 401);
-  }
-
-  const { data: { user }, error } = await supabase.auth.getUser(token);
-
-  if (error || !user) {
-    throw new AppError('Token inválido o expirado', 401);
-  }
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role, full_name, created_at')
-    .eq('id', user.id)
-    .single();
-
-  return {
-    id: user.id,
-    email: user.email,
-    full_name: profile?.full_name,
-    role: profile?.role,
-    created_at: profile?.created_at,
-  };
-};
-
-module.exports = { signup, login, getMe };
+module.exports = { signup, login };

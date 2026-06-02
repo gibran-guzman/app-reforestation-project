@@ -1,5 +1,4 @@
 const supabase = require('../config/supabase');
-const db = require('../config/db');
 const { AppError } = require('../errors/AppError');
 
 const authenticate = async (req, res, next) => {
@@ -16,7 +15,13 @@ const authenticate = async (req, res, next) => {
       throw new AppError('Token inválido o expirado', 401);
     }
 
-    req.user = user;
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role, full_name, created_at')
+      .eq('id', user.id)
+      .single();
+
+    req.user = { ...user, role: profile?.role, full_name: profile?.full_name, created_at: profile?.created_at };
     next();
   } catch (error) {
     next(error);
@@ -26,23 +31,14 @@ const authenticate = async (req, res, next) => {
 const authorize = (...allowedRoles) => {
   return async (req, res, next) => {
     try {
-      const result = await db.query(
-        'SELECT role, full_name FROM profiles WHERE id = $1',
-        [req.user.id]
-      );
-
-      if (result.rows.length === 0) {
+      if (!req.user.role) {
         throw new AppError('Perfil de usuario no encontrado', 403);
       }
 
-      const profile = result.rows[0];
-
-      if (!allowedRoles.includes(profile.role)) {
+      if (!allowedRoles.includes(req.user.role)) {
         throw new AppError('Permisos insuficientes. Se requiere rol: ' + allowedRoles.join(' o '), 403);
       }
 
-      req.user.role = profile.role;
-      req.user.full_name = profile.full_name;
       next();
     } catch (error) {
       next(error);

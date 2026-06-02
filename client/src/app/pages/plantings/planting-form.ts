@@ -6,6 +6,7 @@ import { SpeciesService } from '../../services/species.service';
 import { ZoneService } from '../../services/zone.service';
 import { ConnectivityService } from '../../services/connectivity.service';
 import { OfflineService } from '../../services/offline.service';
+import { ConfigService, type SoilTexture } from '../../services/config.service';
 import type { Species, Zone } from '../../models';
 import L from 'leaflet';
 
@@ -15,15 +16,6 @@ L.Icon.Default.mergeOptions({
   iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
 });
-
-const SOIL_TEXTURES = [
-  { value: 'sandy', label: 'Arenoso' },
-  { value: 'loamy', label: 'Franco' },
-  { value: 'clay', label: 'Arcilloso' },
-  { value: 'silty', label: 'Limoso' },
-  { value: 'peaty', label: 'Turboso' },
-  { value: 'chalky', label: 'Calcáreo' },
-];
 
 const MAX_IMAGE_WIDTH = 1200;
 const COMPRESS_QUALITY = 0.8;
@@ -67,6 +59,7 @@ export default class PlantingForm implements OnInit, AfterViewInit, OnDestroy {
   private zoneService = inject(ZoneService);
   private connectivity = inject(ConnectivityService);
   private offline = inject(OfflineService);
+  private configService = inject(ConfigService);
   private router = inject(Router);
   private ngZone = inject(NgZone);
 
@@ -74,8 +67,10 @@ export default class PlantingForm implements OnInit, AfterViewInit, OnDestroy {
 
   speciesList: Species[] = [];
   zonesList: Zone[] = [];
+  soilTextures: SoilTexture[] = [];
   loadingSpecies = true;
   loadingZones = true;
+  loadingTextures = true;
   speciesError = '';
   zoneError = '';
   saving = false;
@@ -105,8 +100,6 @@ export default class PlantingForm implements OnInit, AfterViewInit, OnDestroy {
   private map: L.Map | null = null;
   private marker: L.Marker | null = null;
 
-  readonly soilTextures = SOIL_TEXTURES;
-
   get latInvalid(): boolean {
     return this.touched.lat && (isNaN(this.form.lat) || this.form.lat < -90 || this.form.lat > 90 || this.form.lat === 0);
   }
@@ -122,6 +115,10 @@ export default class PlantingForm implements OnInit, AfterViewInit, OnDestroy {
     this.zoneService.list().subscribe({
       next: (res) => { this.zonesList = res.data; this.loadingZones = false; },
       error: () => { this.zoneError = 'No se pudieron cargar las zonas'; this.loadingZones = false; },
+    });
+    this.configService.getSoilTextures().subscribe({
+      next: (res) => { this.soilTextures = res.data; this.loadingTextures = false; },
+      error: () => { this.loadingTextures = false; },
     });
   }
 

@@ -1,6 +1,5 @@
 const { ValidationError } = require('../errors/AppError');
-
-const SOIL_TEXTURES = ['sandy', 'loamy', 'clay', 'silty', 'peaty', 'chalky'];
+const { SOIL_TEXTURE_VALUES } = require('../config/constants');
 
 const validateCreatePlanting = (data) => {
   const errors = [];
@@ -52,8 +51,8 @@ const validateCreatePlanting = (data) => {
   }
 
   if (initial_soil_texture !== undefined && initial_soil_texture !== null && initial_soil_texture !== '') {
-    if (!SOIL_TEXTURES.includes(initial_soil_texture)) {
-      errors.push({ field: 'initial_soil_texture', message: `La textura del suelo debe ser uno de: ${SOIL_TEXTURES.join(', ')}` });
+    if (!SOIL_TEXTURE_VALUES.includes(initial_soil_texture)) {
+      errors.push({ field: 'initial_soil_texture', message: `La textura del suelo debe ser uno de: ${SOIL_TEXTURE_VALUES.join(', ')}` });
     }
   }
 
