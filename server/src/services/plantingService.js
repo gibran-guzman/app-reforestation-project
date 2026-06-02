@@ -38,8 +38,64 @@ const create = async (body, userId) => {
   return planting;
 };
 
-const getAll = async (page, limit) => {
-  return plantingRepository.findAll(page, limit);
+const syncBatch = async (items, userId) => {
+  const results = [];
+  for (let i = 0; i < items.length; i++) {
+    try {
+      const item = items[i];
+      const validatedData = validateCreatePlanting(item);
+
+      const zone = await zoneRepository.findById(validatedData.zone_id);
+      if (!zone) {
+        results.push({ index: i, status: 'error', error: 'Zona de intervención no encontrada' });
+        continue;
+      }
+
+      const species = await speciesRepository.findById(validatedData.species_id);
+      if (!species) {
+        results.push({ index: i, status: 'error', error: 'Especie no encontrada' });
+        continue;
+      }
+
+      const inside = await plantingRepository.isPointInZone(
+        validatedData.location.lat,
+        validatedData.location.lng,
+        validatedData.zone_id,
+      );
+      if (!inside) {
+        results.push({ index: i, status: 'error', error: 'Las coordenadas no están dentro de la zona de intervención' });
+        continue;
+      }
+
+      const existing = await plantingRepository.findByConflictKey(
+        validatedData.zone_id,
+        validatedData.species_id,
+        validatedData.planted_at,
+        userId,
+      );
+
+      if (existing) {
+        const updated = await plantingRepository.update(existing.id, { ...validatedData });
+        logger.info({ planting_id: updated.id }, 'Planting updated via sync (last writer wins)');
+        results.push({ index: i, status: 'success', data: updated, conflict: 'resolved' });
+      } else {
+        const planting = await plantingRepository.create({ ...validatedData, planted_by: userId });
+        logger.info({ planting_id: planting.id }, 'Planting created via sync');
+        results.push({ index: i, status: 'success', data: planting });
+      }
+    } catch (error) {
+      results.push({
+        index: i,
+        status: 'error',
+        error: error.message || 'Error al procesar el registro',
+      });
+    }
+  }
+  return results;
+};
+
+const getAll = async (page, limit, filters = {}) => {
+  return plantingRepository.findAll(page, limit, filters);
 };
 
 const getById = async (id) => {
@@ -50,4 +106,4 @@ const getById = async (id) => {
   return planting;
 };
 
-module.exports = { create, getAll, getById };
+module.exports = { create, getAll, getById, syncBatch };

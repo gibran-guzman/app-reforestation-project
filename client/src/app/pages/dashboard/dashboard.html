@@ -32,9 +32,34 @@
         }
         Sincronizar ahora
       </button>
+      <button type="button" class="btn btn-outline-secondary btn-sm" (click)="refreshPending()" [disabled]="syncService.syncing">
+        Actualizar lista
+      </button>
     }
     @if (syncError) {
       <span class="text-danger small">{{ syncError }}</span>
+    }
+
+    @if (syncService.progress(); as p) {
+      <div class="w-100 mt-2">
+        <div class="d-flex justify-content-between small mb-1">
+          <span>Sincronizando... {{ p.current }}/{{ p.total }}</span>
+          <span>{{ (p.current / p.total * 100) | number:'1.0-0' }}%</span>
+        </div>
+        <div class="progress" style="height: 6px;">
+          <div class="progress-bar progress-bar-striped progress-bar-animated bg-success"
+               [style.width.%]="p.total > 0 ? (p.current / p.total * 100) : 0">
+          </div>
+        </div>
+      </div>
+    }
+
+    @if (syncService.errorItems().length > 0) {
+      <div class="w-100 mt-2">
+        @for (err of syncService.errorItems(); track $index) {
+          <div class="small text-danger">{{ err }}</div>
+        }
+      </div>
     }
   </div>
 

@@ -37,4 +37,8 @@ export default class Dashboard implements OnInit {
       this.syncError = 'Error al sincronizar. Intenta de nuevo.';
     }
   }
+
+  async refreshPending() {
+    this.pendingList = await this.offline.getPendingPlantings();
+  }
 }
