@@ -4,17 +4,17 @@
     <a routerLink="/plantings/new" class="btn btn-success">+ Nueva plantación</a>
   </div>
 
-  @if (loading) {
+  @if (loading()) {
     <div class="text-center py-5">
       <div class="spinner-border text-success" role="status"></div>
     </div>
-  } @else if (error) {
-    <div class="alert alert-danger">{{ error }}</div>
-  } @else if (plantings.length === 0) {
+  } @else if (error()) {
+    <div class="alert alert-danger">{{ error() }}</div>
+  } @else if (plantings().length === 0) {
     <div class="alert alert-info">Aún no hay plantaciones registradas.</div>
   } @else {
     <div class="row g-3">
-      @for (p of plantings; track p.id) {
+      @for (p of plantings(); track p.id) {
         <div class="col-6 col-md-4 col-lg-3">
           <div class="card shadow-sm h-100 planting-card">
             <div class="planting-thumb-wrapper">
@@ -38,5 +38,23 @@
         </div>
       }
     </div>
+
+    <nav class="mt-4" aria-label="Paginación de plantaciones">
+      <ul class="pagination pagination-sm justify-content-center mb-0">
+        <li class="page-item" [class.disabled]="currentPage() <= 1">
+          <button class="page-link" (click)="loadPage(currentPage() - 1)" [disabled]="currentPage() <= 1">Anterior</button>
+        </li>
+        @if (meta(); as m) {
+          @for (p of [].constructor(m.totalPages); track $index) {
+            <li class="page-item" [class.active]="currentPage() === $index + 1">
+              <button class="page-link" (click)="loadPage($index + 1)">{{ $index + 1 }}</button>
+            </li>
+          }
+          <li class="page-item" [class.disabled]="currentPage() >= m.totalPages">
+            <button class="page-link" (click)="loadPage(currentPage() + 1)" [disabled]="currentPage() >= m.totalPages">Siguiente</button>
+          </li>
+        }
+      </ul>
+    </nav>
   }
 </div>

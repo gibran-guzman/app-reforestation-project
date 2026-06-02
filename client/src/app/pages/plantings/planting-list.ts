@@ -1,8 +1,8 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { DatePipe } from '@angular/common';
 import { PlantingService } from '../../services/planting.service';
-import type { PlantingSite } from '../../models';
+import type { PlantingSite, PaginationMeta } from '../../models';
 
 @Component({
   selector: 'app-planting-list',
@@ -12,14 +12,29 @@ import type { PlantingSite } from '../../models';
 })
 export default class PlantingList implements OnInit {
   private service = inject(PlantingService);
-  plantings: PlantingSite[] = [];
-  loading = true;
-  error = '';
+  plantings = signal<PlantingSite[]>([]);
+  meta = signal<PaginationMeta | null>(null);
+  loading = signal(true);
+  error = signal('');
+  currentPage = signal(1);
 
   ngOnInit() {
-    this.service.list().subscribe({
-      next: (res) => { this.plantings = res.data; this.loading = false; },
-      error: (err) => { this.error = err.error?.error || 'Error al cargar plantaciones'; this.loading = false; },
+    this.loadPage(1);
+  }
+
+  loadPage(page: number) {
+    this.loading.set(true);
+    this.currentPage.set(page);
+    this.service.list(page).subscribe({
+      next: (res) => {
+        this.plantings.set(res.data);
+        this.meta.set(res.meta);
+        this.loading.set(false);
+      },
+      error: (err) => {
+        this.error.set(err.error?.error || 'Error al cargar plantaciones');
+        this.loading.set(false);
+      },
     });
   }
 }

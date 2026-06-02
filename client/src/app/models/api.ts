@@ -3,6 +3,17 @@ export interface ApiResponse<T> {
   data: T;
 }
 
+export interface PaginationMeta {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
+
+export interface PaginatedResponse<T> extends ApiResponse<T> {
+  meta: PaginationMeta;
+}
+
 export interface LoginRequest {
   email: string;
   password: string;

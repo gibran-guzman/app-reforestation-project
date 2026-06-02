@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import type { ApiResponse, PlantingSite, CreatePlantingRequest } from '../models';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import type { ApiResponse, PaginatedResponse, PlantingSite, CreatePlantingRequest } from '../models';
 
 @Injectable({ providedIn: 'root' })
 export class PlantingService {
@@ -8,8 +8,9 @@ export class PlantingService {
 
   constructor(private http: HttpClient) {}
 
-  list() {
-    return this.http.get<ApiResponse<PlantingSite[]>>(this.api);
+  list(page = 1, limit = 50) {
+    const params = new HttpParams().set('page', String(page)).set('limit', String(limit));
+    return this.http.get<PaginatedResponse<PlantingSite[]>>(this.api, { params });
   }
 
   create(body: CreatePlantingRequest) {
