@@ -50,4 +50,18 @@ const getById = async (req, res, next) => {
   }
 };
 
-module.exports = { create, getAll, getById, syncBatch };
+const getGeoJson = async (req, res, next) => {
+  try {
+    const filters = {};
+    if (req.query.zone_id) filters.zone_id = parseInt(req.query.zone_id, 10);
+    if (req.query.species_id) filters.species_id = parseInt(req.query.species_id, 10);
+    if (req.query.from) filters.from = req.query.from;
+    if (req.query.to) filters.to = req.query.to;
+    const geojson = await plantingService.getGeoJson(filters);
+    res.json(geojson);
+  } catch (error) {
+    next(error);
+  }
+};
+
+module.exports = { create, getAll, getById, syncBatch, getGeoJson };

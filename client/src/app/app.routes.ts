@@ -55,6 +55,16 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/plantings/planting-detail/planting-detail'),
   },
   {
+    path: 'map',
+    canActivate: [authGuard],
+    loadComponent: () => import('./pages/map/map'),
+  },
+  {
+    path: 'heatmap',
+    canActivate: [authGuard],
+    loadComponent: () => import('./pages/heatmap/heatmap'),
+  },
+  {
     path: 'reports',
     canActivate: [authGuard],
     loadComponent: () => import('./pages/reports/reports'),

@@ -135,6 +135,57 @@ const findAll = async (page = 1, limit = 50, filters = {}) => {
   return { rows: result.rows, total };
 };
 
+const findGeoJson = async (filters = {}) => {
+  const conditions = [];
+  const params = [];
+  let idx = 1;
+
+  if (filters.zone_id) { conditions.push(`ps.zone_id = $${idx++}`); params.push(filters.zone_id); }
+  if (filters.species_id) { conditions.push(`ps.species_id = $${idx++}`); params.push(filters.species_id); }
+  if (filters.from) { conditions.push(`ps.planted_at >= $${idx++}`); params.push(filters.from); }
+  if (filters.to) { conditions.push(`ps.planted_at <= $${idx++}`); params.push(filters.to); }
+
+  const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+
+  const result = await db.query(`
+    WITH latest_monitoring AS (
+      SELECT DISTINCT ON (mr.planting_site_id)
+        mr.planting_site_id, mr.survival_status, mr.visit_date
+      FROM monitoring_records mr
+      ORDER BY mr.planting_site_id, mr.visit_date DESC, mr.created_at DESC
+    )
+    SELECT
+      ps.id,
+      ST_AsGeoJSON(ps.location)::jsonb AS geometry,
+      jsonb_build_object(
+        'planting_id', ps.id,
+        'species_name', sc.common_name,
+        'scientific_name', sc.scientific_name,
+        'zone_name', iz.name,
+        'planted_at', ps.planted_at,
+        'survival_status', COALESCE(lm.survival_status, 'unmonitored'),
+        'last_monitoring_date', lm.visit_date,
+        'initial_ph', ps.initial_ph,
+        'initial_humidity', ps.initial_humidity,
+        'photo_url', ps.photo_url
+      ) AS properties
+    FROM planting_sites ps
+    LEFT JOIN species sc ON sc.id = ps.species_id
+    LEFT JOIN intervention_zones iz ON iz.id = ps.zone_id
+    LEFT JOIN latest_monitoring lm ON lm.planting_site_id = ps.id
+    ${where}
+    ORDER BY ps.created_at DESC
+  `, params);
+
+  const features = result.rows.map((r) => ({
+    type: 'Feature',
+    geometry: r.geometry,
+    properties: r.properties,
+  }));
+
+  return { type: 'FeatureCollection', features };
+};
+
 const updatePhotoUrl = async (id, photoUrl) => {
   const result = await db.query(`
     UPDATE planting_sites SET photo_url = $1 WHERE id = $2
@@ -143,4 +194,4 @@ const updatePhotoUrl = async (id, photoUrl) => {
   return result.rows[0];
 };
 
-module.exports = { create, findAll, findById, findByConflictKey, update, isPointInZone, updatePhotoUrl };
+module.exports = { create, findAll, findById, findByConflictKey, update, isPointInZone, updatePhotoUrl, findGeoJson };

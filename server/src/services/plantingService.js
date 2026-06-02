@@ -127,4 +127,8 @@ const updatePhotoUrl = async (id, photoUrl) => {
   return plantingRepository.updatePhotoUrl(id, photoUrl);
 };
 
-module.exports = { create, getAll, getById, syncBatch, updatePhotoUrl };
+const getGeoJson = async (filters = {}) => {
+  return plantingRepository.findGeoJson(filters);
+};
+
+module.exports = { create, getAll, getById, syncBatch, updatePhotoUrl, getGeoJson };

@@ -11,6 +11,7 @@ const photoRoutes = require('./routes/photoRoutes');
 const configRoutes = require('./routes/configRoutes');
 const monitoringRoutes = require('./routes/monitoringRoutes');
 const reportsRoutes = require('./routes/reportsRoutes');
+const analyticsRoutes = require('./routes/analyticsRoutes');
 const { authLimiter, signupLimiter } = require('./middleware/rateLimiter');
 const errorHandler = require('./middleware/errorHandler');
 const logger = require('./utils/logger');
@@ -41,6 +42,7 @@ app.use('/api/plantings/:id/photo', photoRoutes);
 app.use('/api/config', configRoutes);
 app.use('/api/monitoring', monitoringRoutes);
 app.use('/api/reports', reportsRoutes);
+app.use('/api/analytics', analyticsRoutes);
 
 app.use(errorHandler);
 

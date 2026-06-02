@@ -1,0 +1,110 @@
+<div class="heatmap-page d-flex flex-column flex-md-row">
+  <div class="heatmap-filters card shadow-sm p-3">
+    <h5 class="mb-3">Mapa de Calor</h5>
+
+    <label class="form-label small fw-semibold mb-1">Especie</label>
+    <select class="form-select form-select-sm mb-2" [disabled]="loading()" [value]="filterSpecies()" (change)="filterSpecies.set($any($event.target).value); loadData()">
+      <option value="">Todas las especies</option>
+      @for (s of species(); track s.id) {
+        <option [value]="s.id">{{ s.common_name }}</option>
+      }
+    </select>
+
+    <label class="form-label small fw-semibold mb-1">Zona</label>
+    <select class="form-select form-select-sm mb-2" [disabled]="loading()" [value]="filterZone()" (change)="filterZone.set($any($event.target).value); loadData()">
+      <option value="">Todas las zonas</option>
+      @for (z of zones(); track z.id) {
+        <option [value]="z.id">{{ z.name }}</option>
+      }
+    </select>
+
+    <label class="form-label small fw-semibold mb-1">Agrupar por</label>
+    <select class="form-select form-select-sm mb-3" [disabled]="loading()" [value]="interval()" (change)="interval.set($any($event.target).value); onIntervalChange()">
+      <option value="month">Mes</option>
+      <option value="quarter">Trimestre</option>
+      <option value="year">Año</option>
+    </select>
+
+    <hr class="my-2">
+
+    <div class="d-flex align-items-center gap-2 mb-2">
+      <span class="small fw-semibold">Leyenda</span>
+    </div>
+    <div class="heatmap-legend mb-2">
+      <div class="heatmap-legend-bar"></div>
+    </div>
+    <div class="d-flex justify-content-between small text-muted">
+      <span>Vivas</span>
+      <span>Muertas</span>
+    </div>
+
+    <small class="text-muted mt-3 d-block text-center">
+      @if (loading()) {
+        Cargando...
+      } @else {
+        {{ total }} punto(s) monitoreados
+      }
+    </small>
+  </div>
+
+  <div class="heatmap-content flex-grow-1 d-flex flex-column">
+    @if (data() && periods.length > 0) {
+      <div class="heatmap-timeline card shadow-sm px-3 py-2">
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+          <button class="btn btn-sm btn-outline-success" (click)="togglePlay()" [disabled]="periods.length <= 1" title="Reproducir/Pausar">
+            @if (playing()) {
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M6 3.5a.5.5 0 0 1 .5.5v8a.5.5 0 0 1-1 0V4a.5.5 0 0 1 .5-.5zm4 0a.5.5 0 0 1 .5.5v8a.5.5 0 0 1-1 0V4a.5.5 0 0 1 .5-.5z"/>
+              </svg>
+            } @else {
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path d="m11.596 8.697-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393z"/>
+              </svg>
+            }
+          </button>
+
+          <span class="fw-semibold small text-nowrap">{{ currentLabel }}</span>
+
+          <input type="range" class="form-range heatmap-slider" [min]="0" [max]="maxIndex" [value]="currentPeriod()" (input)="goToPeriod(Number($any($event.target).value))" [disabled]="periods.length <= 1">
+
+          <span class="small text-muted text-nowrap">{{ currentPeriod() + 1 }} / {{ periods.length }}</span>
+        </div>
+      </div>
+    }
+
+    <div class="heatmap-wrapper flex-grow-1 position-relative">
+      @if (loading()) {
+        <div class="heatmap-overlay">
+          <div class="spinner-border text-success" role="status"></div>
+        </div>
+      }
+
+      @if (error()) {
+        <div class="heatmap-overlay">
+          <div class="text-center px-4">
+            <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="%23dc3545" viewBox="0 0 16 16" class="mb-2">
+              <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+            </svg>
+            <p class="text-danger fw-semibold mb-1">Error al cargar</p>
+            <p class="small text-muted mb-2">{{ error() }}</p>
+            <button class="btn btn-sm btn-outline-danger" (click)="loadData()">Reintentar</button>
+          </div>
+        </div>
+      }
+
+      @if (!loading() && !error() && total === 0) {
+        <div class="heatmap-overlay">
+          <div class="text-center px-4">
+            <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="%23adb5bd" viewBox="0 0 16 16" class="mb-2">
+              <path d="M8 1a2.5 2.5 0 0 1 2.5 2.5V4h-5v-.5A2.5 2.5 0 0 1 8 1zm3.5 3v-.5a3.5 3.5 0 1 0-7 0V4H1v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V4h-3.5zM2 5h12v9a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5z"/>
+            </svg>
+            <p class="fw-semibold text-muted mb-1">Sin datos de mortalidad</p>
+            <p class="small text-muted mb-0">No hay plantaciones con monitoreo de mortalidad con los filtros seleccionados.</p>
+          </div>
+        </div>
+      }
+
+      <div id="heatmap-container" class="heatmap-container"></div>
+    </div>
+  </div>
+</div>

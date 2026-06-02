@@ -1,6 +1,6 @@
 # Planificación — Lloa Reforestation
 
-> Progreso y tracking del desarrollo. Actualizado: 2026-06-01 — Semanas 1-2 completadas, Sprint 9 y 10 completados
+> Progreso y tracking del desarrollo. Actualizado: 2026-06-02 — Semanas 1-2 completadas, Sprints 9-12 completados
 
 ---
 
@@ -19,7 +19,7 @@
 |------|---------|--------|
 | **1 — Fundamentos de Datos** | 1, 2, 3 | ✅ **100%** |
 | **2 — Captura en Campo** | 4, 5, 6, 7, 8 | ✅ **100%** |
-| **3 — Reportes y Analítica** | 9, 10, 11, 12, 13, 14 | ⬜ ~33% (Sprint 9 y 10 listos) |
+| **3 — Reportes y Analítica** | 9, 10, 11, 12, 13, 14 | ✅ **67%** (Sprints 9-12 listos) |
 | **4 — Cierre y Documentación** | 15, 16, 17, 18 | ⬜ **0%** |
 
 ---
@@ -221,21 +221,22 @@ client/src/app/
 
 > 📝 Excel export excluído del alcance por decisión del usuario
 
-### Sprint 11 — Mapa de Puntos de Siembra (HU7)
-**20h — Prioridad: 🟢 Baja**
+### Sprint 11 — Mapa de Puntos de Siembra (HU7) ✅
+**20h — Prioridad: 🟢 Baja — Completado 2026-06-02**
 
-- [ ] ⬜ Endpoint `GET /api/plantings/geojson` con datos geoespaciales
-- [ ] ⬜ Capa de puntos en Leaflet con íconos por estado
-- [ ] ⬜ Popup con detalle al hacer clic
-- [ ] ⬜ Filtros: especie, período, zona
+- [x] Endpoint `GET /api/plantings/geojson` con datos geoespaciales
+- [x] Capa de puntos en Leaflet con íconos por estado (circleMarker coloreado por supervivencia)
+- [x] Popup con detalle al hacer clic (especie, zona, fechas, estado, foto)
+- [x] Filtros: especie, zona, período (desde/hasta)
+- [+] UX: manejo de errores con alerta + reintentar, estado vacío, spinner de carga, popup estilizado, responsive
 
-### Sprint 12 — Mapa de Calor de Mortalidad (HU7)
-**20h — Prioridad: 🟢 Baja**
+### Sprint 12 — Mapa de Calor de Mortalidad (HU7) ✅
+**20h — Prioridad: 🟢 Baja — Completado 2026-06-02**
 
-- [ ] ⬜ Endpoint `GET /api/analytics/heatmap` con datos agregados
-- [ ] ⬜ Integrar Leaflet.heat
-- [ ] ⬜ Capa de calor para mortalidad
-- [ ] ⬜ Selector de período para animación temporal
+- [x] Endpoint `GET /api/analytics/heatmap` con datos agregados (peso por estado: dead=1, struggling=0.5, alive=0)
+- [x] Leaflet.heat integrado con gradiente personalizado verde→rojo
+- [x] Capa de calor para mortalidad con lat/lng/weight
+- [x] Selector de período para animación temporal (mes/trimestre/año) con slider + play/pausa
 
 ### Sprint 13 — Refinamiento Dashboard
 **15h — Prioridad: 🟢 Baja**
