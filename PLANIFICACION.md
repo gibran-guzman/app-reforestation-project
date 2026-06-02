@@ -1,6 +1,6 @@
 # Planificación — Lloa Reforestation
 
-> Progreso y tracking del desarrollo. Actualizado: 2026-06-01 — Semanas 1-2 completadas, Sprint 9 completado
+> Progreso y tracking del desarrollo. Actualizado: 2026-06-01 — Semanas 1-2 completadas, Sprint 9 y 10 completados
 
 ---
 
@@ -19,7 +19,7 @@
 |------|---------|--------|
 | **1 — Fundamentos de Datos** | 1, 2, 3 | ✅ **100%** |
 | **2 — Captura en Campo** | 4, 5, 6, 7, 8 | ✅ **100%** |
-| **3 — Reportes y Analítica** | 9, 10, 11, 12, 13, 14 | ⬜ ~17% (Sprint 9 listo) |
+| **3 — Reportes y Analítica** | 9, 10, 11, 12, 13, 14 | ⬜ ~33% (Sprint 9 y 10 listos) |
 | **4 — Cierre y Documentación** | 15, 16, 17, 18 | ⬜ **0%** |
 
 ---
@@ -209,12 +209,17 @@ client/src/app/
 - [x] Filtros por especie y zona en la vista de reportes
 - [x] Botón "Exportar PDF" con descarga tipo blob
 
-### Sprint 10 — Exportación Excel + Dashboard (HU6)
-**15h — Prioridad: 🟡 Media**
+### Sprint 10 — Dashboard (HU6) ✅
+**10h — Prioridad: 🟡 Media**
 
-- [ ] ⬜ Exportación Excel (exceljs) con estilos
-- [ ] ⬜ Dashboard básico: cards de resumen (total plántulas, supervivencia, zonas activas)
-- [ ] ⬜ Tabla de tasa de supervivencia por zona y especie
+- [x] Dashboard básico: 4 cards de resumen (total, monitoreadas, supervivencia %, sin monitoreo)
+- [x] Tabla de supervivencia por especie (total, vivas, estresadas, muertas, %)
+- [x] Tabla de supervivencia por zona (total, vivas, estresadas, muertas, %)
+- [x] Colores dinámicos por rango de supervivencia (verde ≥70%, amarillo ≥40%, rojo <40%)
+- [x] Estados loading/error/empty para cada tabla
+- [x] Login: eliminado enlace "Crear cuenta" (registro solo admin)
+
+> 📝 Excel export excluído del alcance por decisión del usuario
 
 ### Sprint 11 — Mapa de Puntos de Siembra (HU7)
 **20h — Prioridad: 🟢 Baja**
@@ -247,6 +252,46 @@ client/src/app/
 - [ ] ⬜ Skeletons de carga
 - [ ] ⬜ Accesibilidad (alt text, ARIA, contraste)
 - [ ] ⬜ Pruebas en dispositivos móviles reales
+
+---
+
+## Code Review (Post-Sprint 10) ✅
+**Duración: ~8h — 29 archivos modificados**
+
+### Performance
+- [x] `syncBatch`: pre-fetch de zonas/especies con `Promise.all` + Map cache (elimina N+1 queries)
+- [x] `reportsRepository`: paginación de 1000 filas/página en consultas de reportes
+- [x] `plantingRepository.update()`: SET dinámico (no sobreescribe campos con `undefined`)
+- [x] `photoService`: `crypto.randomUUID` en vez de `Math.random`, lookup table MIME_EXT
+
+### Clean Code
+- [x] `reports.service.ts`: helper `buildParams()` DRY para filtros en 4 métodos
+- [x] `speciesValidator`: helper `validateAltitudeRange()` extraído (DRY en create/update)
+- [x] `planting-form.ts`: método `placeMarker()` extraído, `takeUntilDestroyed`, fix flujo foto
+- [x] `planting-list.ts`: helper `pageArray()` para paginación
+- [x] `plantingRepository`: `listColumns` movido antes de `findById` (fix TDZ), `findByZoneId` eliminado (muerto)
+- [x] `reports.ts`: helper `buildFilters()`, chart con `effect()`, error handlers agregados
+- [x] `connectivity.service`: import `effect` eliminado (no usado)
+
+### Error Handling
+- [x] `auth.service`: limpiar token si `me()` falla (auto-logout en token inválido)
+- [x] Auth middleware: mensaje claro para perfil sin rol
+- [x] `planting-detail`, `reports`: errores del servidor propagados a UI
+- [x] `planting-form`: error de foto manejado graceful (navega con advertencia)
+
+### Patterns
+- [x] `photoController`: usa `plantingService` en vez de repository directo
+- [x] `plantingService`: método `updatePhotoUrl()` con verificación de existencia
+- [x] `reportsController`: `validateReportFilters()` en species-stats y zone-summary
+- [x] `index.js`: graceful shutdown (SIGTERM/SIGINT)
+- [x] `zoneRepository`: geometría default polygon si no se provee
+- [x] `zoneValidator`: geometry opcional en creación
+- [x] `db.js`: SSL config condicional via `DB_SSL_REJECT_UNAUTHORIZED`
+
+### Fixes Post-Test
+- [x] `is_point_in_zone`: creada en DB local + script SQL guardado (`server/scripts/sql/01-is-point-in-zone.sql`)
+- [x] Auth: perfiles migrados a DB local (`db.query`) para evitar RLS de Supabase Data API
+- [x] Login: filtro de rate limiting aplicado correctamente
 
 ---
 
@@ -290,13 +335,13 @@ client/src/app/
 Semana 1   (01-05 Jun) ████████████████████  ✅ HU4 pendants + Sprint 5 (SW + IndexedDB)
 Semana 2   (08-12 Jun) ████████████████████  ✅ Sprint 6 (Sync automático) + Sprint 8 (Historial)
 Semana 3   (15-19 Jun) ████████████████████  ✅ Sprint 9 (Reportes + PDF)
-Semana 4-5 (22-03 Jul) ████████████████████  Sprint 10 (Exportación Excel + Dashboard)
+Semana 4-5 (22-03 Jul) ████████████████████  ✅ Sprint 10 (Dashboard) + Code Review
 Semana 6-7 (06-17 Jul) ████████████████████  Sprint 11-12 (Mapas + Heatmap)
 Semana 8   (20-24 Jul) ████████░░░░░░░░░░░░  Sprint 13-14 (UI/UX)
 Semana 9-10 (27-07 Aug) ██████████████████  Sprint 15-18 (QA + Doc + Deploy)
 ```
 
-**Total estimado restante:** ~180 horas
+**Total estimado restante:** ~170 horas
 
 ---
 
@@ -320,3 +365,5 @@ Semana 9-10 (27-07 Aug) ██████████████████  
 - [x] Deshabilitar registro abierto (`POST /api/auth/signup` solo para admin con middleware `authorize`)
 - [ ] ⬜ Agregar Helmet CSP en producción
 - [ ] ⬜ Revisar variables de entorno en `.env.example`
+- [x] Perfiles de usuario migrados a DB local (bypass RLS Supabase Data API)
+- [x] Función `is_point_in_zone` creada en DB local + script versionado
