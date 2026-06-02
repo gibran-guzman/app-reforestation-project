@@ -7,6 +7,19 @@
     "dev:server": "pnpm --dir server start",
     "dev:client": "npm --prefix client start",
     "lint:server": "pnpm --dir server lint",
-    "install:all": "pnpm --dir server install && npm --prefix client install"
+    "install:all": "pnpm --dir server install && npm --prefix client install",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "server/src/**/*.js": [
+      "pnpm --dir server lint"
+    ],
+    "client/src/**/*.ts": [
+      "bash -c 'client/node_modules/.bin/tsc --noEmit --project client/tsconfig.app.json'"
+    ]
+  },
+  "devDependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0"
   }
 }

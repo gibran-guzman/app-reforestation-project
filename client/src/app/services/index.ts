@@ -4,3 +4,6 @@ export * from './zone.service';
 export * from './connectivity.service';
 export * from './offline.service';
 export * from './sync.service';
+export * from './config.service';
+export * from './image.service';
+export * from './geolocation.service';

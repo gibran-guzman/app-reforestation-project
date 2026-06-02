@@ -7,6 +7,8 @@ import { ZoneService } from '../../services/zone.service';
 import { ConnectivityService } from '../../services/connectivity.service';
 import { OfflineService } from '../../services/offline.service';
 import { ConfigService, type SoilTexture } from '../../services/config.service';
+import { ImageService } from '../../services/image.service';
+import { GeolocationService } from '../../services/geolocation.service';
 import type { Species, Zone } from '../../models';
 import L from 'leaflet';
 
@@ -16,36 +18,6 @@ L.Icon.Default.mergeOptions({
   iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
 });
-
-const MAX_IMAGE_WIDTH = 1200;
-const COMPRESS_QUALITY = 0.8;
-
-function compressImage(file: File): Promise<File> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    const url = URL.createObjectURL(file);
-    img.onload = () => {
-      URL.revokeObjectURL(url);
-      const canvas = document.createElement('canvas');
-      let { width, height } = img;
-      if (width > MAX_IMAGE_WIDTH) {
-        height = Math.round(height * MAX_IMAGE_WIDTH / width);
-        width = MAX_IMAGE_WIDTH;
-      }
-      canvas.width = width;
-      canvas.height = height;
-      const ctx = canvas.getContext('2d')!;
-      ctx.drawImage(img, 0, 0, width, height);
-      canvas.toBlob((blob) => {
-        if (!blob) { reject(new Error('Error al comprimir la imagen')); return; }
-        const name = file.name.replace(/\.[^.]+$/, '.webp');
-        resolve(new File([blob], name, { type: 'image/webp' }));
-      }, 'image/webp', COMPRESS_QUALITY);
-    };
-    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Error al cargar la imagen')); };
-    img.src = url;
-  });
-}
 
 @Component({
   selector: 'app-planting-form',
@@ -60,6 +32,8 @@ export default class PlantingForm implements OnInit, AfterViewInit, OnDestroy {
   private connectivity = inject(ConnectivityService);
   private offline = inject(OfflineService);
   private configService = inject(ConfigService);
+  private imageService = inject(ImageService);
+  private geolocationService = inject(GeolocationService);
   private router = inject(Router);
   private ngZone = inject(NgZone);
 
@@ -147,7 +121,7 @@ export default class PlantingForm implements OnInit, AfterViewInit, OnDestroy {
   }
 
   captureGps() {
-    if (!navigator.geolocation) {
+    if (!this.geolocationService.isAvailable()) {
       this.gpsStatus = 'La geolocalización no está disponible en este navegador';
       return;
     }
@@ -155,10 +129,10 @@ export default class PlantingForm implements OnInit, AfterViewInit, OnDestroy {
     this.gpsStatus = 'Obteniendo ubicación...';
     this.gpsFailed = false;
 
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
+    this.geolocationService.getCurrentPosition().then(
+      (coords) => {
         this.ngZone.run(() => {
-          this.setPosition(pos.coords.latitude, pos.coords.longitude);
+          this.setPosition(coords.lat, coords.lng);
           this.touched.lat = true;
           this.touched.lng = true;
           this.gpsStatus = 'Ubicación capturada correctamente';
@@ -170,7 +144,6 @@ export default class PlantingForm implements OnInit, AfterViewInit, OnDestroy {
           this.gpsStatus = 'No se pudo obtener la ubicación. Ingresa las coordenadas manualmente o intenta de nuevo.';
         });
       },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 },
     );
   }
 
@@ -221,8 +194,9 @@ export default class PlantingForm implements OnInit, AfterViewInit, OnDestroy {
     const file = input.files?.[0];
     if (!file) return;
 
-    if (file.size > 5 * 1024 * 1024) {
-      this.error = 'La foto no puede superar los 5 MB';
+    const sizeError = this.imageService.validateSize(file);
+    if (sizeError) {
+      this.error = sizeError;
       input.value = '';
       return;
     }
@@ -231,15 +205,10 @@ export default class PlantingForm implements OnInit, AfterViewInit, OnDestroy {
     this.compressing = true;
 
     try {
-      const compressed = await compressImage(file);
+      const compressed = await this.imageService.compress(file);
       this.photoFile = compressed;
-
-      const reader = new FileReader();
-      reader.onload = () => {
-        this.photoPreview = reader.result as string;
-        this.compressing = false;
-      };
-      reader.readAsDataURL(compressed);
+      this.photoPreview = await this.imageService.readAsDataUrl(compressed);
+      this.compressing = false;
     } catch {
       this.error = 'Error al procesar la imagen';
       this.compressing = false;
