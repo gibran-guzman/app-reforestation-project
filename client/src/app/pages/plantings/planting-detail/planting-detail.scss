@@ -1,0 +1,44 @@
+.detail-photo {
+  max-height: 320px;
+  object-fit: cover;
+}
+
+.timeline {
+  position: relative;
+  padding-left: 1.5rem;
+
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0.5rem;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--bs-border-color);
+  }
+}
+
+.timeline-item {
+  position: relative;
+  padding-bottom: 1rem;
+
+  &:last-child {
+    padding-bottom: 0;
+  }
+}
+
+.timeline-marker {
+  position: absolute;
+  left: -1.15rem;
+  top: 0.65rem;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--bs-success);
+  border: 2px solid #fff;
+  z-index: 1;
+}
+
+.timeline-content {
+  border-left: 3px solid var(--bs-success);
+}

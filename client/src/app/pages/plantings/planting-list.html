@@ -16,6 +16,7 @@
     <div class="row g-3">
       @for (p of plantings(); track p.id) {
         <div class="col-6 col-md-4 col-lg-3">
+          <a [routerLink]="['/plantings', p.id]" class="text-decoration-none text-reset">
           <div class="card shadow-sm h-100 planting-card">
             <div class="planting-thumb-wrapper">
               @if (p.photo_url) {
@@ -35,6 +36,7 @@
               <small class="text-muted">{{ p.planted_at | date:'shortDate' }}</small>
             </div>
           </div>
+          </a>
         </div>
       }
     </div>
