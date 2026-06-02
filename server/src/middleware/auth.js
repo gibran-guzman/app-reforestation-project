@@ -1,4 +1,5 @@
 const supabase = require('../config/supabase');
+const db = require('../config/db');
 const { AppError } = require('../errors/AppError');
 
 const authenticate = async (req, res, next) => {
@@ -15,13 +16,13 @@ const authenticate = async (req, res, next) => {
       throw new AppError('Token inválido o expirado', 401);
     }
 
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role, full_name, created_at')
-      .eq('id', user.id)
-      .maybeSingle();
+    const { rows } = await db.query(
+      'SELECT role, full_name, created_at FROM profiles WHERE id = $1',
+      [user.id],
+    );
+    const profile = rows[0] || {};
 
-    req.user = { ...user, role: profile?.role, full_name: profile?.full_name, created_at: profile?.created_at };
+    req.user = { ...user, role: profile.role, full_name: profile.full_name, created_at: profile.created_at };
     next();
   } catch (error) {
     next(error);
