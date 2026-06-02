@@ -11,8 +11,13 @@ const create = async (req, res, next) => {
 
 const getAll = async (req, res, next) => {
   try {
-    const plantings = await plantingService.getAll();
-    res.json({ data: plantings });
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 50));
+    const result = await plantingService.getAll(page, limit);
+    res.json({
+      data: result.rows,
+      meta: { page, limit, total: result.total, totalPages: Math.ceil(result.total / limit) },
+    });
   } catch (error) {
     next(error);
   }

@@ -38,8 +38,8 @@ const create = async (body, userId) => {
   return planting;
 };
 
-const getAll = async () => {
-  return plantingRepository.findAll();
+const getAll = async (page, limit) => {
+  return plantingRepository.findAll(page, limit);
 };
 
 const getById = async (id) => {

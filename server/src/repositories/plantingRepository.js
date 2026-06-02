@@ -65,15 +65,22 @@ const listColumns = [
   'iz.name AS zone_name',
 ];
 
-const findAll = async () => {
+const findAll = async (page = 1, limit = 50) => {
+  const offset = (page - 1) * limit;
+
+  const countResult = await db.query('SELECT COUNT(*) FROM planting_sites');
+  const total = parseInt(countResult.rows[0].count, 10);
+
   const result = await db.query(`
     SELECT ${listColumns.join(', ')}
     FROM planting_sites ps
     LEFT JOIN species sc ON sc.id = ps.species_id
     LEFT JOIN intervention_zones iz ON iz.id = ps.zone_id
     ORDER BY ps.created_at DESC
-  `);
-  return result.rows;
+    LIMIT $1 OFFSET $2
+  `, [limit, offset]);
+
+  return { rows: result.rows, total };
 };
 
 const updatePhotoUrl = async (id, photoUrl) => {
