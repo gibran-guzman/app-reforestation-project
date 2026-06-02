@@ -22,5 +22,4 @@ export interface CreatePlantingRequest {
   initial_ph?: number;
   initial_humidity?: number;
   initial_soil_texture?: string;
-  photo?: File;
 }

@@ -3,8 +3,143 @@
 
   @if (successMsg) {
     <div class="alert alert-success alert-dismissible d-flex align-items-center gap-2 py-2 pe-4" role="alert">
-      <span>✅ {{ successMsg }}</span>
+      <span>{{ successMsg }}</span>
       <button type="button" class="btn-close ms-auto" (click)="successMsg = ''" aria-label="Cerrar"></button>
+    </div>
+  }
+
+  @if (loadingStats()) {
+    <div class="text-center py-4">
+      <div class="spinner-border text-success" role="status"></div>
+    </div>
+  } @else if (statsError()) {
+    <div class="alert alert-danger">{{ statsError() }}</div>
+  } @else if (overall(); as o) {
+    <div class="row g-3 mb-4">
+      <div class="col-6 col-md-3">
+        <div class="card shadow-sm border-0 bg-success text-white h-100">
+          <div class="card-body text-center">
+            <div class="fs-3 fw-bold">{{ o.total }}</div>
+            <div class="small opacity-75">Total plantaciones</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="card shadow-sm border-0 bg-info text-white h-100">
+          <div class="card-body text-center">
+            <div class="fs-3 fw-bold">{{ o.monitored }}</div>
+            <div class="small opacity-75">Monitoreadas</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="card shadow-sm border-0 text-white h-100" [class.bg-success]="rate(o.alive, o.monitored) >= 70" [class.bg-warning]="rate(o.alive, o.monitored) >= 40 && rate(o.alive, o.monitored) < 70" [class.bg-danger]="rate(o.alive, o.monitored) < 40">
+          <div class="card-body text-center">
+            <div class="fs-3 fw-bold">{{ rate(o.alive, o.monitored) }}%</div>
+            <div class="small opacity-75">Supervivencia</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="card shadow-sm border-0 bg-secondary text-white h-100">
+          <div class="card-body text-center">
+            <div class="fs-3 fw-bold">{{ o.unmonitored }}</div>
+            <div class="small opacity-75">Sin monitoreo</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+      <div class="col-md-6">
+        <div class="card shadow-sm h-100">
+          <div class="card-header fw-semibold">Supervivencia por especie</div>
+          <div class="card-body p-0">
+            @if (speciesStats().length === 0) {
+              <div class="p-3 text-muted small">Sin datos</div>
+            } @else {
+              <div class="table-responsive">
+                <table class="table table-sm table-hover mb-0">
+                  <thead class="table-light">
+                    <tr>
+                      <th>Especie</th>
+                      <th class="text-center">Total</th>
+                      <th class="text-center">Vivas</th>
+                      <th class="text-center">Estresadas</th>
+                      <th class="text-center">Muertas</th>
+                      <th class="text-center">Supervivencia</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (s of speciesStats(); track s.id) {
+                      <tr>
+                        <td>{{ s.common_name }}</td>
+                        <td class="text-center">{{ s.total_planted }}</td>
+                        <td class="text-center text-success fw-semibold">{{ s.alive }}</td>
+                        <td class="text-center text-warning fw-semibold">{{ s.struggling }}</td>
+                        <td class="text-center text-danger fw-semibold">{{ s.dead }}</td>
+                        <td class="text-center">
+                          <div class="d-flex align-items-center gap-2 justify-content-center">
+                            <div class="progress flex-grow-1" style="max-width: 80px; height: 8px;">
+                              <div class="progress-bar {{ survivalColor(s.alive, s.monitored) }}" [style.width.%]="rate(s.alive, s.monitored)"></div>
+                            </div>
+                            <small class="text-muted">{{ rate(s.alive, s.monitored) }}%</small>
+                          </div>
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <div class="card shadow-sm h-100">
+          <div class="card-header fw-semibold">Supervivencia por zona</div>
+          <div class="card-body p-0">
+            @if (zoneSummary().length === 0) {
+              <div class="p-3 text-muted small">Sin datos</div>
+            } @else {
+              <div class="table-responsive">
+                <table class="table table-sm table-hover mb-0">
+                  <thead class="table-light">
+                    <tr>
+                      <th>Zona</th>
+                      <th class="text-center">Total</th>
+                      <th class="text-center">Vivas</th>
+                      <th class="text-center">Estresadas</th>
+                      <th class="text-center">Muertas</th>
+                      <th class="text-center">Supervivencia</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (z of zoneSummary(); track z.id) {
+                      <tr>
+                        <td>{{ z.name }}</td>
+                        <td class="text-center">{{ z.total_plantings }}</td>
+                        <td class="text-center text-success fw-semibold">{{ z.alive }}</td>
+                        <td class="text-center text-warning fw-semibold">{{ z.struggling }}</td>
+                        <td class="text-center text-danger fw-semibold">{{ z.dead }}</td>
+                        <td class="text-center">
+                          <div class="d-flex align-items-center gap-2 justify-content-center">
+                            <div class="progress flex-grow-1" style="max-width: 80px; height: 8px;">
+                              <div class="progress-bar {{ survivalColor(z.alive, z.monitored) }}" [style.width.%]="rate(z.alive, z.monitored)"></div>
+                            </div>
+                            <small class="text-muted">{{ rate(z.alive, z.monitored) }}%</small>
+                          </div>
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
     </div>
   }
 
@@ -44,11 +179,11 @@
       <div class="w-100 mt-2">
         <div class="d-flex justify-content-between small mb-1">
           <span>Sincronizando... {{ p.current }}/{{ p.total }}</span>
-          <span>{{ (p.current / p.total * 100) | number:'1.0-0' }}%</span>
+          <span>{{ rate(p.current, p.total) }}%</span>
         </div>
         <div class="progress" style="height: 6px;">
           <div class="progress-bar progress-bar-striped progress-bar-animated bg-success"
-               [style.width.%]="p.total > 0 ? (p.current / p.total * 100) : 0">
+               [style.width.%]="p.total > 0 ? rate(p.current, p.total) : 0">
           </div>
         </div>
       </div>
@@ -76,7 +211,7 @@
               <small class="text-muted">Zona #{{ item.payload.zone_id }} · Especie #{{ item.payload.species_id }}</small>
               <small class="text-muted">{{ item.created_at | date:'short' }}</small>
               @if (item.photo) {
-                <small class="text-success">📷 Foto incluida</small>
+                <small class="text-success">Foto incluida</small>
               }
             </div>
             <small class="text-muted">{{ item.retries > 0 ? 'Reintento ' + item.retries : 'Pendiente' }}</small>

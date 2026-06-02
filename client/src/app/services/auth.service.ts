@@ -13,7 +13,14 @@ export class AuthService {
     const token = localStorage.getItem('access_token');
     if (token) {
       this.isAuthenticated.set(true);
-      this.me().subscribe();
+      this.me().subscribe({
+        error: () => {
+          this.isAuthenticated.set(false);
+          this.user.set(null);
+          localStorage.removeItem('access_token');
+          localStorage.removeItem('refresh_token');
+        },
+      });
     }
   }
 

@@ -1,15 +1,12 @@
 const photoService = require('../services/photoService');
-const plantingRepository = require('../repositories/plantingRepository');
-const { NotFoundError, AppError } = require('../errors/AppError');
+const plantingService = require('../services/plantingService');
+const { AppError } = require('../errors/AppError');
 
 const upload = async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    const planting = await plantingRepository.findById(id);
-    if (!planting) {
-      throw new NotFoundError('Plantación no encontrada');
-    }
+    await plantingService.getById(id);
 
     if (!req.file) {
       throw new AppError('Debes seleccionar una imagen', 400);
@@ -17,7 +14,7 @@ const upload = async (req, res, next) => {
 
     const photoUrl = await photoService.uploadPhoto(id, req.file);
 
-    const updated = await plantingRepository.updatePhotoUrl(id, photoUrl);
+    const updated = await plantingService.updatePhotoUrl(id, photoUrl);
 
     res.json({ message: 'Foto subida correctamente', data: { photo_url: updated.photo_url } });
   } catch (error) {

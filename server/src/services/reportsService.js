@@ -180,13 +180,12 @@ const generatePdf = async (filters = {}) => {
   addBarChart();
   addDetailTable();
 
-  doc.on('end', addFooter);
-  doc.end();
-
   return new Promise((resolve) => {
     doc.on('end', () => {
+      addFooter();
       resolve(Buffer.concat(buffers));
     });
+    doc.end();
   });
 };
 

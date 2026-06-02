@@ -25,7 +25,7 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
-app.use(express.json({ limit: '10kb' }));
+app.use(express.json({ limit: '1mb' }));
 
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', service: 'Lloa Reforestation API' });
@@ -44,7 +44,7 @@ app.use('/api/reports', reportsRoutes);
 
 app.use(errorHandler);
 
-app.listen(PORT, async () => {
+const server = app.listen(PORT, async () => {
   logger.info({ port: PORT }, 'Servidor iniciado');
   try {
     await ensureBucket();
@@ -53,3 +53,18 @@ app.listen(PORT, async () => {
     logger.warn({ err }, 'No se pudo inicializar el bucket de almacenamiento');
   }
 });
+
+const gracefulShutdown = async (signal) => {
+  logger.info({ signal }, 'Received shutdown signal');
+  server.close(() => {
+    logger.info('HTTP server closed');
+    process.exit(0);
+  });
+  setTimeout(() => {
+    logger.error('Forced shutdown after timeout');
+    process.exit(1);
+  }, 10000).unref();
+};
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));

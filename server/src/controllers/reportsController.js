@@ -24,6 +24,7 @@ const getSurvivalRate = async (req, res, next) => {
 const getSpeciesStats = async (req, res, next) => {
   try {
     const filters = parseFilters(req.query);
+    validateReportFilters(filters);
     const result = await reportsService.getSpeciesStats(filters);
     res.json({ data: result });
   } catch (error) {
@@ -34,6 +35,7 @@ const getSpeciesStats = async (req, res, next) => {
 const getZoneSummary = async (req, res, next) => {
   try {
     const filters = parseFilters(req.query);
+    validateReportFilters(filters);
     const result = await reportsService.getZoneSummary(filters);
     res.json({ data: result });
   } catch (error) {

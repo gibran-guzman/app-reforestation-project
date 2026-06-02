@@ -1,6 +1,8 @@
-import { Component, inject, NgZone, OnInit, AfterViewInit, ViewChild, ElementRef, OnDestroy } from '@angular/core';
+import { Component, inject, NgZone, OnInit, AfterViewInit, ViewChild, ElementRef, OnDestroy, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { switchMap, of, catchError } from 'rxjs';
 import { PlantingService } from '../../services/planting.service';
 import { SpeciesService } from '../../services/species.service';
 import { ZoneService } from '../../services/zone.service';
@@ -36,6 +38,7 @@ export default class PlantingForm implements OnInit, AfterViewInit, OnDestroy {
   private geolocationService = inject(GeolocationService);
   private router = inject(Router);
   private ngZone = inject(NgZone);
+  private destroyRef = inject(DestroyRef);
 
   @ViewChild('mapContainer') mapContainer!: ElementRef;
 
@@ -82,15 +85,15 @@ export default class PlantingForm implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnInit() {
-    this.speciesService.list().subscribe({
+    this.speciesService.list().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (res) => { this.speciesList = res.data; this.loadingSpecies = false; },
       error: () => { this.speciesError = 'No se pudieron cargar las especies'; this.loadingSpecies = false; },
     });
-    this.zoneService.list().subscribe({
+    this.zoneService.list().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (res) => { this.zonesList = res.data; this.loadingZones = false; },
       error: () => { this.zoneError = 'No se pudieron cargar las zonas'; this.loadingZones = false; },
     });
-    this.configService.getSoilTextures().subscribe({
+    this.configService.getSoilTextures().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (res) => { this.soilTextures = res.data; this.loadingTextures = false; },
       error: () => { this.loadingTextures = false; },
     });
@@ -147,7 +150,7 @@ export default class PlantingForm implements OnInit, AfterViewInit, OnDestroy {
     );
   }
 
-  private setPosition(lat: number, lng: number) {
+  private placeMarker(lat: number, lng: number) {
     this.form.lat = Math.round(lat * 1000000) / 1000000;
     this.form.lng = Math.round(lng * 1000000) / 1000000;
 
@@ -167,23 +170,13 @@ export default class PlantingForm implements OnInit, AfterViewInit, OnDestroy {
     this.map?.setView([this.form.lat, this.form.lng], 16);
   }
 
+  private setPosition(lat: number, lng: number) {
+    this.placeMarker(lat, lng);
+  }
+
   updateMarkerFromCoords() {
     if (this.form.lat === null || this.form.lng === null || isNaN(this.form.lat) || isNaN(this.form.lng)) return;
-
-    if (this.marker) {
-      this.marker.setLatLng([this.form.lat, this.form.lng]);
-    } else if (this.map) {
-      this.marker = L.marker([this.form.lat, this.form.lng], { draggable: true }).addTo(this.map);
-      this.marker.on('dragend', () => {
-        const pos = this.marker!.getLatLng();
-        this.ngZone.run(() => {
-          this.form.lat = Math.round(pos.lat * 1000000) / 1000000;
-          this.form.lng = Math.round(pos.lng * 1000000) / 1000000;
-        });
-      });
-    }
-
-    this.map?.setView([this.form.lat, this.form.lng], 16);
+    this.placeMarker(this.form.lat, this.form.lng);
   }
 
   touchLat() { this.touched.lat = true; }
@@ -246,18 +239,22 @@ export default class PlantingForm implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
 
-    this.plantingService.create(payload).subscribe({
-      next: (res) => {
+    const create$ = this.plantingService.create(payload).pipe(
+      switchMap((res) => {
         if (this.photoFile && res.data?.id) {
           this.uploading = true;
-          this.plantingService.uploadPhoto(res.data.id, this.photoFile).subscribe({
-            next: () => this.router.navigate(['/dashboard'], { state: { success: 'Plántula registrada con foto' } }),
-            error: () => this.router.navigate(['/dashboard'], { state: { success: 'Plántula registrada' } }),
-          });
-        } else {
-          this.router.navigate(['/dashboard'], { state: { success: 'Plántula registrada correctamente' } });
+          return this.plantingService.uploadPhoto(res.data.id, this.photoFile).pipe(
+            switchMap(() => of({ success: 'Plántula registrada con foto' })),
+            catchError(() => of({ success: 'Plántula registrada, pero la foto no pudo subirse' })),
+          );
         }
-      },
+        return of({ success: 'Plántula registrada correctamente' });
+      }),
+      takeUntilDestroyed(this.destroyRef),
+    );
+
+    create$.subscribe({
+      next: (msg) => this.router.navigate(['/dashboard'], { state: { success: msg.success } }),
       error: (err) => {
         this.error = err.error?.error || err.error?.details?.[0]?.message || 'Error al registrar plántula';
         this.saving = false;

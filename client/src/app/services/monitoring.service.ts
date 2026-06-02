@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import type { ApiResponse, MonitoringRecord } from '../models';
+import type { ApiResponse, MonitoringRecord, CreateMonitoringRequest } from '../models';
 
 @Injectable({ providedIn: 'root' })
 export class MonitoringService {
@@ -16,7 +16,7 @@ export class MonitoringService {
     return this.http.get<ApiResponse<MonitoringRecord>>(`${this.api}/${id}`);
   }
 
-  create(body: MonitoringRecord) {
+  create(body: CreateMonitoringRequest) {
     return this.http.post<ApiResponse<MonitoringRecord>>(this.api, body);
   }
 }

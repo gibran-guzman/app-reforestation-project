@@ -37,4 +37,8 @@ export default class PlantingList implements OnInit {
       },
     });
   }
+
+  pageArray(total: number): number[] {
+    return Array.from({ length: total }, (_, i) => i);
+  }
 }

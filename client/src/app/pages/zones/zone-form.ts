@@ -50,7 +50,6 @@ export default class ZoneForm implements OnInit {
       : this.service.create({
           name: this.form.name,
           description: this.form.description || undefined,
-          geometry: { type: 'Polygon', coordinates: [[]] },
         });
 
     obs.subscribe({

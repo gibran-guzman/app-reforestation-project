@@ -1,3 +1,4 @@
+const crypto = require('node:crypto');
 const supabase = require('../config/supabase');
 const logger = require('../utils/logger');
 const { AppError } = require('../errors/AppError');
@@ -19,9 +20,11 @@ const ensureBucket = async () => {
   }
 };
 
+const MIME_EXT = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };
+
 const uploadPhoto = async (plantingId, file) => {
-  const ext = file.mimetype === 'image/jpeg' ? 'jpg' : file.mimetype === 'image/png' ? 'png' : 'webp';
-  const filePath = `plantings/${plantingId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+  const ext = MIME_EXT[file.mimetype] || 'webp';
+  const filePath = `plantings/${plantingId}/${Date.now()}-${crypto.randomUUID().slice(0, 8)}.${ext}`;
 
   const { error: uploadError } = await supabase.storage
     .from(BUCKET)

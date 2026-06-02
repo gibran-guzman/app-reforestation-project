@@ -9,6 +9,13 @@ const validateAltitude = (value, field) => {
   return null;
 };
 
+const validateAltitudeRange = (min, max, errors) => {
+  if (min !== undefined && min !== null && max !== undefined && max !== null &&
+      Number(min) >= Number(max)) {
+    errors.push({ field: 'recommended_altitude_max', message: 'Max altitude must be greater than min altitude' });
+  }
+};
+
 const validateCreateSpecies = (data) => {
   const errors = [];
   const { scientific_name, common_name, description, ideal_soil_type, recommended_altitude_min, recommended_altitude_max } = data || {};
@@ -47,11 +54,7 @@ const validateCreateSpecies = (data) => {
   const altMaxErr = validateAltitude(recommended_altitude_max, 'recommended_altitude_max');
   if (altMaxErr) errors.push(altMaxErr);
 
-  if (recommended_altitude_min !== undefined && recommended_altitude_min !== null &&
-      recommended_altitude_max !== undefined && recommended_altitude_max !== null &&
-      Number(recommended_altitude_min) >= Number(recommended_altitude_max)) {
-    errors.push({ field: 'recommended_altitude_max', message: 'Max altitude must be greater than min altitude' });
-  }
+  validateAltitudeRange(recommended_altitude_min, recommended_altitude_max, errors);
 
   if (errors.length > 0) {
     throw new ValidationError(errors);
@@ -108,11 +111,7 @@ const validateUpdateSpecies = (data) => {
   const altMaxErr = validateAltitude(data.recommended_altitude_max, 'recommended_altitude_max');
   if (altMaxErr) errors.push(altMaxErr);
 
-  if (data.recommended_altitude_min !== undefined && data.recommended_altitude_min !== null &&
-      data.recommended_altitude_max !== undefined && data.recommended_altitude_max !== null &&
-      Number(data.recommended_altitude_min) >= Number(data.recommended_altitude_max)) {
-    errors.push({ field: 'recommended_altitude_max', message: 'Max altitude must be greater than min altitude' });
-  }
+  validateAltitudeRange(data.recommended_altitude_min, data.recommended_altitude_max, errors);
 
   if (errors.length > 0) {
     throw new ValidationError(errors);

@@ -176,7 +176,7 @@
     </div>
 
     <div class="d-flex flex-column flex-md-row gap-2">
-      <button type="submit" class="btn btn-success" [disabled]="saving || !form.species_id || !form.zone_id || !form.lat || !form.lng">
+      <button type="submit" class="btn btn-success" [disabled]="saving || !form.species_id || !form.zone_id || (form.lat === 0 && form.lng === 0)">
         @if (uploading) {
           <span class="spinner-border spinner-border-sm me-1"></span>
           Subiendo foto...

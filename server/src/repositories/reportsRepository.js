@@ -1,5 +1,11 @@
 const db = require('../config/db');
 
+/*
+ * Performance note: The DISTINCT ON + ORDER BY in latest_monitoring CTE requires
+ * a composite index for efficient execution:
+ *   CREATE INDEX idx_monitoring_site_visit
+ *     ON monitoring_records (planting_site_id, visit_date DESC, created_at DESC);
+ */
 const latestMonitoringCte = `
   WITH latest_monitoring AS (
     SELECT DISTINCT ON (mr.planting_site_id)
@@ -104,27 +110,41 @@ const getSurvivalRateByZone = async (filters = {}) => {
 const getAllPlantingsForReport = async (filters = {}) => {
   const { where, params } = buildFilters(filters);
 
-  const result = await db.query(`
-    ${latestMonitoringCte}
-    SELECT
-      ps.id, ps.zone_id, ps.species_id,
-      ST_AsGeoJSON(ps.location)::jsonb AS location,
-      ps.planted_at, ps.planted_by,
-      ps.initial_ph, ps.initial_humidity, ps.initial_soil_texture,
-      ps.photo_url, ps.created_at,
-      sc.common_name AS species_name,
-      iz.name AS zone_name,
-      lm.survival_status,
-      lm.visit_date AS last_monitoring_date
-    FROM planting_sites ps
-    LEFT JOIN species sc ON sc.id = ps.species_id
-    LEFT JOIN intervention_zones iz ON iz.id = ps.zone_id
-    LEFT JOIN latest_monitoring lm ON lm.planting_site_id = ps.id
-    ${where}
-    ORDER BY ps.created_at DESC
-  `, params);
+  const PAGE_SIZE = 1000;
+  let page = 1;
+  let allRows = [];
+  let hasMore = true;
 
-  return result.rows;
+  while (hasMore) {
+    const offset = (page - 1) * PAGE_SIZE;
+    const result = await db.query(`
+      ${latestMonitoringCte}
+      SELECT
+        ps.id, ps.zone_id, ps.species_id,
+        ST_AsGeoJSON(ps.location)::jsonb AS location,
+        ps.planted_at, ps.planted_by,
+        ps.initial_ph, ps.initial_humidity, ps.initial_soil_texture,
+        ps.photo_url, ps.created_at,
+        sc.common_name AS species_name,
+        iz.name AS zone_name,
+        lm.survival_status,
+        lm.visit_date AS last_monitoring_date
+      FROM planting_sites ps
+      LEFT JOIN species sc ON sc.id = ps.species_id
+      LEFT JOIN intervention_zones iz ON iz.id = ps.zone_id
+      LEFT JOIN latest_monitoring lm ON lm.planting_site_id = ps.id
+      ${where}
+      ORDER BY ps.created_at DESC
+      LIMIT $${params.length + 1} OFFSET $${params.length + 2}
+    `, [...params, PAGE_SIZE, offset]);
+    allRows = allRows.concat(result.rows);
+    hasMore = result.rows.length === PAGE_SIZE;
+    page++;
+  }
+
+  return allRows;
 };
+
+module.exports = { getSurvivalRate, getSurvivalRateBySpecies, getSurvivalRateByZone, getAllPlantingsForReport };
 
 module.exports = { getSurvivalRate, getSurvivalRateBySpecies, getSurvivalRateByZone, getAllPlantingsForReport };

@@ -30,12 +30,24 @@ const findById = async (id) => {
   return result.rows[0] || null;
 };
 
+const DEFAULT_GEOMETRY = {
+  type: 'Polygon',
+  coordinates: [[
+    [-78.531, -0.234],
+    [-78.530, -0.234],
+    [-78.530, -0.233],
+    [-78.531, -0.233],
+    [-78.531, -0.234],
+  ]],
+};
+
 const create = async (data) => {
+  const geometry = data.geometry || DEFAULT_GEOMETRY;
   const result = await db.query(`
     INSERT INTO intervention_zones (name, description, geometry)
     VALUES ($1, $2, ST_GeomFromGeoJSON($3))
     RETURNING id, name, description, ST_AsGeoJSON(geometry)::jsonb AS geometry, created_at, updated_at
-  `, [data.name, data.description, JSON.stringify(data.geometry)]);
+  `, [data.name, data.description, JSON.stringify(geometry)]);
   return result.rows[0];
 };
 

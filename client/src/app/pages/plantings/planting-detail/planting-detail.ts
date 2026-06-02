@@ -46,7 +46,8 @@ export default class PlantingDetail implements OnInit {
         this.monitoring.set(res.data);
         this.loading.set(false);
       },
-      error: () => {
+      error: (err) => {
+        this.error.set(err.error?.error || 'Error al cargar el historial de monitoreo');
         this.loading.set(false);
       },
     });

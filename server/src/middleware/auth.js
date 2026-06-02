@@ -19,7 +19,7 @@ const authenticate = async (req, res, next) => {
       .from('profiles')
       .select('role, full_name, created_at')
       .eq('id', user.id)
-      .single();
+      .maybeSingle();
 
     req.user = { ...user, role: profile?.role, full_name: profile?.full_name, created_at: profile?.created_at };
     next();
@@ -32,7 +32,7 @@ const authorize = (...allowedRoles) => {
   return async (req, res, next) => {
     try {
       if (!req.user.role) {
-        throw new AppError('Perfil de usuario no encontrado', 403);
+        throw new AppError('Perfil de usuario sin rol asignado. Contacta al administrador.', 403);
       }
 
       if (!allowedRoles.includes(req.user.role)) {

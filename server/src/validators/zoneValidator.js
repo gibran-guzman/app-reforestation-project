@@ -18,13 +18,12 @@ const validateCreateZone = (data) => {
     }
   }
 
-  if (!geometry || typeof geometry !== 'object') {
-    errors.push({ field: 'geometry', message: 'Geometry is required and must be a valid GeoJSON Polygon' });
-  } else {
-    if (geometry.type !== 'Polygon') {
+  if (geometry !== undefined) {
+    if (typeof geometry !== 'object') {
+      errors.push({ field: 'geometry', message: 'Geometry must be a valid GeoJSON Polygon' });
+    } else if (geometry.type !== 'Polygon') {
       errors.push({ field: 'geometry.type', message: 'Geometry type must be "Polygon"' });
-    }
-    if (!Array.isArray(geometry.coordinates) || geometry.coordinates.length === 0) {
+    } else if (!Array.isArray(geometry.coordinates) || geometry.coordinates.length === 0) {
       errors.push({ field: 'geometry.coordinates', message: 'Geometry coordinates are required' });
     } else {
       const ring = geometry.coordinates[0];

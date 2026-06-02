@@ -10,7 +10,7 @@ export interface Zone {
 export interface CreateZoneRequest {
   name: string;
   description?: string;
-  geometry: GeoJSON.Polygon;
+  geometry?: GeoJSON.Polygon;
 }
 
 export interface UpdateZoneRequest {

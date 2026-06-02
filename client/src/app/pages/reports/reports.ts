@@ -1,10 +1,12 @@
-import { Component, inject, OnInit, signal, ElementRef, viewChild, afterNextRender } from '@angular/core';
+import { Component, inject, OnInit, signal, ElementRef, viewChild, effect } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { Chart, registerables } from 'chart.js';
 import { ReportsService } from '../../services/reports.service';
 import { SpeciesService } from '../../services/species.service';
 import { ZoneService } from '../../services/zone.service';
 import type { SurvivalReport, SpeciesStat, ZoneSummary, Species, Zone } from '../../models';
+
+type ReportFilters = { species_id?: number; zone_id?: number };
 
 Chart.register(...registerables);
 
@@ -36,7 +38,11 @@ export default class Reports implements OnInit {
   private speciesChart: Chart | null = null;
 
   constructor() {
-    afterNextRender(() => this.renderCharts());
+    effect(() => {
+      if (this.survivalChartRef() && this.speciesChartRef()) {
+        this.renderCharts();
+      }
+    });
   }
 
   ngOnInit() {
@@ -45,19 +51,23 @@ export default class Reports implements OnInit {
     this.loadData();
   }
 
+  private buildFilters(): ReportFilters {
+    const filters: ReportFilters = {};
+    if (this.filterSpecies()) filters.species_id = Number(this.filterSpecies());
+    if (this.filterZone()) filters.zone_id = Number(this.filterZone());
+    return filters;
+  }
+
   loadData() {
     this.loading.set(true);
     this.error.set('');
 
-    const filters: any = {};
-    if (this.filterSpecies()) filters.species_id = Number(this.filterSpecies());
-    if (this.filterZone()) filters.zone_id = Number(this.filterZone());
+    const filters = this.buildFilters();
 
     this.reportsService.getSurvivalRate(filters).subscribe({
       next: (res) => {
         this.report.set(res.data);
         this.loading.set(false);
-        setTimeout(() => this.renderCharts(), 0);
       },
       error: (err) => {
         this.error.set(err.error?.error || 'Error al cargar reportes');
@@ -68,20 +78,25 @@ export default class Reports implements OnInit {
     this.reportsService.getSpeciesStats(filters).subscribe({
       next: (res) => {
         this.speciesStats.set(res.data);
-        setTimeout(() => this.renderCharts(), 0);
+      },
+      error: (err) => {
+        this.error.set(err.error?.error || 'Error al cargar estadísticas por especie');
+        this.loading.set(false);
       },
     });
 
     this.reportsService.getZoneSummary(filters).subscribe({
       next: (res) => this.zoneSummary.set(res.data),
+      error: (err) => {
+        this.error.set(err.error?.error || 'Error al cargar resumen por zona');
+        this.loading.set(false);
+      },
     });
   }
 
   downloadPdf() {
     this.downloading.set(true);
-    const filters: any = {};
-    if (this.filterSpecies()) filters.species_id = Number(this.filterSpecies());
-    if (this.filterZone()) filters.zone_id = Number(this.filterZone());
+    const filters = this.buildFilters();
 
     this.reportsService.exportPdf(filters).subscribe({
       next: (blob) => {
