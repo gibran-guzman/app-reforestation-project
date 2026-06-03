@@ -91,7 +91,7 @@
         <div #mapContainer class="map-container border"></div>
         <div class="form-text d-flex flex-wrap gap-2 mt-1">
           <span>Haz clic en el mapa, arrastra el marcador, o captura tu ubicación con GPS.</span>
-          @if (form.lat !== 0 && form.lng !== 0) {
+          @if (coordsSet) {
             <span class="text-success fw-medium">
               {{ form.lat.toFixed(6) }}, {{ form.lng.toFixed(6) }}
             </span>
@@ -146,7 +146,7 @@
         @if (photoPreview) {
           <div class="d-flex flex-wrap align-items-start gap-3">
             <div class="position-relative">
-              <img [src]="photoPreview" alt="Vista previa" class="photo-preview border">
+              <img [src]="photoPreview" alt="Vista previa de la foto de la plántula" class="photo-preview border">
               <button type="button" class="btn btn-sm btn-outline-danger position-absolute top-0 end-0 rounded-circle" style="transform: translate(50%, -50%);" (click)="removePhoto()" title="Eliminar foto">&times;</button>
             </div>
             <div class="small text-muted">
@@ -155,7 +155,7 @@
             </div>
           </div>
         } @else {
-          <div class="photo-zone d-flex flex-column align-items-center justify-content-center py-4" (click)="photoInput.click()">
+          <div class="photo-zone d-flex flex-column align-items-center justify-content-center py-4" role="button" tabindex="0" (click)="photoInput.click()" (keydown)="onPhotoZoneKeydown($event)">
             @if (compressing) {
               <span class="spinner-border text-muted mb-1"></span>
               <span class="small text-muted">Comprimiendo imagen...</span>
@@ -176,7 +176,7 @@
     </div>
 
     <div class="d-flex flex-column flex-md-row gap-2">
-      <button type="submit" class="btn btn-success" [disabled]="saving || !form.species_id || !form.zone_id || (form.lat === 0 && form.lng === 0)">
+      <button type="submit" class="btn btn-success" [disabled]="saving || !form.species_id || !form.zone_id || !coordsSet">
         @if (uploading) {
           <span class="spinner-border spinner-border-sm me-1"></span>
           Subiendo foto...

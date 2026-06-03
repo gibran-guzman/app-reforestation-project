@@ -41,6 +41,7 @@ export default class PlantingForm implements OnInit, AfterViewInit, OnDestroy {
   private destroyRef = inject(DestroyRef);
 
   @ViewChild('mapContainer') mapContainer!: ElementRef;
+  @ViewChild('photoInput') photoInput!: ElementRef<HTMLInputElement>;
 
   speciesList: Species[] = [];
   zonesList: Zone[] = [];
@@ -56,6 +57,7 @@ export default class PlantingForm implements OnInit, AfterViewInit, OnDestroy {
   error = '';
   gpsStatus = '';
   gpsFailed = false;
+  coordsSet = false;
 
   photoFile: File | null = null;
   photoPreview: string | null = null;
@@ -78,10 +80,10 @@ export default class PlantingForm implements OnInit, AfterViewInit, OnDestroy {
   private marker: L.Marker | null = null;
 
   get latInvalid(): boolean {
-    return this.touched.lat && (isNaN(this.form.lat) || this.form.lat < -90 || this.form.lat > 90 || this.form.lat === 0);
+    return this.touched.lat && (isNaN(this.form.lat) || this.form.lat < -90 || this.form.lat > 90 || (!this.coordsSet && this.form.lat === 0));
   }
   get lngInvalid(): boolean {
-    return this.touched.lng && (isNaN(this.form.lng) || this.form.lng < -180 || this.form.lng > 180 || this.form.lng === 0);
+    return this.touched.lng && (isNaN(this.form.lng) || this.form.lng < -180 || this.form.lng > 180 || (!this.coordsSet && this.form.lng === 0));
   }
 
   ngOnInit() {
@@ -151,6 +153,7 @@ export default class PlantingForm implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private placeMarker(lat: number, lng: number) {
+    this.coordsSet = true;
     this.form.lat = Math.round(lat * 1000000) / 1000000;
     this.form.lng = Math.round(lng * 1000000) / 1000000;
 
@@ -176,6 +179,7 @@ export default class PlantingForm implements OnInit, AfterViewInit, OnDestroy {
 
   updateMarkerFromCoords() {
     if (this.form.lat === null || this.form.lng === null || isNaN(this.form.lat) || isNaN(this.form.lng)) return;
+    this.coordsSet = true;
     this.placeMarker(this.form.lat, this.form.lng);
   }
 
@@ -211,6 +215,13 @@ export default class PlantingForm implements OnInit, AfterViewInit, OnDestroy {
   removePhoto() {
     this.photoFile = null;
     this.photoPreview = null;
+  }
+
+  onPhotoZoneKeydown(event: KeyboardEvent) {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      this.photoInput.nativeElement.click();
+    }
   }
 
   submit() {

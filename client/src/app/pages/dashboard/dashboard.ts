@@ -1,6 +1,7 @@
 import { Component, inject, OnInit, signal, ElementRef, viewChild, effect, DestroyRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Router, RouterLink, DatePipe } from '@angular/common';
+import { DatePipe } from '@angular/common';
+import { Router, RouterLink } from '@angular/router';
 import { Chart, registerables } from 'chart.js';
 import { AuthService } from '../../services/auth.service';
 import { ConnectivityService } from '../../services/connectivity.service';
@@ -59,8 +60,8 @@ export default class Dashboard implements OnInit {
   }
 
   async ngOnInit() {
-    const nav = this.router.getCurrentNavigation();
-    this.successMsg = (nav?.extras?.state as Record<string, string>)?.['success'] || '';
+    const nav = this.router.getCurrentNavigation() as { extras: { state: Record<string, string> } } | null;
+    this.successMsg = nav?.extras?.state?.['success'] || '';
     this.pendingList = await this.offline.getPendingPlantings();
     this.loadStats();
     this.loadAuxData();

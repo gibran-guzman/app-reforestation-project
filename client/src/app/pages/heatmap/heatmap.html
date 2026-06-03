@@ -51,7 +51,7 @@
     @if (data() && periods.length > 0) {
       <div class="heatmap-timeline card shadow-sm px-3 py-2">
         <div class="d-flex align-items-center gap-2 flex-wrap">
-          <button class="btn btn-sm btn-outline-success" (click)="togglePlay()" [disabled]="periods.length <= 1" title="Reproducir/Pausar">
+          <button class="btn btn-sm btn-outline-success" (click)="togglePlay()" [disabled]="periods.length <= 1" title="Reproducir/Pausar" aria-label="Reproducir o pausar animación temporal">
             @if (playing()) {
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
                 <path d="M6 3.5a.5.5 0 0 1 .5.5v8a.5.5 0 0 1-1 0V4a.5.5 0 0 1 .5-.5zm4 0a.5.5 0 0 1 .5.5v8a.5.5 0 0 1-1 0V4a.5.5 0 0 1 .5-.5z"/>
@@ -65,7 +65,7 @@
 
           <span class="fw-semibold small text-nowrap">{{ currentLabel }}</span>
 
-          <input type="range" class="form-range heatmap-slider" [min]="0" [max]="maxIndex" [value]="currentPeriod()" (input)="goToPeriod(Number($any($event.target).value))" [disabled]="periods.length <= 1">
+          <input type="range" class="form-range heatmap-slider" [min]="0" [max]="maxIndex" [value]="currentPeriod()" (input)="goToPeriod(Number($any($event.target).value))" [disabled]="periods.length <= 1" aria-label="Línea de tiempo del mapa de calor">
 
           <span class="small text-muted text-nowrap">{{ currentPeriod() + 1 }} / {{ periods.length }}</span>
         </div>

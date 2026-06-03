@@ -102,6 +102,11 @@
   font-weight: 500;
 }
 
+.badge-alive { background: #2d6a4f; }
+.badge-struggling { background: #e9c46a; color: #000; }
+.badge-dead { background: #d62828; }
+.badge-unmonitored { background: #adb5bd; color: #000; }
+
 .map-popup-photo {
   width: 100%;
   max-height: 120px;

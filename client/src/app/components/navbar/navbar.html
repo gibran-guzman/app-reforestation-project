@@ -33,12 +33,12 @@
     <ul class="navbar-nav align-items-center gap-1">
       @if (connectivity.online()) {
         <li class="nav-item small text-success-emphasis d-flex align-items-center gap-1">
-          <span class="rounded-circle d-inline-block" style="width: 8px; height: 8px; background: #75b798;"></span>
+          <span class="rounded-circle d-inline-block status-dot status-dot-online"></span>
           Online
         </li>
       } @else {
         <li class="nav-item small text-warning d-flex align-items-center gap-1">
-          <span class="rounded-circle d-inline-block" style="width: 8px; height: 8px; background: #ffda6a;"></span>
+          <span class="rounded-circle d-inline-block status-dot status-dot-offline"></span>
           Offline
         </li>
       }
@@ -48,7 +48,7 @@
         </li>
       }
       <li class="nav-item dropdown" [class.show]="dropdownOpen">
-        <a class="nav-link dropdown-toggle" (click)="toggleDropdown($event)" role="button">
+        <a class="nav-link dropdown-toggle" (click)="toggleDropdown($event)" role="button" aria-haspopup="true" [attr.aria-expanded]="dropdownOpen">
           {{ auth.user()?.full_name || auth.user()?.email }}
         </a>
         <ul class="dropdown-menu dropdown-menu-end" [class.show]="dropdownOpen">

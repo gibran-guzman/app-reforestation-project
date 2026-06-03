@@ -113,7 +113,7 @@
               <p class="text-muted text-center small mb-0 py-3">Sin datos de evolución.</p>
             } @else {
               <div class="chart-container">
-                <canvas #evolutionChart></canvas>
+                <canvas #evolutionChart aria-label="Gráfico de evolución de plantaciones"></canvas>
               </div>
             }
           </div>
@@ -134,7 +134,7 @@
               <div class="list-group list-group-flush">
                 @for (p of recentPlantings(); track p.id) {
                   <a [routerLink]="['/plantings', p.id]" class="list-group-item list-group-item-action d-flex align-items-center gap-3 px-3 py-2">
-                    <div class="rounded-circle bg-success-subtle d-flex align-items-center justify-content-center" style="width: 36px; height: 36px; min-width: 36px;">
+                    <div class="rounded-circle bg-success-subtle d-flex align-items-center justify-content-center dashboard-avatar-icon">
                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#198754" viewBox="0 0 16 16">
                         <path d="M6.5 14.5v-3.482c0-.697-.488-1.303-1.166-1.459l-.405-.096a3.515 3.515 0 0 1-.835-.272c-.606-.285-.942-1.01-.942-1.833 0-.776.314-1.5.825-2.02.424-.43.991-.692 1.623-.784A1.5 1.5 0 0 1 8 3.5c.43 0 .83.157 1.136.438.591.54 1.13 1.298 1.13 2.31 0 .823-.336 1.548-.942 1.833a3.515 3.515 0 0 1-.835.272l-.405.096c-.678.156-1.166.762-1.166 1.459v3.482m4 0v-1.518c.575.196 1.108.618 1.622 1.064.256.224.522.424.755.566.15.092.31.17.48.215.255.067.518.123.643.123V14.5z"/>
                       </svg>
@@ -192,8 +192,8 @@
                         <td class="text-center text-danger fw-semibold">{{ s.dead }}</td>
                         <td class="text-center">
                           <div class="d-flex align-items-center gap-2 justify-content-center">
-                            <div class="progress flex-grow-1" style="max-width: 80px; height: 8px;">
-                              <div class="progress-bar {{ survivalColor(s.alive, s.monitored) }}" [style.width.%]="rate(s.alive, s.monitored)"></div>
+<div class="progress flex-grow-1 progress-bar-sm">
+                               <div class="progress-bar {{ survivalColor(s.alive, s.monitored) }}" [style.width.%]="rate(s.alive, s.monitored)"></div>
                             </div>
                             <small class="text-muted">{{ rate(s.alive, s.monitored) }}%</small>
                           </div>
@@ -236,8 +236,8 @@
                         <td class="text-center text-danger fw-semibold">{{ z.dead }}</td>
                         <td class="text-center">
                           <div class="d-flex align-items-center gap-2 justify-content-center">
-                            <div class="progress flex-grow-1" style="max-width: 80px; height: 8px;">
-                              <div class="progress-bar {{ survivalColor(z.alive, z.monitored) }}" [style.width.%]="rate(z.alive, z.monitored)"></div>
+<div class="progress flex-grow-1 progress-bar-sm">
+                               <div class="progress-bar {{ survivalColor(z.alive, z.monitored) }}" [style.width.%]="rate(z.alive, z.monitored)"></div>
                             </div>
                             <small class="text-muted">{{ rate(z.alive, z.monitored) }}%</small>
                           </div>
@@ -257,12 +257,12 @@
   <div class="d-flex flex-wrap gap-2 mb-4">
     @if (connectivity.online()) {
       <span class="badge bg-success fs-6 px-3 py-2 d-flex align-items-center gap-2">
-        <span class="rounded-circle d-inline-block" style="width: 10px; height: 10px; background: #fff;"></span>
+        <span class="rounded-circle d-inline-block badge-status-dot"></span>
         Online
       </span>
     } @else {
       <span class="badge bg-warning text-dark fs-6 px-3 py-2 d-flex align-items-center gap-2">
-        <span class="rounded-circle d-inline-block" style="width: 10px; height: 10px; background: #000;"></span>
+        <span class="rounded-circle d-inline-block badge-status-dot badge-status-dot-dark"></span>
         Offline
       </span>
     }
@@ -292,7 +292,7 @@
           <span>Sincronizando... {{ p.current }}/{{ p.total }}</span>
           <span>{{ rate(p.current, p.total) }}%</span>
         </div>
-        <div class="progress" style="height: 6px;">
+        <div class="progress progress-bar-xs">
           <div class="progress-bar progress-bar-striped progress-bar-animated bg-success"
                [style.width.%]="p.total > 0 ? rate(p.current, p.total) : 0">
           </div>

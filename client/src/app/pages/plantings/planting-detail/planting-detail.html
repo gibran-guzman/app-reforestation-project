@@ -12,7 +12,7 @@
       <div class="col-lg-6">
         <div class="card shadow-sm">
           @if (p.photo_url) {
-            <img [src]="p.photo_url" alt="Foto de plantación" class="card-img-top detail-photo">
+            <img [src]="p.photo_url" alt="Foto de {{ p.species_name || 'plantación' }}" class="card-img-top detail-photo">
           }
           <div class="card-body">
             <h4 class="card-title mb-1">{{ p.species_name || 'Sin especie' }}</h4>
@@ -20,7 +20,7 @@
 
             <table class="table table-sm mb-0">
               <tbody>
-                <tr><th class="ps-0" style="width:120px">Fecha</th><td>{{ p.planted_at | date:'mediumDate' }}</td></tr>
+                <tr><th class="ps-0 th-label">Fecha</th><td>{{ p.planted_at | date:'mediumDate' }}</td></tr>
                 <tr><th class="ps-0">Coordenadas</th><td>{{ p.location?.coordinates?.[1] }}, {{ p.location?.coordinates?.[0] }}</td></tr>
                 <tr><th class="ps-0">pH inicial</th><td>{{ p.initial_ph ?? '—' }}</td></tr>
                 <tr><th class="ps-0">Humedad inicial</th><td>{{ p.initial_humidity != null ? p.initial_humidity + '%' : '—' }}</td></tr>

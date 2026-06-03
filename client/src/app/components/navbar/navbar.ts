@@ -8,6 +8,7 @@ import { OfflineService } from '../../services/offline.service';
   selector: 'app-navbar',
   imports: [RouterLink, RouterLinkActive],
   templateUrl: './navbar.html',
+  styleUrl: './navbar.scss',
 })
 export class Navbar {
   protected auth = inject(AuthService);
