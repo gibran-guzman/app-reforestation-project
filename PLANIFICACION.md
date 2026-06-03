@@ -1,6 +1,6 @@
 # Planificación — Lloa Reforestation
 
-> Progreso y tracking del desarrollo. Actualizado: 2026-06-02 — Semanas 1-2 completadas, Sprints 9-12 completados
+> Progreso y tracking del desarrollo. Actualizado: 2026-06-02 — Semanas 1-2 completadas, Sprints 9-13 completados
 
 ---
 
@@ -19,7 +19,7 @@
 |------|---------|--------|
 | **1 — Fundamentos de Datos** | 1, 2, 3 | ✅ **100%** |
 | **2 — Captura en Campo** | 4, 5, 6, 7, 8 | ✅ **100%** |
-| **3 — Reportes y Analítica** | 9, 10, 11, 12, 13, 14 | ✅ **67%** (Sprints 9-12 listos) |
+| **3 — Reportes y Analítica** | 9, 10, 11, 12, 13, 14 | ✅ **83%** (Sprints 9-13 listos) |
 | **4 — Cierre y Documentación** | 15, 16, 17, 18 | ⬜ **0%** |
 
 ---
@@ -238,12 +238,12 @@ client/src/app/
 - [x] Capa de calor para mortalidad con lat/lng/weight
 - [x] Selector de período para animación temporal (mes/trimestre/año) con slider + play/pausa
 
-### Sprint 13 — Refinamiento Dashboard
-**15h — Prioridad: 🟢 Baja**
+### Sprint 13 — Refinamiento Dashboard ✅
+**15h — Prioridad: 🟢 Baja — Completado 2026-06-02**
 
-- [ ] ⬜ Cards de resumen con indicadores clave
-- [ ] ⬜ Gráficos de evolución (Chart.js o similar)
-- [ ] ⬜ Tabla de últimas plantaciones registradas
+- [x] Cards de resumen con indicadores clave (6 cards con iconos SVG: total, monitoreadas, supervivencia %, sin monitoreo, especies, zonas)
+- [x] Gráficos de evolución (Chart.js line chart de plantaciones por mes)
+- [x] Tabla de últimas plantaciones registradas (list-group con enlace a detalle)
 
 ### Sprint 14 — UI/UX
 **15h — Prioridad: 🟢 Baja**
