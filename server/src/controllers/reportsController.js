@@ -60,4 +60,15 @@ const exportPdf = async (req, res, next) => {
   }
 };
 
-module.exports = { getSurvivalRate, getSpeciesStats, getZoneSummary, exportPdf };
+const getPlantingEvolution = async (req, res, next) => {
+  try {
+    const filters = parseFilters(req.query);
+    validateReportFilters(filters);
+    const result = await reportsService.getPlantingEvolution(filters);
+    res.json({ data: result });
+  } catch (error) {
+    next(error);
+  }
+};
+
+module.exports = { getSurvivalRate, getSpeciesStats, getZoneSummary, exportPdf, getPlantingEvolution };

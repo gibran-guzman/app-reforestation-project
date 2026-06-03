@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import type { ApiResponse, SurvivalReport, SpeciesStat, ZoneSummary } from '../models';
+import type { ApiResponse, SurvivalReport, SpeciesStat, ZoneSummary, EvolutionPoint } from '../models';
 
 type ReportFilters = { zone_id?: number; species_id?: number; from?: string; to?: string };
 
@@ -29,6 +29,10 @@ export class ReportsService {
 
   getZoneSummary(filters?: ReportFilters) {
     return this.http.get<ApiResponse<ZoneSummary[]>>(`${this.api}/zone-summary`, { params: this.buildParams(filters) });
+  }
+
+  getEvolution(filters?: ReportFilters) {
+    return this.http.get<ApiResponse<EvolutionPoint[]>>(`${this.api}/planting-evolution`, { params: this.buildParams(filters) });
   }
 
   exportPdf(filters?: ReportFilters) {

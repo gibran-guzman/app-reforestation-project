@@ -189,4 +189,8 @@ const generatePdf = async (filters = {}) => {
   });
 };
 
-module.exports = { getSurvivalRate, getSpeciesStats, getZoneSummary, generatePdf };
+const getPlantingEvolution = async (filters = {}) => {
+  return reportsRepository.getPlantingEvolution(filters);
+};
+
+module.exports = { getSurvivalRate, getSpeciesStats, getZoneSummary, generatePdf, getPlantingEvolution };

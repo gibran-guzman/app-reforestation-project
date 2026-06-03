@@ -33,3 +33,8 @@ export interface SurvivalReport {
   bySpecies: SpeciesStat[];
   byZone: ZoneSummary[];
 }
+
+export interface EvolutionPoint {
+  period: string;
+  total: number;
+}

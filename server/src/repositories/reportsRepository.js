@@ -145,6 +145,29 @@ const getAllPlantingsForReport = async (filters = {}) => {
   return allRows;
 };
 
-module.exports = { getSurvivalRate, getSurvivalRateBySpecies, getSurvivalRateByZone, getAllPlantingsForReport };
+const getPlantingEvolution = async (filters = {}) => {
+  const conditions = [];
+  const params = [];
+  let idx = 1;
 
-module.exports = { getSurvivalRate, getSurvivalRateBySpecies, getSurvivalRateByZone, getAllPlantingsForReport };
+  if (filters.zone_id) { conditions.push(`ps.zone_id = $${idx++}`); params.push(filters.zone_id); }
+  if (filters.species_id) { conditions.push(`ps.species_id = $${idx++}`); params.push(filters.species_id); }
+  if (filters.from) { conditions.push(`ps.planted_at >= $${idx++}`); params.push(filters.from); }
+  if (filters.to) { conditions.push(`ps.planted_at <= $${idx++}`); params.push(filters.to); }
+
+  const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+
+  const result = await db.query(`
+    SELECT
+      to_char(ps.planted_at, 'YYYY-MM') AS period,
+      COUNT(*)::int AS total
+    FROM planting_sites ps
+    ${where}
+    GROUP BY to_char(ps.planted_at, 'YYYY-MM')
+    ORDER BY period
+  `, params);
+
+  return result.rows;
+};
+
+module.exports = { getSurvivalRate, getSurvivalRateBySpecies, getSurvivalRateByZone, getAllPlantingsForReport, getPlantingEvolution };
