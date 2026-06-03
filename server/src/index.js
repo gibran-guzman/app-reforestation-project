@@ -20,9 +20,24 @@ const { ensureBucket } = require('./services/photoService');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(helmet());
+const isProduction = process.env.NODE_ENV === 'production';
+
+app.use(helmet({
+  contentSecurityPolicy: isProduction ? {
+    directives: {
+      defaultSrc: ["'self'"],
+      imgSrc: ["'self'", "https://*.tile.openstreetmap.org", "https://cdnjs.cloudflare.com"],
+      scriptSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      connectSrc: ["'self'"],
+      fontSrc: ["'self'"],
+      objectSrc: ["'none'"],
+      upgradeInsecureRequests: [],
+    },
+  } : false,
+}));
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:4200',
+  origin: isProduction ? process.env.CORS_ORIGIN : (process.env.CORS_ORIGIN || 'http://localhost:4200'),
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
