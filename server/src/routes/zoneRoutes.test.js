@@ -5,10 +5,14 @@ const proxyquire = cjsRequire('proxyquire').noPreserveCache();
 
 const mockController = { list: vi.fn(), getById: vi.fn(), create: vi.fn(), update: vi.fn(), remove: vi.fn() };
 const mockAuth = { authenticate: vi.fn((_req, _res, next) => next()), authorize: vi.fn(() => (_req, _res, next) => next()) };
+const mockValidate = vi.fn(() => (_req, _res, next) => next());
+const mockZoneValidator = { validateCreateZone: vi.fn(x => x), validateUpdateZone: vi.fn(x => x) };
 
 const router = proxyquire('./zoneRoutes', {
   '../controllers/zoneController': mockController,
   '../middleware/auth': mockAuth,
+  '../middleware/validate': mockValidate,
+  '../validators/zoneValidator': mockZoneValidator,
 });
 
 describe('zoneRoutes', () => {

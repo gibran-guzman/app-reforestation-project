@@ -20,7 +20,7 @@ describe('reportsController', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    req = { query: {} };
+    req = { filters: {} };
     res = { json: vi.fn().mockReturnThis(), set: vi.fn().mockReturnThis(), send: vi.fn().mockReturnThis() };
     next = vi.fn();
   });
@@ -28,27 +28,19 @@ describe('reportsController', () => {
   describe('getSurvivalRate', () => {
     it('returns survival rate data', async () => {
       mockService.getSurvivalRate.mockResolvedValue({ overall: {}, bySpecies: [], byZone: [] });
-      req.query = { zone_id: '1', species_id: '2', from: '2026-01-01', to: '2026-12-31' };
+      req.filters = { zone_id: 1, species_id: 2, from: '2026-01-01', to: '2026-12-31' };
 
       await controller.getSurvivalRate(req, res, next);
 
       expect(mockService.getSurvivalRate).toHaveBeenCalledWith({ zone_id: 1, species_id: 2, from: '2026-01-01', to: '2026-12-31' });
       expect(res.json).toHaveBeenCalledWith({ data: { overall: {}, bySpecies: [], byZone: [] } });
     });
-
-    it('passes validation error to next', async () => {
-      req.query = { zone_id: '-1' };
-
-      await controller.getSurvivalRate(req, res, next);
-
-      expect(next).toHaveBeenCalled();
-    });
   });
 
   describe('getSpeciesStats', () => {
     it('returns species statistics', async () => {
       mockService.getSpeciesStats.mockResolvedValue([]);
-      req.query = {};
+      req.filters = {};
 
       await controller.getSpeciesStats(req, res, next);
       expect(res.json).toHaveBeenCalledWith({ data: [] });

@@ -1,74 +1,34 @@
 const reportsService = require('../services/reportsService');
-const { validateReportFilters } = require('../validators/reportsValidator');
+const asyncHandler = require('../utils/asyncHandler');
 
-const parseFilters = (query) => {
-  const filters = {};
-  if (query.zone_id) filters.zone_id = parseInt(query.zone_id, 10);
-  if (query.species_id) filters.species_id = parseInt(query.species_id, 10);
-  if (query.from) filters.from = query.from;
-  if (query.to) filters.to = query.to;
-  return filters;
-};
+const getSurvivalRate = asyncHandler(async (req, res) => {
+  const result = await reportsService.getSurvivalRate(req.filters);
+  res.json({ data: result });
+});
 
-const getSurvivalRate = async (req, res, next) => {
-  try {
-    const filters = parseFilters(req.query);
-    validateReportFilters(filters);
-    const result = await reportsService.getSurvivalRate(filters);
-    res.json({ data: result });
-  } catch (error) {
-    next(error);
-  }
-};
+const getSpeciesStats = asyncHandler(async (req, res) => {
+  const result = await reportsService.getSpeciesStats(req.filters);
+  res.json({ data: result });
+});
 
-const getSpeciesStats = async (req, res, next) => {
-  try {
-    const filters = parseFilters(req.query);
-    validateReportFilters(filters);
-    const result = await reportsService.getSpeciesStats(filters);
-    res.json({ data: result });
-  } catch (error) {
-    next(error);
-  }
-};
+const getZoneSummary = asyncHandler(async (req, res) => {
+  const result = await reportsService.getZoneSummary(req.filters);
+  res.json({ data: result });
+});
 
-const getZoneSummary = async (req, res, next) => {
-  try {
-    const filters = parseFilters(req.query);
-    validateReportFilters(filters);
-    const result = await reportsService.getZoneSummary(filters);
-    res.json({ data: result });
-  } catch (error) {
-    next(error);
-  }
-};
+const exportPdf = asyncHandler(async (req, res) => {
+  const pdfBuffer = await reportsService.generatePdf(req.filters);
+  res.set({
+    'Content-Type': 'application/pdf',
+    'Content-Disposition': `attachment; filename=reporte-plantaciones-${Date.now()}.pdf`,
+    'Content-Length': pdfBuffer.length,
+  });
+  res.send(pdfBuffer);
+});
 
-const exportPdf = async (req, res, next) => {
-  try {
-    const filters = parseFilters(req.query);
-    validateReportFilters(filters);
-    const pdfBuffer = await reportsService.generatePdf(filters);
-
-    res.set({
-      'Content-Type': 'application/pdf',
-      'Content-Disposition': `attachment; filename=reporte-plantaciones-${Date.now()}.pdf`,
-      'Content-Length': pdfBuffer.length,
-    });
-    res.send(pdfBuffer);
-  } catch (error) {
-    next(error);
-  }
-};
-
-const getPlantingEvolution = async (req, res, next) => {
-  try {
-    const filters = parseFilters(req.query);
-    validateReportFilters(filters);
-    const result = await reportsService.getPlantingEvolution(filters);
-    res.json({ data: result });
-  } catch (error) {
-    next(error);
-  }
-};
+const getPlantingEvolution = asyncHandler(async (req, res) => {
+  const result = await reportsService.getPlantingEvolution(req.filters);
+  res.json({ data: result });
+});
 
 module.exports = { getSurvivalRate, getSpeciesStats, getZoneSummary, exportPdf, getPlantingEvolution };

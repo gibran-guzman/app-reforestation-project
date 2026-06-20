@@ -1,4 +1,7 @@
 const db = require('../config/db');
+const { buildWhereClause } = require('../utils/queryBuilder');
+const { latestMonitoringCte } = require('../utils/cteQueries');
+const { MAX_GEOJSON_FEATURES } = require('../config/constants');
 
 const columns = [
   'id', 'zone_id', 'species_id',
@@ -89,35 +92,9 @@ const isPointInZone = async (lat, lng, zoneId) => {
   return result.rows[0]?.valid || false;
 };
 
-const buildWhereClause = (filters) => {
-  const conditions = [];
-  const params = [];
-  let idx = 1;
-
-  if (filters.zone_id) {
-    conditions.push(`ps.zone_id = $${idx++}`);
-    params.push(filters.zone_id);
-  }
-  if (filters.species_id) {
-    conditions.push(`ps.species_id = $${idx++}`);
-    params.push(filters.species_id);
-  }
-  if (filters.from) {
-    conditions.push(`ps.planted_at >= $${idx++}`);
-    params.push(filters.from);
-  }
-  if (filters.to) {
-    conditions.push(`ps.planted_at <= $${idx++}`);
-    params.push(filters.to);
-  }
-
-  const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
-  return { where, params };
-};
-
 const findAll = async (page = 1, limit = 50, filters = {}) => {
   const offset = (page - 1) * limit;
-  const { where, params: whereParams } = buildWhereClause(filters);
+  const { where, params: whereParams } = buildWhereClause(filters, 'ps');
 
   const countResult = await db.query(`SELECT COUNT(*) FROM planting_sites ps ${where}`, whereParams);
   const total = parseInt(countResult.rows[0].count, 10);
@@ -136,24 +113,11 @@ const findAll = async (page = 1, limit = 50, filters = {}) => {
 };
 
 const findGeoJson = async (filters = {}) => {
-  const conditions = [];
-  const params = [];
-  let idx = 1;
-
-  if (filters.zone_id) { conditions.push(`ps.zone_id = $${idx++}`); params.push(filters.zone_id); }
-  if (filters.species_id) { conditions.push(`ps.species_id = $${idx++}`); params.push(filters.species_id); }
-  if (filters.from) { conditions.push(`ps.planted_at >= $${idx++}`); params.push(filters.from); }
-  if (filters.to) { conditions.push(`ps.planted_at <= $${idx++}`); params.push(filters.to); }
-
-  const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+  const { where, params } = buildWhereClause(filters, 'ps');
+  const limitParamIndex = params.length + 1;
 
   const result = await db.query(`
-    WITH latest_monitoring AS (
-      SELECT DISTINCT ON (mr.planting_site_id)
-        mr.planting_site_id, mr.survival_status, mr.visit_date
-      FROM monitoring_records mr
-      ORDER BY mr.planting_site_id, mr.visit_date DESC, mr.created_at DESC
-    )
+    ${latestMonitoringCte}
     SELECT
       ps.id,
       ST_AsGeoJSON(ps.location)::jsonb AS geometry,
@@ -175,7 +139,8 @@ const findGeoJson = async (filters = {}) => {
     LEFT JOIN latest_monitoring lm ON lm.planting_site_id = ps.id
     ${where}
     ORDER BY ps.created_at DESC
-  `, params);
+    LIMIT $${limitParamIndex}
+  `, [...params, MAX_GEOJSON_FEATURES]);
 
   const features = result.rows.map((r) => ({
     type: 'Feature',

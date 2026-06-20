@@ -21,13 +21,14 @@ describe('AnalyticsController', () => {
   it('returns heatmap data', async () => {
     mockService.getHeatmap.mockResolvedValue({ periods: [], total: 0 });
     await controller.getHeatmap(req, res, next);
-    expect(res.json).toHaveBeenCalledWith({ periods: [], total: 0 });
+    expect(res.json).toHaveBeenCalledWith({ data: { periods: [], total: 0 } });
   });
 
   it('parses filters from query params', async () => {
     req.query = { zone_id: '1', species_id: '2', from: '2026-01-01', to: '2026-06-01', interval: 'quarter' };
     mockService.getHeatmap.mockResolvedValue({ periods: [], total: 0 });
     await controller.getHeatmap(req, res, next);
+    expect(res.json).toHaveBeenCalledWith({ data: { periods: [], total: 0 } });
     expect(mockService.getHeatmap).toHaveBeenCalledWith({
       zone_id: 1, species_id: 2, from: '2026-01-01', to: '2026-06-01', interval: 'quarter',
     });

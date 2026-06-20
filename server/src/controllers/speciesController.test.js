@@ -20,13 +20,13 @@ describe('speciesController', () => {
 
   describe('createSpecies', () => {
     it('creates and returns 201', async () => {
-      mockService.createSpecies.mockResolvedValue({ message: 'Creada', data: { id: 1 } });
+      mockService.createSpecies.mockResolvedValue({ id: 1 });
       req.body = { scientific_name: 'Test', common_name: 'Test' };
 
       await controller.createSpecies(req, res, next);
 
       expect(res.status).toHaveBeenCalledWith(201);
-      expect(res.json).toHaveBeenCalledWith({ message: 'Creada', data: { id: 1 } });
+      expect(res.json).toHaveBeenCalledWith({ message: 'Especie registrada correctamente', data: { id: 1 } });
     });
   });
 
@@ -50,6 +50,15 @@ describe('speciesController', () => {
       expect(mockService.getById).toHaveBeenCalledWith(1);
       expect(res.json).toHaveBeenCalledWith({ data: { id: 1, common_name: 'Cedro' } });
     });
+
+    it('rejects non-numeric id', async () => {
+      req.params.id = 'abc';
+
+      await controller.getById(req, res, next);
+
+      expect(next).toHaveBeenCalledWith(expect.any(Error));
+      expect(mockService.getById).not.toHaveBeenCalled();
+    });
   });
 
   describe('update', () => {
@@ -63,6 +72,15 @@ describe('speciesController', () => {
       expect(mockService.update).toHaveBeenCalledWith(1, { common_name: 'Actualizado' });
       expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ message: 'Especie actualizada correctamente' }));
     });
+
+    it('rejects non-numeric id on update', async () => {
+      req.params.id = 'abc';
+
+      await controller.update(req, res, next);
+
+      expect(next).toHaveBeenCalledWith(expect.any(Error));
+      expect(mockService.update).not.toHaveBeenCalled();
+    });
   });
 
   describe('remove', () => {
@@ -73,7 +91,16 @@ describe('speciesController', () => {
       await controller.remove(req, res, next);
 
       expect(mockService.remove).toHaveBeenCalledWith(1);
-      expect(res.json).toHaveBeenCalledWith({ message: 'Especie eliminada correctamente' });
+      expect(res.json).toHaveBeenCalledWith({ message: 'Especie eliminada correctamente', data: null });
+    });
+
+    it('rejects non-numeric id on remove', async () => {
+      req.params.id = 'abc';
+
+      await controller.remove(req, res, next);
+
+      expect(next).toHaveBeenCalledWith(expect.any(Error));
+      expect(mockService.remove).not.toHaveBeenCalled();
     });
   });
 

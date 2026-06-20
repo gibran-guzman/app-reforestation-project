@@ -37,7 +37,7 @@ describe('monitoringController', () => {
 
       await controller.getByPlantingSiteId(req, res, next);
 
-      expect(mockService.getByPlantingSiteId).toHaveBeenCalledWith('1');
+      expect(mockService.getByPlantingSiteId).toHaveBeenCalledWith(1);
       expect(res.json).toHaveBeenCalledWith({ data: [{ id: 1, survival_status: 'alive' }] });
     });
   });
@@ -49,7 +49,17 @@ describe('monitoringController', () => {
 
       await controller.getById(req, res, next);
 
+      expect(mockService.getById).toHaveBeenCalledWith(1);
       expect(res.json).toHaveBeenCalledWith({ data: { id: 1, survival_status: 'alive' } });
+    });
+
+    it('rejects non-numeric id', async () => {
+      req.params.id = 'abc';
+
+      await controller.getById(req, res, next);
+
+      expect(next).toHaveBeenCalledWith(expect.any(Error));
+      expect(mockService.getById).not.toHaveBeenCalled();
     });
   });
 

@@ -1,11 +1,8 @@
 const { SOIL_TEXTURES } = require('../config/constants');
+const asyncHandler = require('../utils/asyncHandler');
 
-const getSoilTextures = async (req, res, next) => {
-  try {
-    res.json({ data: SOIL_TEXTURES });
-  } catch (error) {
-    next(error);
-  }
-};
+const getSoilTextures = asyncHandler(async (req, res) => {
+  res.json({ data: SOIL_TEXTURES });
+});
 
 module.exports = { getSoilTextures };

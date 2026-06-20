@@ -46,7 +46,7 @@ describe('analyticsRepository', () => {
 
       await analyticsRepository.getHeatmapData({ zone_id: 1 });
 
-      expect(mockDb.query).toHaveBeenCalledWith(expect.stringContaining('ps.zone_id = $1'), [1]);
+      expect(mockDb.query).toHaveBeenCalledWith(expect.stringContaining('ps.zone_id = $1'), [1, 100000]);
     });
 
     it('applies species_id filter', async () => {
@@ -54,7 +54,7 @@ describe('analyticsRepository', () => {
 
       await analyticsRepository.getHeatmapData({ species_id: 2 });
 
-      expect(mockDb.query).toHaveBeenCalledWith(expect.stringContaining('ps.species_id = $1'), [2]);
+      expect(mockDb.query).toHaveBeenCalledWith(expect.stringContaining('ps.species_id = $1'), [2, 100000]);
     });
 
     it('applies from filter', async () => {
@@ -62,7 +62,7 @@ describe('analyticsRepository', () => {
 
       await analyticsRepository.getHeatmapData({ from: '2026-01-01' });
 
-      expect(mockDb.query).toHaveBeenCalledWith(expect.stringContaining('ps.planted_at >= $1'), ['2026-01-01']);
+      expect(mockDb.query).toHaveBeenCalledWith(expect.stringContaining('ps.planted_at >= $1'), ['2026-01-01', 100000]);
     });
 
     it('applies to filter', async () => {
@@ -70,7 +70,7 @@ describe('analyticsRepository', () => {
 
       await analyticsRepository.getHeatmapData({ to: '2026-12-31' });
 
-      expect(mockDb.query).toHaveBeenCalledWith(expect.stringContaining('ps.planted_at <= $1'), ['2026-12-31']);
+      expect(mockDb.query).toHaveBeenCalledWith(expect.stringContaining('ps.planted_at <= $1'), ['2026-12-31', 100000]);
     });
 
     it('applies all filters simultaneously', async () => {
@@ -85,7 +85,7 @@ describe('analyticsRepository', () => {
       expect(call[0]).toContain('ps.species_id = $2');
       expect(call[0]).toContain('ps.planted_at >= $3');
       expect(call[0]).toContain('ps.planted_at <= $4');
-      expect(call[1]).toEqual([1, 2, '2026-01-01', '2026-12-31']);
+      expect(call[1]).toEqual([1, 2, '2026-01-01', '2026-12-31', 100000]);
     });
 
     it('returns empty array when no data', async () => {

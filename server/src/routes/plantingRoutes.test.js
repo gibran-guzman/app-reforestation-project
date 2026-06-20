@@ -5,10 +5,14 @@ const proxyquire = cjsRequire('proxyquire').noPreserveCache();
 
 const mockController = { getAll: vi.fn(), getById: vi.fn(), create: vi.fn(), syncBatch: vi.fn(), getGeoJson: vi.fn() };
 const mockAuth = { authenticate: vi.fn((_req, _res, next) => next()), authorize: vi.fn(() => (_req, _res, next) => next()) };
+const mockValidate = vi.fn(() => (_req, _res, next) => next());
+const mockPlantingValidator = { validateCreatePlanting: vi.fn(x => x) };
 
 const router = proxyquire('./plantingRoutes', {
   '../controllers/plantingController': mockController,
   '../middleware/auth': mockAuth,
+  '../middleware/validate': mockValidate,
+  '../validators/plantingValidator': mockPlantingValidator,
 });
 
 describe('plantingRoutes', () => {

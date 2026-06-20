@@ -31,28 +31,52 @@ describe('monitoringRepository', () => {
   });
 
   describe('findByPlantingSiteId', () => {
-    it('returns records ordered by visit_date DESC', async () => {
+    it('returns paginated records with total count', async () => {
       const rows = [
         { id: 2, planting_site_id: 10, visit_date: '2026-06-15' },
         { id: 1, planting_site_id: 10, visit_date: '2026-06-01' },
       ];
-      mockDb.query.mockResolvedValue({ rows });
+      mockDb.query
+        .mockResolvedValueOnce({ rows: [{ count: '2' }] })
+        .mockResolvedValueOnce({ rows });
 
       const result = await monitoringRepository.findByPlantingSiteId(10);
 
-      expect(result).toEqual(rows);
-      expect(mockDb.query).toHaveBeenCalledWith(
-        expect.stringContaining('WHERE planting_site_id = $1'),
+      expect(result).toEqual({ rows, total: 2 });
+      expect(mockDb.query).toHaveBeenNthCalledWith(
+        1,
+        expect.stringContaining('SELECT COUNT'),
         [10],
+      );
+      expect(mockDb.query).toHaveBeenNthCalledWith(
+        2,
+        expect.stringContaining('LIMIT $2 OFFSET $3'),
+        [10, 50, 0],
       );
     });
 
-    it('returns empty array when no records found', async () => {
-      mockDb.query.mockResolvedValue({ rows: [] });
+    it('accepts custom page and limit', async () => {
+      mockDb.query
+        .mockResolvedValueOnce({ rows: [{ count: '0' }] })
+        .mockResolvedValueOnce({ rows: [] });
+
+      await monitoringRepository.findByPlantingSiteId(10, 2, 10);
+
+      expect(mockDb.query).toHaveBeenNthCalledWith(
+        2,
+        expect.stringContaining('LIMIT $2 OFFSET $3'),
+        [10, 10, 10],
+      );
+    });
+
+    it('returns empty result when no records found', async () => {
+      mockDb.query
+        .mockResolvedValueOnce({ rows: [{ count: '0' }] })
+        .mockResolvedValueOnce({ rows: [] });
 
       const result = await monitoringRepository.findByPlantingSiteId(999);
 
-      expect(result).toEqual([]);
+      expect(result).toEqual({ rows: [], total: 0 });
     });
   });
 
@@ -75,68 +99,4 @@ describe('monitoringRepository', () => {
     });
   });
 
-  describe('update', () => {
-    it('updates specified fields and returns updated record', async () => {
-      const fakeRow = { id: 1, planting_site_id: 10, survival_status: 'dead', vigor: 'poor' };
-      mockDb.query.mockResolvedValue({ rows: [fakeRow] });
-
-      const result = await monitoringRepository.update(1, { survival_status: 'dead', vigor: 'poor' });
-
-      expect(result).toEqual(fakeRow);
-      expect(mockDb.query).toHaveBeenCalledWith(
-        expect.stringContaining('UPDATE monitoring_records'),
-        ['dead', 'poor', 1],
-      );
-    });
-
-    it('returns existing record when no fields to update', async () => {
-      const fakeRow = { id: 1 };
-      mockDb.query.mockResolvedValue({ rows: [fakeRow] });
-
-      const result = await monitoringRepository.update(1, {});
-
-      expect(result).toEqual(fakeRow);
-      expect(mockDb.query).toHaveBeenCalledWith(
-        expect.stringContaining('SELECT'),
-        [1],
-      );
-    });
-
-    it('ignores undefined fields', async () => {
-      const fakeRow = { id: 1, visit_date: '2026-07-01' };
-      mockDb.query.mockResolvedValue({ rows: [fakeRow] });
-
-      const result = await monitoringRepository.update(1, { visit_date: '2026-07-01', ph: undefined });
-
-      expect(result).toEqual(fakeRow);
-      expect(mockDb.query).toHaveBeenCalledWith(
-        expect.stringContaining('UPDATE'),
-        ['2026-07-01', 1],
-      );
-    });
-
-    it('updates all allowed fields', async () => {
-      const fakeRow = { id: 1 };
-      mockDb.query.mockResolvedValue({ rows: [fakeRow] });
-
-      await monitoringRepository.update(1, {
-        visit_date: '2026-07-01', ph: 7, humidity: 80, soil_texture: 'clay', survival_status: 'alive', vigor: 'excellent', notes: 'great', photo_url: 'http://example.com/new.jpg',
-      });
-
-      expect(mockDb.query.mock.calls[0][1]).toHaveLength(9);
-    });
-  });
-
-  describe('remove', () => {
-    it('deletes the record by id', async () => {
-      mockDb.query.mockResolvedValue({ rows: [] });
-
-      await monitoringRepository.remove(1);
-
-      expect(mockDb.query).toHaveBeenCalledWith(
-        'DELETE FROM monitoring_records WHERE id = $1',
-        [1],
-      );
-    });
-  });
 });

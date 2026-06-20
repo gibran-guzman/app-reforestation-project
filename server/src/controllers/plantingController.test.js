@@ -88,7 +88,17 @@ describe('plantingController', () => {
 
       await controller.getById(req, res, next);
 
+      expect(mockService.getById).toHaveBeenCalledWith(1);
       expect(res.json).toHaveBeenCalledWith({ data: { id: 1, species_name: 'Cedro' } });
+    });
+
+    it('rejects non-numeric id', async () => {
+      req.params.id = 'abc';
+
+      await controller.getById(req, res, next);
+
+      expect(next).toHaveBeenCalledWith(expect.any(Error));
+      expect(mockService.getById).not.toHaveBeenCalled();
     });
   });
 
@@ -138,6 +148,15 @@ describe('plantingController', () => {
       await controller.syncBatch(req, res, next);
 
       expect(res.status).toHaveBeenCalledWith(400);
+    });
+
+    it('returns 400 if items exceeds max batch size', async () => {
+      req.body = { items: new Array(501).fill({ zone_id: 1 }) };
+
+      await controller.syncBatch(req, res, next);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith({ error: expect.stringContaining('Máximo') });
     });
   });
 

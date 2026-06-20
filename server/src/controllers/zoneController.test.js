@@ -35,6 +35,15 @@ describe('zoneController', () => {
       await controller.getById(req, res, next);
       expect(mockService.getById).toHaveBeenCalledWith(1);
     });
+
+    it('rejects non-numeric id', async () => {
+      req.params.id = 'abc';
+
+      await controller.getById(req, res, next);
+
+      expect(next).toHaveBeenCalledWith(expect.any(Error));
+      expect(mockService.getById).not.toHaveBeenCalled();
+    });
   });
 
   describe('create', () => {
@@ -56,6 +65,15 @@ describe('zoneController', () => {
       await controller.update(req, res, next);
       expect(mockService.update).toHaveBeenCalledWith(1, { name: 'Actualizada' });
     });
+
+    it('rejects non-numeric id on update', async () => {
+      req.params.id = 'abc';
+
+      await controller.update(req, res, next);
+
+      expect(next).toHaveBeenCalledWith(expect.any(Error));
+      expect(mockService.update).not.toHaveBeenCalled();
+    });
   });
 
   describe('remove', () => {
@@ -65,6 +83,15 @@ describe('zoneController', () => {
 
       await controller.remove(req, res, next);
       expect(mockService.remove).toHaveBeenCalledWith(1);
+    });
+
+    it('rejects non-numeric id on remove', async () => {
+      req.params.id = 'abc';
+
+      await controller.remove(req, res, next);
+
+      expect(next).toHaveBeenCalledWith(expect.any(Error));
+      expect(mockService.remove).not.toHaveBeenCalled();
     });
   });
 

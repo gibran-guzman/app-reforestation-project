@@ -1,48 +1,10 @@
 const db = require('../config/db');
-
-/*
- * Performance note: The DISTINCT ON + ORDER BY in latest_monitoring CTE requires
- * a composite index for efficient execution:
- *   CREATE INDEX idx_monitoring_site_visit
- *     ON monitoring_records (planting_site_id, visit_date DESC, created_at DESC);
- */
-const latestMonitoringCte = `
-  WITH latest_monitoring AS (
-    SELECT DISTINCT ON (mr.planting_site_id)
-      mr.planting_site_id, mr.survival_status, mr.visit_date
-    FROM monitoring_records mr
-    ORDER BY mr.planting_site_id, mr.visit_date DESC, mr.created_at DESC
-  )
-`;
-
-const buildFilters = (filters) => {
-  const conditions = [];
-  const params = [];
-  let idx = 1;
-
-  if (filters.zone_id) {
-    conditions.push(`ps.zone_id = $${idx++}`);
-    params.push(filters.zone_id);
-  }
-  if (filters.species_id) {
-    conditions.push(`ps.species_id = $${idx++}`);
-    params.push(filters.species_id);
-  }
-  if (filters.from) {
-    conditions.push(`ps.planted_at >= $${idx++}`);
-    params.push(filters.from);
-  }
-  if (filters.to) {
-    conditions.push(`ps.planted_at <= $${idx++}`);
-    params.push(filters.to);
-  }
-
-  const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
-  return { where, params };
-};
+const { buildWhereClause } = require('../utils/queryBuilder');
+const { latestMonitoringCte } = require('../utils/cteQueries');
+const { MAX_REPORT_LIMIT } = require('../config/constants');
 
 const getSurvivalRate = async (filters = {}) => {
-  const { where, params } = buildFilters(filters);
+  const { where, params } = buildWhereClause(filters, 'ps');
 
   const result = await db.query(`
     ${latestMonitoringCte}
@@ -62,7 +24,8 @@ const getSurvivalRate = async (filters = {}) => {
 };
 
 const getSurvivalRateBySpecies = async (filters = {}) => {
-  const { where, params } = buildFilters(filters);
+  const { conditions, params } = buildWhereClause(filters, 'ps');
+  const joinClause = conditions.length > 0 ? `AND ${conditions.join(' AND ')}` : '';
 
   const result = await db.query(`
     ${latestMonitoringCte}
@@ -74,9 +37,8 @@ const getSurvivalRateBySpecies = async (filters = {}) => {
       COUNT(CASE WHEN lm.survival_status = 'struggling' THEN 1 END)::int AS struggling,
       COUNT(CASE WHEN lm.survival_status = 'dead' THEN 1 END)::int AS dead
     FROM species s
-    LEFT JOIN planting_sites ps ON ps.species_id = s.id
+    LEFT JOIN planting_sites ps ON ps.species_id = s.id ${joinClause}
     LEFT JOIN latest_monitoring lm ON lm.planting_site_id = ps.id
-    ${where}
     GROUP BY s.id, s.common_name, s.scientific_name
     ORDER BY total_planted DESC
   `, params);
@@ -85,7 +47,8 @@ const getSurvivalRateBySpecies = async (filters = {}) => {
 };
 
 const getSurvivalRateByZone = async (filters = {}) => {
-  const { where, params } = buildFilters(filters);
+  const { conditions, params } = buildWhereClause(filters, 'ps');
+  const joinClause = conditions.length > 0 ? `AND ${conditions.join(' AND ')}` : '';
 
   const result = await db.query(`
     ${latestMonitoringCte}
@@ -97,9 +60,8 @@ const getSurvivalRateByZone = async (filters = {}) => {
       COUNT(CASE WHEN lm.survival_status = 'struggling' THEN 1 END)::int AS struggling,
       COUNT(CASE WHEN lm.survival_status = 'dead' THEN 1 END)::int AS dead
     FROM intervention_zones z
-    LEFT JOIN planting_sites ps ON ps.zone_id = z.id
+    LEFT JOIN planting_sites ps ON ps.zone_id = z.id ${joinClause}
     LEFT JOIN latest_monitoring lm ON lm.planting_site_id = ps.id
-    ${where}
     GROUP BY z.id, z.name
     ORDER BY total_plantings DESC
   `, params);
@@ -107,55 +69,35 @@ const getSurvivalRateByZone = async (filters = {}) => {
   return result.rows;
 };
 
-const getAllPlantingsForReport = async (filters = {}) => {
-  const { where, params } = buildFilters(filters);
+const getAllPlantingsForReport = async (filters = {}, limit = MAX_REPORT_LIMIT) => {
+  const { where, params } = buildWhereClause(filters, 'ps');
 
-  const PAGE_SIZE = 1000;
-  let page = 1;
-  let allRows = [];
-  let hasMore = true;
+  const result = await db.query(`
+    ${latestMonitoringCte}
+    SELECT
+      ps.id, ps.zone_id, ps.species_id,
+      ST_AsGeoJSON(ps.location)::jsonb AS location,
+      ps.planted_at, ps.planted_by,
+      ps.initial_ph, ps.initial_humidity, ps.initial_soil_texture,
+      ps.photo_url, ps.created_at,
+      sc.common_name AS species_name,
+      iz.name AS zone_name,
+      lm.survival_status,
+      lm.visit_date AS last_monitoring_date
+    FROM planting_sites ps
+    LEFT JOIN species sc ON sc.id = ps.species_id
+    LEFT JOIN intervention_zones iz ON iz.id = ps.zone_id
+    LEFT JOIN latest_monitoring lm ON lm.planting_site_id = ps.id
+    ${where}
+    ORDER BY ps.created_at DESC
+    LIMIT $1
+  `, [...params, limit]);
 
-  while (hasMore) {
-    const offset = (page - 1) * PAGE_SIZE;
-    const result = await db.query(`
-      ${latestMonitoringCte}
-      SELECT
-        ps.id, ps.zone_id, ps.species_id,
-        ST_AsGeoJSON(ps.location)::jsonb AS location,
-        ps.planted_at, ps.planted_by,
-        ps.initial_ph, ps.initial_humidity, ps.initial_soil_texture,
-        ps.photo_url, ps.created_at,
-        sc.common_name AS species_name,
-        iz.name AS zone_name,
-        lm.survival_status,
-        lm.visit_date AS last_monitoring_date
-      FROM planting_sites ps
-      LEFT JOIN species sc ON sc.id = ps.species_id
-      LEFT JOIN intervention_zones iz ON iz.id = ps.zone_id
-      LEFT JOIN latest_monitoring lm ON lm.planting_site_id = ps.id
-      ${where}
-      ORDER BY ps.created_at DESC
-      LIMIT $${params.length + 1} OFFSET $${params.length + 2}
-    `, [...params, PAGE_SIZE, offset]);
-    allRows = allRows.concat(result.rows);
-    hasMore = result.rows.length === PAGE_SIZE;
-    page++;
-  }
-
-  return allRows;
+  return result.rows;
 };
 
 const getPlantingEvolution = async (filters = {}) => {
-  const conditions = [];
-  const params = [];
-  let idx = 1;
-
-  if (filters.zone_id) { conditions.push(`ps.zone_id = $${idx++}`); params.push(filters.zone_id); }
-  if (filters.species_id) { conditions.push(`ps.species_id = $${idx++}`); params.push(filters.species_id); }
-  if (filters.from) { conditions.push(`ps.planted_at >= $${idx++}`); params.push(filters.from); }
-  if (filters.to) { conditions.push(`ps.planted_at <= $${idx++}`); params.push(filters.to); }
-
-  const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+  const { where, params } = buildWhereClause(filters, 'ps');
 
   const result = await db.query(`
     SELECT

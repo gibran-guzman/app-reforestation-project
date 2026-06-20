@@ -103,35 +103,22 @@ describe('reportsRepository', () => {
   });
 
   describe('getAllPlantingsForReport', () => {
-    it('fetches all pages and concatenates results', async () => {
-      const page1 = Array.from({ length: 1000 }, (_, i) => ({ id: i + 1 }));
-      const page2 = Array.from({ length: 500 }, (_, i) => ({ id: 1000 + i + 1 }));
-      mockDb.query
-        .mockResolvedValueOnce({ rows: page1 })
-        .mockResolvedValueOnce({ rows: page2 });
+    it('returns up to default limit in a single query', async () => {
+      const rows = Array.from({ length: 1000 }, (_, i) => ({ id: i + 1 }));
+      mockDb.query.mockResolvedValue({ rows });
 
       const result = await reportsRepository.getAllPlantingsForReport();
 
-      expect(result).toHaveLength(1500);
-      expect(mockDb.query).toHaveBeenCalledTimes(2);
-    });
-
-    it('stops pagination when page is smaller than PAGE_SIZE', async () => {
-      const rows = Array.from({ length: 500 }, (_, i) => ({ id: i + 1 }));
-      mockDb.query.mockResolvedValueOnce({ rows });
-
-      const result = await reportsRepository.getAllPlantingsForReport();
-
-      expect(result).toHaveLength(500);
+      expect(result).toHaveLength(1000);
       expect(mockDb.query).toHaveBeenCalledTimes(1);
     });
 
-    it('applies filters to each page query', async () => {
+    it('passes limit as last parameter', async () => {
       mockDb.query.mockResolvedValue({ rows: [] });
 
       await reportsRepository.getAllPlantingsForReport({ zone_id: 1, species_id: 2 });
 
-      expect(mockDb.query.mock.calls[0][1]).toEqual([1, 2, 1000, 0]);
+      expect(mockDb.query.mock.calls[0][1]).toEqual([1, 2, 10000]);
     });
 
     it('returns empty array when no plantings', async () => {
@@ -140,6 +127,14 @@ describe('reportsRepository', () => {
       const result = await reportsRepository.getAllPlantingsForReport({ zone_id: 999 });
 
       expect(result).toEqual([]);
+    });
+
+    it('respects custom limit when provided', async () => {
+      mockDb.query.mockResolvedValue({ rows: [] });
+
+      await reportsRepository.getAllPlantingsForReport({}, 500);
+
+      expect(mockDb.query.mock.calls[0][1]).toEqual([500]);
     });
   });
 

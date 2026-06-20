@@ -238,7 +238,7 @@ describe('plantingRepository', () => {
       expect(call[0]).toContain('ps.species_id = $2');
       expect(call[0]).toContain('ps.planted_at >= $3');
       expect(call[0]).toContain('ps.planted_at <= $4');
-      expect(call[1]).toEqual([1, 2, '2026-01-01', '2026-12-31']);
+      expect(call[1]).toEqual([1, 2, '2026-01-01', '2026-12-31', 100000]);
     });
 
     it('returns empty features array when no data', async () => {
@@ -254,7 +254,7 @@ describe('plantingRepository', () => {
 
       await plantingRepository.findGeoJson({ zone_id: 1 });
 
-      expect(mockDb.query.mock.calls[0][1]).toEqual([1]);
+      expect(mockDb.query.mock.calls[0][1]).toEqual([1, 100000]);
       expect(mockDb.query.mock.calls[0][0]).toContain('ps.zone_id = $1');
       expect(mockDb.query.mock.calls[0][0]).not.toContain('ps.species_id =');
     });

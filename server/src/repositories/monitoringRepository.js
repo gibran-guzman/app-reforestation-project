@@ -27,14 +27,21 @@ const create = async (data) => {
   return result.rows[0];
 };
 
-const findByPlantingSiteId = async (plantingSiteId) => {
-  const result = await db.query(`
-    SELECT ${columns.join(', ')}
-    FROM monitoring_records
-    WHERE planting_site_id = $1
-    ORDER BY visit_date DESC, created_at DESC
-  `, [plantingSiteId]);
-  return result.rows;
+const findByPlantingSiteId = async (plantingSiteId, page = 1, limit = 50) => {
+  const offset = (page - 1) * limit;
+
+  const [countResult, result] = await Promise.all([
+    db.query('SELECT COUNT(*) FROM monitoring_records WHERE planting_site_id = $1', [plantingSiteId]),
+    db.query(`
+      SELECT ${columns.join(', ')}
+      FROM monitoring_records
+      WHERE planting_site_id = $1
+      ORDER BY visit_date DESC, created_at DESC
+      LIMIT $2 OFFSET $3
+    `, [plantingSiteId, limit, offset]),
+  ]);
+
+  return { rows: result.rows, total: parseInt(countResult.rows[0].count, 10) };
 };
 
 const findById = async (id) => {
@@ -45,31 +52,4 @@ const findById = async (id) => {
   return result.rows[0] || null;
 };
 
-const update = async (id, data) => {
-  const sets = [];
-  const params = [];
-  let idx = 1;
-
-  const fields = ['visit_date', 'ph', 'humidity', 'soil_texture', 'survival_status', 'vigor', 'notes', 'photo_url'];
-  for (const field of fields) {
-    if (data[field] !== undefined) {
-      sets.push(`${field} = $${idx++}`);
-      params.push(data[field]);
-    }
-  }
-
-  if (sets.length === 0) return findById(id);
-
-  params.push(id);
-  const result = await db.query(`
-    UPDATE monitoring_records SET ${sets.join(', ')} WHERE id = $${idx}
-    RETURNING ${columns.join(', ')}
-  `, params);
-  return result.rows[0];
-};
-
-const remove = async (id) => {
-  await db.query('DELETE FROM monitoring_records WHERE id = $1', [id]);
-};
-
-module.exports = { create, findByPlantingSiteId, findById, update, remove };
+module.exports = { create, findByPlantingSiteId, findById };

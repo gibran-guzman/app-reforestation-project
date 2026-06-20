@@ -12,10 +12,11 @@ const configRoutes = require('./routes/configRoutes');
 const monitoringRoutes = require('./routes/monitoringRoutes');
 const reportsRoutes = require('./routes/reportsRoutes');
 const analyticsRoutes = require('./routes/analyticsRoutes');
-const { authLimiter, signupLimiter } = require('./middleware/rateLimiter');
+const { authLimiter, signupLimiter, writeLimiter } = require('./middleware/rateLimiter');
 const errorHandler = require('./middleware/errorHandler');
 const logger = require('./utils/logger');
 const { ensureBucket } = require('./services/photoService');
+const { REQUEST_BODY_LIMIT } = require('./config/constants');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -26,7 +27,7 @@ app.use(helmet({
   contentSecurityPolicy: isProduction ? {
     directives: {
       defaultSrc: ["'self'"],
-      imgSrc: ["'self'", "https://*.tile.openstreetmap.org", "https://cdnjs.cloudflare.com"],
+      imgSrc: ["'self'", "https://*.tile.openstreetmap.org"],
       scriptSrc: ["'self'"],
       styleSrc: ["'self'", "'unsafe-inline'"],
       connectSrc: ["'self'"],
@@ -41,7 +42,8 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
-app.use(express.json({ limit: '1mb' }));
+app.use(express.json({ limit: REQUEST_BODY_LIMIT }));
+app.use('/api', writeLimiter);
 
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', service: 'Lloa Reforestation API' });
