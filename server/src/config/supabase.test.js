@@ -22,7 +22,7 @@ describe('supabase config', () => {
   });
 
   it('loads successfully when SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are set', () => {
-    const supabase = loadSupabase();
+    const { supabase } = loadSupabase();
 
     expect(mockCreateClient).toHaveBeenCalledTimes(1);
     expect(mockCreateClient).toHaveBeenCalledWith(
