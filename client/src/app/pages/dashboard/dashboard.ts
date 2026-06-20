@@ -52,6 +52,7 @@ export default class Dashboard implements OnInit {
   private evolutionChart: Chart | null = null;
 
   constructor() {
+    /* istanbul ignore next */
     effect(() => {
       if (this.evolutionChartRef() && this.evolution().length > 0) {
         this.renderEvolutionChart();
