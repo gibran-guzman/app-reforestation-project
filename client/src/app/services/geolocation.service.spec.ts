@@ -37,5 +37,26 @@ describe('GeolocationService', () => {
         });
       }
     });
+
+    it('resolves with rounded coordinates on success', async () => {
+      const mockPos = {
+        coords: { latitude: -0.229498, longitude: -78.524123 },
+      } as GeolocationPosition;
+      spyOn(navigator.geolocation, 'getCurrentPosition').and.callFake(
+        (success: PositionCallback) => success(mockPos),
+      );
+      const coords = await service.getCurrentPosition();
+      expect(coords).toEqual({ lat: -0.229498, lng: -78.524123 });
+    });
+
+    it('rejects on geolocation error callback', async () => {
+      spyOn(navigator.geolocation, 'getCurrentPosition').and.callFake(
+        (_: PositionCallback, error: PositionErrorCallback) =>
+          error({ code: 1, message: 'User denied', PERMISSION_DENIED: 1, POSITION_UNAVAILABLE: 2, TIMEOUT: 3 } as GeolocationPositionError),
+      );
+      await expectAsync(service.getCurrentPosition()).toBeRejectedWithError(
+        /No se pudo obtener la ubicación/,
+      );
+    });
   });
 });
