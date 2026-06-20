@@ -32,9 +32,10 @@ const generatePdf = async (filters = {}) => {
   const startX = 50;
 
   const addFooter = () => {
-    const pageCount = doc.bufferedPageRange().count;
+    const range = doc.bufferedPageRange();
+    const pageCount = range.count;
     for (let i = 0; i < pageCount; i++) {
-      doc.switchToPage(i);
+      doc.switchToPage(range.start + i);
       doc.fontSize(7).font(font).fillColor('#999');
       doc.text(
         `GAD Municipal de Lloa — Página ${i + 1} de ${pageCount}`,
@@ -126,7 +127,6 @@ const generatePdf = async (filters = {}) => {
       return;
     }
 
-    if (doc.y > 600) doc.addPage();
     doc.fontSize(14).font(bold).text('Detalle de Plantaciones', { underline: true });
     doc.moveDown(0.5);
 
@@ -180,9 +180,10 @@ const generatePdf = async (filters = {}) => {
   addBarChart();
   addDetailTable();
 
+  addFooter();
+
   return new Promise((resolve) => {
     doc.on('end', () => {
-      addFooter();
       resolve(Buffer.concat(buffers));
     });
     doc.end();
