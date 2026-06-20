@@ -1,6 +1,6 @@
-const supabase = require('../config/supabase');
-const db = require('../config/db');
-const { AppError } = require('../errors/AppError');
+const { supabase, supabaseAnon } = require('../config/supabase');
+const authRepository = require('../repositories/authRepository');
+const { AppError, NotFoundError } = require('../errors/AppError');
 const logger = require('../utils/logger');
 
 const isDuplicateEmailError = (error) => {
@@ -38,10 +38,7 @@ const signup = async (body) => {
   }
 
   try {
-    await db.query(
-      'INSERT INTO profiles (id, full_name, role) VALUES ($1, $2, $3)',
-      [authData.user.id, full_name, role],
-    );
+    await authRepository.createProfile(authData.user.id, full_name, role);
   } catch (profileError) {
     try {
       await supabase.auth.admin.deleteUser(authData.user.id);
@@ -59,7 +56,7 @@ const signup = async (body) => {
 const login = async (body) => {
   const { email, password } = body;
 
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  const { data, error } = await supabaseAnon.auth.signInWithPassword({ email, password });
 
   if (error) {
     if (isInvalidCredentialsError(error)) {
@@ -69,11 +66,10 @@ const login = async (body) => {
     throw new AppError('Error al iniciar sesión. Intenta de nuevo.', 500);
   }
 
-  const { rows } = await db.query(
-    'SELECT role, full_name FROM profiles WHERE id = $1',
-    [data.user.id],
-  );
-  const profile = rows[0] || {};
+  const profile = await authRepository.findProfileById(data.user.id);
+  if (!profile) {
+    throw new NotFoundError('Perfil de usuario no encontrado. Contacta al administrador.');
+  }
 
   logger.info({ user_id: data.user.id }, 'User logged in');
 

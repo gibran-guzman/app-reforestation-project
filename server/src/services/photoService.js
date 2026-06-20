@@ -1,5 +1,5 @@
 const crypto = require('node:crypto');
-const supabase = require('../config/supabase');
+const { supabase } = require('../config/supabase');
 const logger = require('../utils/logger');
 const { PhotoUploadError } = require('../errors/AppError');
 const { PHOTO_BUCKET: BUCKET } = require('../config/constants');

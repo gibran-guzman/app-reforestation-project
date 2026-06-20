@@ -18,7 +18,7 @@ const mockSupabaseClient = {
 };
 
 const photoService = proxyquire('./photoService', {
-  '../config/supabase': mockSupabaseClient,
+  '../config/supabase': { supabase: mockSupabaseClient },
 });
 
 describe('photoService', () => {

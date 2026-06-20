@@ -3,14 +3,16 @@ import { createRequire } from 'module';
 const cjsRequire = createRequire(import.meta.url);
 const proxyquire = cjsRequire('proxyquire').noPreserveCache();
 
-const mockDb = { query: vi.fn() };
 const mockSupabaseClient = {
   auth: { getUser: vi.fn() },
 };
+const mockAuthRepository = {
+  findProfileById: vi.fn(),
+};
 
 const { authenticate, authorize } = proxyquire('./auth', {
-  '../config/supabase': mockSupabaseClient,
-  '../config/db': mockDb,
+  '../config/supabase': { supabase: mockSupabaseClient },
+  '../repositories/authRepository': mockAuthRepository,
 });
 
 describe('authenticate middleware', () => {
@@ -29,7 +31,7 @@ describe('authenticate middleware', () => {
       data: { user: { id: 'user-123', email: 'test@example.com' } },
       error: null,
     });
-    mockDb.query.mockResolvedValue({ rows: [{ role: 'admin', full_name: 'Test User', created_at: new Date() }] });
+    mockAuthRepository.findProfileById.mockResolvedValue({ role: 'admin', full_name: 'Test User', created_at: new Date() });
 
     await authenticate(req, res, next);
 
@@ -61,19 +63,18 @@ describe('authenticate middleware', () => {
     expect(next).toHaveBeenCalledWith(expect.any(Error));
   });
 
-  it('uses empty profile if no profiles row exists', async () => {
+  it('throws when no profile row exists', async () => {
     req.headers.authorization = 'Bearer valid-token';
     mockSupabaseClient.auth.getUser.mockResolvedValue({
       data: { user: { id: 'user-123', email: 'test@example.com' } },
       error: null,
     });
-    mockDb.query.mockResolvedValue({ rows: [] });
+    mockAuthRepository.findProfileById.mockResolvedValue(null);
 
     await authenticate(req, res, next);
 
-    expect(req.user.role).toBeUndefined();
-    expect(req.user.full_name).toBeUndefined();
-    expect(next).toHaveBeenCalledWith();
+    expect(next).toHaveBeenCalledWith(expect.any(Error));
+    expect(next.mock.calls[0][0].message).toBe('Perfil de usuario no encontrado. Contacta al administrador.');
   });
 
   it('passes error to next if supabase fails', async () => {
@@ -134,6 +135,6 @@ describe('authorize middleware', () => {
     await middleware(req, res, next);
     const errorCall = next.mock.calls[0][0];
     expect(errorCall.status).toBe(403);
-    expect(errorCall.message).toContain('admin');
+    expect(errorCall.message).toBe('No tienes permisos para esta acción');
   });
 });

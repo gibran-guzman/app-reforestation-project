@@ -3,17 +3,24 @@ import { createRequire } from 'module';
 const cjsRequire = createRequire(import.meta.url);
 const proxyquire = cjsRequire('proxyquire').noPreserveCache();
 
-const mockDb = { query: vi.fn() };
+const mockAuthRepository = {
+  createProfile: vi.fn(),
+  findProfileById: vi.fn(),
+};
 const mockSupabaseClient = {
   auth: {
     admin: { createUser: vi.fn(), deleteUser: vi.fn() },
+  },
+};
+const mockSupabaseAnonClient = {
+  auth: {
     signInWithPassword: vi.fn(),
   },
 };
 
 const authService = proxyquire('./authService', {
-  '../config/supabase': mockSupabaseClient,
-  '../config/db': mockDb,
+  '../config/supabase': { supabase: mockSupabaseClient, supabaseAnon: mockSupabaseAnonClient },
+  '../repositories/authRepository': mockAuthRepository,
 });
 
 describe('authService.signup', () => {
@@ -62,7 +69,7 @@ describe('authService.signup', () => {
       data: { user: { id: 'user-456' } },
       error: null,
     });
-    mockDb.query.mockRejectedValue(new Error('db error'));
+    mockAuthRepository.createProfile.mockRejectedValue(new Error('db error'));
 
     await expect(authService.signup({
       email: 'rollback@example.com',
@@ -78,7 +85,7 @@ describe('authService.signup', () => {
       data: { user: { id: 'user-789' } },
       error: null,
     });
-    mockDb.query.mockRejectedValue(new Error('db error'));
+    mockAuthRepository.createProfile.mockRejectedValue(new Error('db error'));
     mockSupabaseClient.auth.admin.deleteUser.mockRejectedValue(new Error('cleanup failed'));
 
     await expect(authService.signup({
@@ -96,14 +103,14 @@ describe('authService.login', () => {
   });
 
   it('authenticates and returns session with profile', async () => {
-    mockSupabaseClient.auth.signInWithPassword.mockResolvedValue({
+    mockSupabaseAnonClient.auth.signInWithPassword.mockResolvedValue({
       data: {
         user: { id: 'user-123', email: 'test@example.com' },
         session: { access_token: 'token-abc', refresh_token: 'refresh-xyz', expires_at: 9999999999 },
       },
       error: null,
     });
-    mockDb.query.mockResolvedValue({ rows: [{ role: 'technician', full_name: 'Test User' }] });
+    mockAuthRepository.findProfileById.mockResolvedValue({ role: 'technician', full_name: 'Test User' });
 
     const result = await authService.login({ email: 'test@example.com', password: 'SecurePass1' });
 
@@ -111,22 +118,21 @@ describe('authService.login', () => {
     expect(result.session.access_token).toBe('token-abc');
   });
 
-  it('returns empty profile when no profiles row exists', async () => {
-    mockSupabaseClient.auth.signInWithPassword.mockResolvedValue({
+  it('throws NotFoundError when no profiles row exists', async () => {
+    mockSupabaseAnonClient.auth.signInWithPassword.mockResolvedValue({
       data: {
         user: { id: 'user-123', email: 'test@example.com' },
         session: { access_token: 'token', refresh_token: 'refresh', expires_at: 9999999999 },
       },
       error: null,
     });
-    mockDb.query.mockResolvedValue({ rows: [] });
+    mockAuthRepository.findProfileById.mockResolvedValue(null);
 
-    const result = await authService.login({ email: 'test@example.com', password: 'SecurePass1' });
-    expect(result.user.role).toBeUndefined();
+    await expect(authService.login({ email: 'test@example.com', password: 'SecurePass1' })).rejects.toThrow('Perfil de usuario no encontrado. Contacta al administrador.');
   });
 
   it('throws 401 with incorrect credentials', async () => {
-    mockSupabaseClient.auth.signInWithPassword.mockResolvedValue({
+    mockSupabaseAnonClient.auth.signInWithPassword.mockResolvedValue({
       data: { user: null, session: null },
       error: { message: 'Invalid login credentials' },
     });
@@ -165,7 +171,7 @@ describe('authService.login - non-specific errors', () => {
 
   it('throws a generic AppError if login error is not "Invalid login credentials"', async () => {
     const rawError = new Error('Some other login error');
-    mockSupabaseClient.auth.signInWithPassword.mockResolvedValue({
+    mockSupabaseAnonClient.auth.signInWithPassword.mockResolvedValue({
       data: { user: null, session: null },
       error: rawError,
     });
