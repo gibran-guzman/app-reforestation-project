@@ -1,4 +1,11 @@
 const { ValidationError } = require('../errors/AppError');
+const { parseQueryFilters } = require('../utils/queryBuilder');
+
+const parseAndValidateReportFilters = (query) => {
+  const filters = parseQueryFilters(query);
+  validateReportFilters(filters);
+  return filters;
+};
 
 const validateReportFilters = (filters) => {
   const errors = [];
@@ -34,4 +41,4 @@ const validateReportFilters = (filters) => {
   }
 };
 
-module.exports = { validateReportFilters };
+module.exports = { validateReportFilters, parseAndValidateReportFilters };

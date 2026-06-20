@@ -27,6 +27,7 @@ const photoLimiter = rateLimit({
 const writeLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 60,
+  skip: (req) => req.method === 'GET' || req.method === 'HEAD',
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Demasiadas solicitudes de escritura. Intenta de nuevo en 15 minutos.' },
