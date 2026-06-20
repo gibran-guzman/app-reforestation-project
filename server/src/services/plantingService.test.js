@@ -245,7 +245,7 @@ describe('plantingService', () => {
 
       const results = await plantingService.syncBatch([validItem], 'user-123');
       expect(results[0].status).toBe('error');
-      expect(results[0].error).toContain('DB connection lost');
+      expect(results[0].error).toBe('Error al validar la ubicación contra la zona de intervención');
     });
 
     it('uses fallback message when error has no message property', async () => {
@@ -255,7 +255,7 @@ describe('plantingService', () => {
 
       const results = await plantingService.syncBatch([validItem], 'user-123');
       expect(results[0].status).toBe('error');
-      expect(results[0].error).toBe('Error al procesar el registro');
+      expect(results[0].error).toBe('Error al validar la ubicación contra la zona de intervención');
     });
 
     it('handles rejected promise via allSettled fallback', async () => {
@@ -269,6 +269,7 @@ describe('plantingService', () => {
 
       const results = await plantingService.syncBatch([validItem], 'user-123');
       expect(results[0].status).toBe('error');
+      expect(results[0].index).toBe(0);
       expect(results[0].error).toContain('Error interno');
 
       allSettledSpy.mockRestore();

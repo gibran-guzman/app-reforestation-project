@@ -1,7 +1,7 @@
 const plantingRepository = require('../repositories/plantingRepository');
 const speciesRepository = require('../repositories/speciesRepository');
 const zoneRepository = require('../repositories/zoneRepository');
-const { NotFoundError, ValidationError } = require('../errors/AppError');
+const { AppError, NotFoundError, ValidationError } = require('../errors/AppError');
 const pgCodes = require('../errors/pgCodes');
 const logger = require('../utils/logger');
 const { CONCURRENCY_LIMIT } = require('../config/constants');
@@ -20,11 +20,16 @@ const create = async (body, userId) => {
     throw new NotFoundError('Especie no encontrada');
   }
 
-  const inside = await plantingRepository.isPointInZone(
-    body.location.lat,
-    body.location.lng,
-    body.zone_id,
-  );
+  let inside;
+  try {
+    inside = await plantingRepository.isPointInZone(
+      body.location.lat,
+      body.location.lng,
+      body.zone_id,
+    );
+  } catch (error) {
+    throw new AppError('Error al validar la ubicación contra la zona de intervención', 500);
+  }
   if (!inside) {
     throw new ValidationError([
       { field: 'location', message: 'Las coordenadas no están dentro de la zona de intervención seleccionada' },
@@ -52,11 +57,16 @@ const processItem = async (item, i, zoneMap, speciesMap, userId) => {
       return { index: i, status: 'error', error: 'Especie no encontrada' };
     }
 
-    const inside = await plantingRepository.isPointInZone(
-      item.location.lat,
-      item.location.lng,
-      item.zone_id,
-    );
+    let inside;
+    try {
+      inside = await plantingRepository.isPointInZone(
+        item.location.lat,
+        item.location.lng,
+        item.zone_id,
+      );
+    } catch (_err) {
+      return { index: i, status: 'error', error: 'Error al validar la ubicación contra la zona de intervención' };
+    }
     if (!inside) {
       return { index: i, status: 'error', error: 'Las coordenadas no están dentro de la zona de intervención' };
     }
@@ -114,11 +124,11 @@ const syncBatch = async (items, userId) => {
       })
     );
 
-    for (const result of settled) {
+    for (const [offset, result] of settled.entries()) {
       if (result.status === 'fulfilled') {
         results.push(result.value);
       } else {
-        results.push({ index: results.length, status: 'error', error: 'Error interno al procesar el lote' });
+        results.push({ index: start + offset, status: 'error', error: 'Error interno al procesar el lote' });
       }
     }
   }
