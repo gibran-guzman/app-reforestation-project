@@ -23,9 +23,8 @@ describe('validateSignup', () => {
     expect(result.role).toBe('technician');
   });
 
-  it('defaults to technician role if invalid role', () => {
-    const result = validateSignup({ ...validData, role: 'superadmin' });
-    expect(result.role).toBe('technician');
+  it('throws error if invalid role', () => {
+    expect(() => validateSignup({ ...validData, role: 'superadmin' })).toThrow(ValidationError);
   });
 
   it('accepts admin role', () => {

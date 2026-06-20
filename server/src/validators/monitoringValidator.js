@@ -1,5 +1,5 @@
 const { ValidationError } = require('../errors/AppError');
-const { SOIL_TEXTURE_VALUES } = require('../config/constants');
+const { SOIL_TEXTURE_VALUES, MAX_NOTE_LENGTH } = require('../config/constants');
 const { validateRange } = require('../utils/validators');
 
 const SURVIVAL_STATUSES = ['alive', 'struggling', 'dead'];
@@ -41,8 +41,8 @@ const validateCreateMonitoring = (data) => {
     }
   }
 
-  if (data.notes !== undefined && data.notes !== null && typeof data.notes === 'string' && data.notes.length > 2000) {
-    errors.push({ field: 'notes', message: 'Las notas no deben exceder 2000 caracteres' });
+  if (data.notes !== undefined && data.notes !== null && typeof data.notes === 'string' && data.notes.length > MAX_NOTE_LENGTH) {
+    errors.push({ field: 'notes', message: `Las notas no deben exceder ${MAX_NOTE_LENGTH} caracteres` });
   }
 
   if (errors.length > 0) {

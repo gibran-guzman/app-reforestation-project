@@ -1,4 +1,5 @@
 const { ValidationError } = require('../errors/AppError');
+const { MAX_SCIENTIFIC_NAME_LENGTH, MAX_COMMON_NAME_LENGTH, MAX_DESCRIPTION_LENGTH, MAX_SOIL_TYPE_LENGTH } = require('../config/constants');
 
 const ALTITUDE_LABELS = {
   recommended_altitude_min: 'Altitud mínima recomendada',
@@ -28,29 +29,29 @@ const validateCreateSpecies = (data) => {
 
   if (!scientific_name || typeof scientific_name !== 'string' || scientific_name.trim().length === 0) {
     errors.push({ field: 'scientific_name', message: 'El nombre científico es requerido y debe ser un texto no vacío' });
-  } else if (scientific_name.length > 500) {
-    errors.push({ field: 'scientific_name', message: 'El nombre científico no debe exceder 500 caracteres' });
+  } else if (scientific_name.length > MAX_SCIENTIFIC_NAME_LENGTH) {
+    errors.push({ field: 'scientific_name', message: `El nombre científico no debe exceder ${MAX_SCIENTIFIC_NAME_LENGTH} caracteres` });
   }
 
   if (!common_name || typeof common_name !== 'string' || common_name.trim().length === 0) {
     errors.push({ field: 'common_name', message: 'El nombre común es requerido y debe ser un texto no vacío' });
-  } else if (common_name.length > 300) {
-    errors.push({ field: 'common_name', message: 'El nombre común no debe exceder 300 caracteres' });
+  } else if (common_name.length > MAX_COMMON_NAME_LENGTH) {
+    errors.push({ field: 'common_name', message: `El nombre común no debe exceder ${MAX_COMMON_NAME_LENGTH} caracteres` });
   }
 
   if (description !== undefined && description !== null && description !== '') {
     if (typeof description !== 'string') {
       errors.push({ field: 'description', message: 'La descripción debe ser un texto' });
-    } else if (description.length > 2000) {
-      errors.push({ field: 'description', message: 'La descripción no debe exceder 2000 caracteres' });
+    } else if (description.length > MAX_DESCRIPTION_LENGTH) {
+      errors.push({ field: 'description', message: `La descripción no debe exceder ${MAX_DESCRIPTION_LENGTH} caracteres` });
     }
   }
 
   if (ideal_soil_type !== undefined && ideal_soil_type !== null && ideal_soil_type !== '') {
     if (typeof ideal_soil_type !== 'string') {
       errors.push({ field: 'ideal_soil_type', message: 'El tipo de suelo ideal debe ser un texto' });
-    } else if (ideal_soil_type.length > 200) {
-      errors.push({ field: 'ideal_soil_type', message: 'El tipo de suelo ideal no debe exceder 200 caracteres' });
+    } else if (ideal_soil_type.length > MAX_SOIL_TYPE_LENGTH) {
+      errors.push({ field: 'ideal_soil_type', message: `El tipo de suelo ideal no debe exceder ${MAX_SOIL_TYPE_LENGTH} caracteres` });
     }
   }
 
@@ -82,32 +83,32 @@ const validateUpdateSpecies = (data) => {
   if (data.scientific_name !== undefined) {
     if (typeof data.scientific_name !== 'string' || data.scientific_name.trim().length === 0) {
       errors.push({ field: 'scientific_name', message: 'El nombre científico debe ser un texto no vacío' });
-    } else if (data.scientific_name.length > 500) {
-      errors.push({ field: 'scientific_name', message: 'El nombre científico no debe exceder 500 caracteres' });
+    } else if (data.scientific_name.length > MAX_SCIENTIFIC_NAME_LENGTH) {
+      errors.push({ field: 'scientific_name', message: `El nombre científico no debe exceder ${MAX_SCIENTIFIC_NAME_LENGTH} caracteres` });
     }
   }
 
   if (data.common_name !== undefined) {
     if (typeof data.common_name !== 'string' || data.common_name.trim().length === 0) {
       errors.push({ field: 'common_name', message: 'El nombre común debe ser un texto no vacío' });
-    } else if (data.common_name.length > 300) {
-      errors.push({ field: 'common_name', message: 'El nombre común no debe exceder 300 caracteres' });
+    } else if (data.common_name.length > MAX_COMMON_NAME_LENGTH) {
+      errors.push({ field: 'common_name', message: `El nombre común no debe exceder ${MAX_COMMON_NAME_LENGTH} caracteres` });
     }
   }
 
   if (data.description !== undefined && data.description !== null && data.description !== '') {
     if (typeof data.description !== 'string') {
       errors.push({ field: 'description', message: 'La descripción debe ser un texto' });
-    } else if (data.description.length > 2000) {
-      errors.push({ field: 'description', message: 'La descripción no debe exceder 2000 caracteres' });
+    } else if (data.description.length > MAX_DESCRIPTION_LENGTH) {
+      errors.push({ field: 'description', message: `La descripción no debe exceder ${MAX_DESCRIPTION_LENGTH} caracteres` });
     }
   }
 
   if (data.ideal_soil_type !== undefined && data.ideal_soil_type !== null && data.ideal_soil_type !== '') {
     if (typeof data.ideal_soil_type !== 'string') {
       errors.push({ field: 'ideal_soil_type', message: 'El tipo de suelo ideal debe ser un texto' });
-    } else if (data.ideal_soil_type.length > 200) {
-      errors.push({ field: 'ideal_soil_type', message: 'El tipo de suelo ideal no debe exceder 200 caracteres' });
+    } else if (data.ideal_soil_type.length > MAX_SOIL_TYPE_LENGTH) {
+      errors.push({ field: 'ideal_soil_type', message: `El tipo de suelo ideal no debe exceder ${MAX_SOIL_TYPE_LENGTH} caracteres` });
     }
   }
 
