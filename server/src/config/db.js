@@ -11,7 +11,7 @@ const pool = new Pool({
     ? { rejectUnauthorized: false }
     : process.env.DATABASE_URL?.includes('sslmode=require')
       ? undefined
-      : { rejectUnauthorized: false },
+      : { rejectUnauthorized: true },
 });
 
 pool.on('error', (err) => {

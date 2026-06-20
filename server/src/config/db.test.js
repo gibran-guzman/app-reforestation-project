@@ -58,7 +58,7 @@ describe('db config', () => {
     loadDb({ DATABASE_URL: 'postgres://user:pass@localhost:5432/db' });
 
     const poolOpts = mockPg.Pool.mock.calls[0][0];
-    expect(poolOpts.ssl).toEqual({ rejectUnauthorized: false });
+    expect(poolOpts.ssl).toEqual({ rejectUnauthorized: true });
   });
 
   it('sets ssl with rejectUnauthorized false when DB_SSL_REJECT_UNAUTHORIZED is false', () => {
