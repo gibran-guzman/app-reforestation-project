@@ -1,4 +1,7 @@
-const { AppError, ValidationError, ConflictError, NotFoundError } = require('./AppError');
+import { createRequire } from 'module';
+const cjsRequire = createRequire(import.meta.url);
+
+const { AppError, ValidationError, ConflictError, NotFoundError } = cjsRequire('./AppError');
 
 describe('AppError', () => {
   it('creates an error with message and default status 500', () => {
