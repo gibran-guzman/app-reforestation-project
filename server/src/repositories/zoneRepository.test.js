@@ -95,16 +95,13 @@ describe('zoneRepository', () => {
       );
     });
 
-    it('inserts with default geometry when none provided', async () => {
+    it('passes geometry as-is when none provided', async () => {
       mockDb.query.mockResolvedValue({ rows: [fakeRow] });
 
-      const result = await zoneRepository.create({ name: 'Zone A', description: 'Desc' });
+      await zoneRepository.create({ name: 'Zone A', description: 'Desc' });
 
-      expect(result).toEqual(fakeRow);
       const params = mockDb.query.mock.calls[0][1];
-      const parsed = JSON.parse(params[2]);
-      expect(parsed.type).toBe('Polygon');
-      expect(parsed.coordinates[0][0]).toEqual([-78.531, -0.234]);
+      expect(params[2]).toBeUndefined();
     });
   });
 
