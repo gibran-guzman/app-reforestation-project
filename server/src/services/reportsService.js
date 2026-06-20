@@ -2,19 +2,13 @@ const reportsRepository = require('../repositories/reportsRepository');
 const PDFDocument = require('pdfkit');
 
 const getSurvivalRate = async (filters = {}) => {
-  const overall = await reportsRepository.getSurvivalRate(filters);
-  const bySpecies = await reportsRepository.getSurvivalRateBySpecies(filters);
-  const byZone = await reportsRepository.getSurvivalRateByZone(filters);
+  const [overall, bySpecies, byZone] = await Promise.all([
+    reportsRepository.getSurvivalRate(filters),
+    reportsRepository.getSurvivalRateBySpecies(filters),
+    reportsRepository.getSurvivalRateByZone(filters),
+  ]);
 
   return { overall, bySpecies, byZone };
-};
-
-const getSpeciesStats = async (filters = {}) => {
-  return reportsRepository.getSurvivalRateBySpecies(filters);
-};
-
-const getZoneSummary = async (filters = {}) => {
-  return reportsRepository.getSurvivalRateByZone(filters);
 };
 
 const generatePdf = async (filters = {}) => {
@@ -188,6 +182,14 @@ const generatePdf = async (filters = {}) => {
     });
     doc.end();
   });
+};
+
+const getSpeciesStats = async (filters = {}) => {
+  return reportsRepository.getSurvivalRateBySpecies(filters);
+};
+
+const getZoneSummary = async (filters = {}) => {
+  return reportsRepository.getSurvivalRateByZone(filters);
 };
 
 const getPlantingEvolution = async (filters = {}) => {

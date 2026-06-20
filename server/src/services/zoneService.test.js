@@ -50,14 +50,10 @@ describe('zoneService', () => {
       expect(result.name).toBe('Zona Test');
     });
 
-    it('throws error with invalid data', async () => {
-      await expect(zoneService.create({ name: '' })).rejects.toThrow();
-    });
   });
 
   describe('update', () => {
     it('updates a zone successfully', async () => {
-      mockZoneRepository.findById.mockResolvedValue({ id: 1, name: 'Zona Norte' });
       mockZoneRepository.update.mockResolvedValue({ id: 1, name: 'Zona Norte Actualizada' });
 
       const result = await zoneService.update(1, { name: 'Zona Norte Actualizada' });
@@ -65,21 +61,20 @@ describe('zoneService', () => {
     });
 
     it('throws not found if it does not exist', async () => {
-      mockZoneRepository.findById.mockResolvedValue(null);
+      mockZoneRepository.update.mockResolvedValue(null);
       await expect(zoneService.update(999, { name: 'Test' })).rejects.toThrow();
     });
   });
 
   describe('remove', () => {
     it('removes a zone successfully', async () => {
-      mockZoneRepository.findById.mockResolvedValue({ id: 1 });
       mockZoneRepository.remove.mockResolvedValue({ id: 1 });
 
       await expect(zoneService.remove(1)).resolves.toBeUndefined();
     });
 
     it('throws not found if it does not exist', async () => {
-      mockZoneRepository.findById.mockResolvedValue(null);
+      mockZoneRepository.remove.mockResolvedValue(null);
       await expect(zoneService.remove(999)).rejects.toThrow();
     });
   });

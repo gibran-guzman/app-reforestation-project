@@ -51,37 +51,53 @@ describe('upload middleware', () => {
     expect(capturedLimits).toEqual({ fileSize: 5 * 1024 * 1024 });
   });
 
-  it('accepts image/jpeg mime type', () => {
+  const jpegBuffer = Buffer.from([0xFF, 0xD8, 0xFF, 0x00]);
+  const pngBuffer = Buffer.from([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]);
+  const webpBuffer = Buffer.from([0x52, 0x49, 0x46, 0x46, 0x00, 0x00, 0x00, 0x00, 0x57, 0x45, 0x42, 0x50]);
+
+  it('accepts image/jpeg with valid magic bytes', () => {
     proxyquire('./upload', {
       multer: multerMock,
       '../errors/AppError': { AppError: AppErrorMock },
     });
 
     const cb = vi.fn();
-    capturedFileFilter({}, { mimetype: 'image/jpeg' }, cb);
+    capturedFileFilter({}, { mimetype: 'image/jpeg', buffer: jpegBuffer }, cb);
     expect(cb).toHaveBeenCalledWith(null, true);
   });
 
-  it('accepts image/png mime type', () => {
+  it('accepts image/png with valid magic bytes', () => {
     proxyquire('./upload', {
       multer: multerMock,
       '../errors/AppError': { AppError: AppErrorMock },
     });
 
     const cb = vi.fn();
-    capturedFileFilter({}, { mimetype: 'image/png' }, cb);
+    capturedFileFilter({}, { mimetype: 'image/png', buffer: pngBuffer }, cb);
     expect(cb).toHaveBeenCalledWith(null, true);
   });
 
-  it('accepts image/webp mime type', () => {
+  it('accepts image/webp with valid magic bytes', () => {
     proxyquire('./upload', {
       multer: multerMock,
       '../errors/AppError': { AppError: AppErrorMock },
     });
 
     const cb = vi.fn();
-    capturedFileFilter({}, { mimetype: 'image/webp' }, cb);
+    capturedFileFilter({}, { mimetype: 'image/webp', buffer: webpBuffer }, cb);
     expect(cb).toHaveBeenCalledWith(null, true);
+  });
+
+  it('rejects image with mismatched magic bytes', () => {
+    proxyquire('./upload', {
+      multer: multerMock,
+      '../errors/AppError': { AppError: AppErrorMock },
+    });
+
+    const cb = vi.fn();
+    capturedFileFilter({}, { mimetype: 'image/jpeg', buffer: Buffer.from([0x00, 0x00, 0x00]) }, cb);
+    expect(cb).toHaveBeenCalledWith(expect.any(Error), false);
+    expect(cb.mock.calls[0][0].message).toContain('formato de imagen');
   });
 
   it('rejects image/gif mime type with AppError', () => {
@@ -91,7 +107,7 @@ describe('upload middleware', () => {
     });
 
     const cb = vi.fn();
-    capturedFileFilter({}, { mimetype: 'image/gif' }, cb);
+    capturedFileFilter({}, { mimetype: 'image/gif', buffer: jpegBuffer }, cb);
     expect(cb).toHaveBeenCalledTimes(1);
     const err = cb.mock.calls[0][0];
     expect(err).toBeInstanceOf(Error);
@@ -107,7 +123,7 @@ describe('upload middleware', () => {
     });
 
     const cb = vi.fn();
-    capturedFileFilter({}, { mimetype: 'image/bmp' }, cb);
+    capturedFileFilter({}, { mimetype: 'image/bmp', buffer: jpegBuffer }, cb);
     const err = cb.mock.calls[0][0];
     expect(err.message).toContain('JPG, PNG o WebP');
     expect(err.status).toBe(400);

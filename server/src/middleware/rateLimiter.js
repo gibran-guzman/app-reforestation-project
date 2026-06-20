@@ -16,4 +16,20 @@ const signupLimiter = rateLimit({
   message: { error: 'Demasiados intentos de registro. Intenta de nuevo en 1 hora.' },
 });
 
-module.exports = { authLimiter, signupLimiter };
+const photoLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Demasiadas subidas de fotos. Intenta de nuevo en 15 minutos.' },
+});
+
+const writeLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Demasiadas solicitudes de escritura. Intenta de nuevo en 15 minutos.' },
+});
+
+module.exports = { authLimiter, signupLimiter, photoLimiter, writeLimiter };

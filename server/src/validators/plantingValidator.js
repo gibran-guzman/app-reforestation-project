@@ -1,5 +1,6 @@
 const { ValidationError } = require('../errors/AppError');
 const { SOIL_TEXTURE_VALUES } = require('../config/constants');
+const { validateRange } = require('../utils/validators');
 
 const validateCreatePlanting = (data) => {
   const errors = [];
@@ -36,19 +37,11 @@ const validateCreatePlanting = (data) => {
     }
   }
 
-  if (initial_ph !== undefined && initial_ph !== null) {
-    const ph = Number(initial_ph);
-    if (isNaN(ph) || ph < 0 || ph > 14) {
-      errors.push({ field: 'initial_ph', message: 'El pH debe estar entre 0 y 14' });
-    }
-  }
+  const phErr = validateRange(initial_ph, 'initial_ph', 0, 14, 'El pH');
+  if (phErr) errors.push(phErr);
 
-  if (initial_humidity !== undefined && initial_humidity !== null) {
-    const humidity = Number(initial_humidity);
-    if (isNaN(humidity) || humidity < 0 || humidity > 100) {
-      errors.push({ field: 'initial_humidity', message: 'La humedad debe estar entre 0 y 100' });
-    }
-  }
+  const humidityErr = validateRange(initial_humidity, 'initial_humidity', 0, 100, 'La humedad');
+  if (humidityErr) errors.push(humidityErr);
 
   if (initial_soil_texture !== undefined && initial_soil_texture !== null && initial_soil_texture !== '') {
     if (!SOIL_TEXTURE_VALUES.includes(initial_soil_texture)) {

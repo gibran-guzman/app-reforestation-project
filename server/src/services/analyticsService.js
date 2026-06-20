@@ -3,32 +3,25 @@ const analyticsRepository = require('../repositories/analyticsRepository');
 const getHeatmap = async (filters = {}) => {
   const points = await analyticsRepository.getHeatmapData(filters);
 
-  const filtered = points.filter((p) => p.weight !== null);
+  const grouped = points.reduce(
+    (acc, p) => {
+      if (p.weight !== null) {
+        const key = filters.interval ? p.period_label : 'general';
+        if (!acc.groups[key]) acc.groups[key] = [];
+        acc.groups[key].push({ lat: p.lat, lng: p.lng, weight: p.weight });
+      }
+      return acc;
+    },
+    { groups: {}, total: 0 }
+  );
 
-  if (filters.interval) {
-    const groups = {};
-    for (const p of filtered) {
-      const d = new Date(p.planted_at);
-      let key;
-      if (filters.interval === 'year') key = d.getFullYear().toString();
-      else if (filters.interval === 'quarter') key = `${d.getFullYear()}-Q${Math.ceil((d.getMonth() + 1) / 3)}`;
-      else key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+  const total = Object.values(grouped.groups).reduce((sum, arr) => sum + arr.length, 0);
 
-      if (!groups[key]) groups[key] = [];
-      groups[key].push({ lat: p.lat, lng: p.lng, weight: p.weight });
-    }
+  const periods = Object.entries(grouped.groups)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([label, data]) => ({ label, data }));
 
-    const periods = Object.entries(groups)
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([label, data]) => ({ label, data }));
-
-    return { periods, total: filtered.length };
-  }
-
-  return {
-    periods: [{ label: 'general', data: filtered.map((p) => ({ lat: p.lat, lng: p.lng, weight: p.weight })) }],
-    total: filtered.length,
-  };
+  return { periods, total };
 };
 
 module.exports = { getHeatmap };

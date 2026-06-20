@@ -8,8 +8,8 @@ const mockPlantingRepository = {
   findByConflictKey: vi.fn(), update: vi.fn(), isPointInZone: vi.fn(),
   updatePhotoUrl: vi.fn(), findGeoJson: vi.fn(),
 };
-const mockSpeciesRepository = { findById: vi.fn() };
-const mockZoneRepository = { findById: vi.fn() };
+const mockSpeciesRepository = { findById: vi.fn(), findByIds: vi.fn() };
+const mockZoneRepository = { findById: vi.fn(), findByIds: vi.fn() };
 
 const plantingService = proxyquire('./plantingService', {
   '../repositories/plantingRepository': mockPlantingRepository,
@@ -45,9 +45,10 @@ describe('plantingService', () => {
 
     it('throws not found if zone does not exist', async () => {
       mockZoneRepository.findById.mockResolvedValue(null);
+      mockSpeciesRepository.findById.mockResolvedValue({ id: 1, common_name: 'Cedro' });
 
       await expect(plantingService.create(validPayload, 'user-123')).rejects.toThrow();
-      expect(mockSpeciesRepository.findById).not.toHaveBeenCalled();
+      expect(mockPlantingRepository.isPointInZone).not.toHaveBeenCalled();
     });
 
     it('throws not found if species does not exist', async () => {
@@ -67,9 +68,6 @@ describe('plantingService', () => {
       expect(mockPlantingRepository.create).not.toHaveBeenCalled();
     });
 
-    it('throws error with invalid data', async () => {
-      await expect(plantingService.create({}, 'user-123')).rejects.toThrow();
-    });
   });
 
   describe('getAll', () => {
@@ -117,7 +115,7 @@ describe('plantingService', () => {
     });
 
     it('throws not found if planting does not exist', async () => {
-      mockPlantingRepository.findById.mockResolvedValue(null);
+      mockPlantingRepository.updatePhotoUrl.mockResolvedValue(null);
 
       await expect(plantingService.updatePhotoUrl(999, 'url')).rejects.toThrow();
     });
@@ -146,10 +144,9 @@ describe('plantingService', () => {
     };
 
     it('syncs a complete batch successfully', async () => {
-      mockZoneRepository.findById.mockResolvedValue({ id: 1, name: 'Zona Norte' });
-      mockSpeciesRepository.findById.mockResolvedValue({ id: 1, common_name: 'Cedro' });
+      mockZoneRepository.findByIds.mockResolvedValue([{ id: 1, name: 'Zona Norte' }]);
+      mockSpeciesRepository.findByIds.mockResolvedValue([{ id: 1, common_name: 'Cedro' }]);
       mockPlantingRepository.isPointInZone.mockResolvedValue(true);
-      mockPlantingRepository.findByConflictKey.mockResolvedValue(null);
       mockPlantingRepository.create.mockResolvedValue({ id: 10, ...validItem });
 
       const results = await plantingService.syncBatch([validItem], 'user-123');
@@ -157,11 +154,12 @@ describe('plantingService', () => {
       expect(results[0].status).toBe('success');
     });
 
-    it('resolves conflicts with last writer wins', async () => {
-      mockZoneRepository.findById.mockResolvedValue({ id: 1, name: 'Zona Norte' });
-      mockSpeciesRepository.findById.mockResolvedValue({ id: 1, common_name: 'Cedro' });
+    it('resolves conflicts with last writer wins (atomic upsert)', async () => {
+      mockZoneRepository.findByIds.mockResolvedValue([{ id: 1, name: 'Zona Norte' }]);
+      mockSpeciesRepository.findByIds.mockResolvedValue([{ id: 1, common_name: 'Cedro' }]);
       mockPlantingRepository.isPointInZone.mockResolvedValue(true);
-      mockPlantingRepository.findByConflictKey.mockResolvedValue({ id: 5 });
+      mockPlantingRepository.create.mockRejectedValue({ code: '23505' });
+      mockPlantingRepository.findByConflictKey.mockResolvedValue({ id: 5, planted_by: 'user-123' });
       mockPlantingRepository.update.mockResolvedValue({ id: 5, ...validItem });
 
       const results = await plantingService.syncBatch([validItem], 'user-123');
@@ -170,8 +168,20 @@ describe('plantingService', () => {
       expect(results[0].data.id).toBe(5);
     });
 
+    it('reports error if conflicting record belongs to another user', async () => {
+      mockZoneRepository.findByIds.mockResolvedValue([{ id: 1, name: 'Zona Norte' }]);
+      mockSpeciesRepository.findByIds.mockResolvedValue([{ id: 1, common_name: 'Cedro' }]);
+      mockPlantingRepository.isPointInZone.mockResolvedValue(true);
+      mockPlantingRepository.create.mockRejectedValue({ code: '23505' });
+      mockPlantingRepository.findByConflictKey.mockResolvedValue({ id: 5, planted_by: 'other-user' });
+
+      const results = await plantingService.syncBatch([validItem], 'user-123');
+      expect(results[0].status).toBe('error');
+      expect(results[0].error).toContain('El registro en conflicto pertenece a otro usuario');
+    });
+
     it('reports error if zone does not exist in batch', async () => {
-      mockZoneRepository.findById.mockResolvedValue(undefined);
+      mockZoneRepository.findByIds.mockResolvedValue([]);
 
       const results = await plantingService.syncBatch([validItem], 'user-123');
       expect(results[0].status).toBe('error');
@@ -179,8 +189,8 @@ describe('plantingService', () => {
     });
 
     it('reports error if species does not exist in batch', async () => {
-      mockZoneRepository.findById.mockResolvedValue({ id: 1, name: 'Zona Norte' });
-      mockSpeciesRepository.findById.mockResolvedValue(undefined);
+      mockZoneRepository.findByIds.mockResolvedValue([{ id: 1, name: 'Zona Norte' }]);
+      mockSpeciesRepository.findByIds.mockResolvedValue([]);
 
       const results = await plantingService.syncBatch([validItem], 'user-123');
       expect(results[0].status).toBe('error');
@@ -188,8 +198,8 @@ describe('plantingService', () => {
     });
 
     it('reports error if point is outside zone in batch', async () => {
-      mockZoneRepository.findById.mockResolvedValue({ id: 1, name: 'Zona Norte' });
-      mockSpeciesRepository.findById.mockResolvedValue({ id: 1, common_name: 'Cedro' });
+      mockZoneRepository.findByIds.mockResolvedValue([{ id: 1, name: 'Zona Norte' }]);
+      mockSpeciesRepository.findByIds.mockResolvedValue([{ id: 1, common_name: 'Cedro' }]);
       mockPlantingRepository.isPointInZone.mockResolvedValue(false);
 
       const results = await plantingService.syncBatch([validItem], 'user-123');
@@ -198,13 +208,9 @@ describe('plantingService', () => {
     });
 
     it('processes a batch with valid and invalid items', async () => {
-      mockZoneRepository.findById.mockImplementation(async (id) => {
-        if (id === 1) return { id: 1, name: 'Zona Norte' };
-        return undefined;
-      });
-      mockSpeciesRepository.findById.mockResolvedValue({ id: 1, common_name: 'Cedro' });
+      mockZoneRepository.findByIds.mockResolvedValue([{ id: 1, name: 'Zona Norte' }]);
+      mockSpeciesRepository.findByIds.mockResolvedValue([{ id: 1, common_name: 'Cedro' }]);
       mockPlantingRepository.isPointInZone.mockResolvedValue(true);
-      mockPlantingRepository.findByConflictKey.mockResolvedValue(null);
       mockPlantingRepository.create.mockResolvedValue({ id: 10 });
 
       const items = [validItem, { ...validItem, zone_id: 999 }, validItem];
@@ -215,15 +221,26 @@ describe('plantingService', () => {
       expect(results[2].status).toBe('success');
     });
 
+    it('handles non-unique-violation error during create', async () => {
+      mockZoneRepository.findByIds.mockResolvedValue([{ id: 1, name: 'Zona Norte' }]);
+      mockSpeciesRepository.findByIds.mockResolvedValue([{ id: 1, common_name: 'Cedro' }]);
+      mockPlantingRepository.isPointInZone.mockResolvedValue(true);
+      mockPlantingRepository.create.mockRejectedValue(new Error('DB constraint error'));
+
+      const results = await plantingService.syncBatch([validItem], 'user-123');
+      expect(results[0].status).toBe('error');
+      expect(results[0].error).toContain('DB constraint error');
+    });
+
     it('handles pre-fetch errors', async () => {
-      mockZoneRepository.findById.mockRejectedValue(new Error('DB crash'));
+      mockZoneRepository.findByIds.mockRejectedValue(new Error('DB crash'));
 
       await expect(plantingService.syncBatch([validItem], 'user-123')).rejects.toThrow('DB crash');
     });
 
     it('catches unexpected errors thrown during item processing', async () => {
-      mockZoneRepository.findById.mockResolvedValue({ id: 1, name: 'Zona Norte' });
-      mockSpeciesRepository.findById.mockResolvedValue({ id: 1, common_name: 'Cedro' });
+      mockZoneRepository.findByIds.mockResolvedValue([{ id: 1, name: 'Zona Norte' }]);
+      mockSpeciesRepository.findByIds.mockResolvedValue([{ id: 1, common_name: 'Cedro' }]);
       mockPlantingRepository.isPointInZone.mockRejectedValue(new Error('DB connection lost'));
 
       const results = await plantingService.syncBatch([validItem], 'user-123');
@@ -232,8 +249,8 @@ describe('plantingService', () => {
     });
 
     it('uses fallback message when error has no message property', async () => {
-      mockZoneRepository.findById.mockResolvedValue({ id: 1, name: 'Zona Norte' });
-      mockSpeciesRepository.findById.mockResolvedValue({ id: 1, common_name: 'Cedro' });
+      mockZoneRepository.findByIds.mockResolvedValue([{ id: 1, name: 'Zona Norte' }]);
+      mockSpeciesRepository.findByIds.mockResolvedValue([{ id: 1, common_name: 'Cedro' }]);
       mockPlantingRepository.isPointInZone.mockRejectedValue({ code: 500 });
 
       const results = await plantingService.syncBatch([validItem], 'user-123');
@@ -242,6 +259,9 @@ describe('plantingService', () => {
     });
 
     it('handles rejected promise via allSettled fallback', async () => {
+      mockZoneRepository.findByIds.mockResolvedValue([{ id: 1, name: 'Zona Norte' }]);
+      mockSpeciesRepository.findByIds.mockResolvedValue([{ id: 1, common_name: 'Cedro' }]);
+
       const allSettledSpy = vi.spyOn(Promise, 'allSettled');
       allSettledSpy.mockResolvedValueOnce([
         { status: 'rejected', reason: new Error('Unexpected') },

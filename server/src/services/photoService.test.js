@@ -6,6 +6,7 @@ const proxyquire = cjsRequire('proxyquire').noPreserveCache();
 const mockStorageBucket = {
   upload: vi.fn(),
   getPublicUrl: vi.fn(() => ({ data: { publicUrl: 'https://example.com/photo.jpg' } })),
+  remove: vi.fn(),
 };
 
 const mockSupabaseClient = {
@@ -70,11 +71,12 @@ describe('photoService', () => {
       buffer: Buffer.from('fake-image-data'),
     };
 
-    it('uploads photo and returns public url', async () => {
+    it('uploads photo and returns publicUrl and filePath', async () => {
       mockStorageBucket.upload.mockResolvedValue({ data: {}, error: null });
 
       const result = await photoService.uploadPhoto(1, mockFile);
-      expect(result).toBe('https://example.com/photo.jpg');
+      expect(result.publicUrl).toBe('https://example.com/photo.jpg');
+      expect(result.filePath).toMatch(/^plantings\/1\//);
       expect(mockStorageBucket.upload).toHaveBeenCalledTimes(1);
     });
 
@@ -98,6 +100,22 @@ describe('photoService', () => {
       mockStorageBucket.upload.mockResolvedValue({ data: null, error: new Error('Storage full') });
 
       await expect(photoService.uploadPhoto(1, mockFile)).rejects.toThrow();
+    });
+  });
+
+  describe('deletePhoto', () => {
+    it('deletes a photo by filePath', async () => {
+      mockStorageBucket.remove.mockResolvedValue({ data: {}, error: null });
+
+      await photoService.deletePhoto('plantings/1/photo.jpg');
+
+      expect(mockStorageBucket.remove).toHaveBeenCalledWith(['plantings/1/photo.jpg']);
+    });
+
+    it('throws on remove error', async () => {
+      mockStorageBucket.remove.mockResolvedValue({ data: null, error: new Error('Remove failed') });
+
+      await expect(photoService.deletePhoto('plantings/1/photo.jpg')).rejects.toThrow('Error al limpiar la foto anterior');
     });
   });
 });

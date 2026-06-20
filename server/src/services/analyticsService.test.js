@@ -31,9 +31,9 @@ describe('analyticsService', () => {
 
     it('groups by month when interval is month', async () => {
       mockRepository.getHeatmapData.mockResolvedValue([
-        { lat: -0.229, lng: -78.524, planted_at: '2026-01-15', weight: 0, survival_status: 'alive' },
-        { lat: -0.230, lng: -78.525, planted_at: '2026-02-10', weight: 1, survival_status: 'dead' },
-        { lat: -0.231, lng: -78.526, planted_at: '2026-02-20', weight: 0.5, survival_status: 'struggling' },
+        { lat: -0.229, lng: -78.524, planted_at: '2026-01-15', weight: 0, survival_status: 'alive', period_label: '2026-01' },
+        { lat: -0.230, lng: -78.525, planted_at: '2026-02-10', weight: 1, survival_status: 'dead', period_label: '2026-02' },
+        { lat: -0.231, lng: -78.526, planted_at: '2026-02-20', weight: 0.5, survival_status: 'struggling', period_label: '2026-02' },
       ]);
 
       const result = await analyticsService.getHeatmap({ interval: 'month' });
@@ -47,8 +47,8 @@ describe('analyticsService', () => {
 
     it('groups by quarter when interval is quarter', async () => {
       mockRepository.getHeatmapData.mockResolvedValue([
-        { lat: -0.229, lng: -78.524, planted_at: '2026-02-15', weight: 0, survival_status: 'alive' },
-        { lat: -0.230, lng: -78.525, planted_at: '2026-05-10', weight: 1, survival_status: 'dead' },
+        { lat: -0.229, lng: -78.524, planted_at: '2026-02-15', weight: 0, survival_status: 'alive', period_label: '2026-Q1' },
+        { lat: -0.230, lng: -78.525, planted_at: '2026-05-10', weight: 1, survival_status: 'dead', period_label: '2026-Q2' },
       ]);
 
       const result = await analyticsService.getHeatmap({ interval: 'quarter' });
@@ -60,8 +60,8 @@ describe('analyticsService', () => {
 
     it('groups by year when interval is year', async () => {
       mockRepository.getHeatmapData.mockResolvedValue([
-        { lat: -0.229, lng: -78.524, planted_at: '2025-06-15', weight: 0, survival_status: 'alive' },
-        { lat: -0.230, lng: -78.525, planted_at: '2026-03-10', weight: 1, survival_status: 'dead' },
+        { lat: -0.229, lng: -78.524, planted_at: '2025-06-15', weight: 0, survival_status: 'alive', period_label: '2025' },
+        { lat: -0.230, lng: -78.525, planted_at: '2026-03-10', weight: 1, survival_status: 'dead', period_label: '2026' },
       ]);
 
       const result = await analyticsService.getHeatmap({ interval: 'year' });
@@ -85,9 +85,9 @@ describe('analyticsService', () => {
 
     it('sorts periods chronologically', async () => {
       mockRepository.getHeatmapData.mockResolvedValue([
-        { lat: -0.229, lng: -78.524, planted_at: '2026-03-01', weight: 1, survival_status: 'dead' },
-        { lat: -0.230, lng: -78.525, planted_at: '2026-01-01', weight: 0, survival_status: 'alive' },
-        { lat: -0.231, lng: -78.526, planted_at: '2026-02-01', weight: 0.5, survival_status: 'struggling' },
+        { lat: -0.229, lng: -78.524, planted_at: '2026-03-01', weight: 1, survival_status: 'dead', period_label: '2026-03' },
+        { lat: -0.230, lng: -78.525, planted_at: '2026-01-01', weight: 0, survival_status: 'alive', period_label: '2026-01' },
+        { lat: -0.231, lng: -78.526, planted_at: '2026-02-01', weight: 0.5, survival_status: 'struggling', period_label: '2026-02' },
       ]);
 
       const result = await analyticsService.getHeatmap({ interval: 'month' });
@@ -99,8 +99,8 @@ describe('analyticsService', () => {
 
     it('returns a single period if all points are from the same month', async () => {
       mockRepository.getHeatmapData.mockResolvedValue([
-        { lat: -0.229, lng: -78.524, planted_at: '2026-06-01', weight: 0, survival_status: 'alive' },
-        { lat: -0.230, lng: -78.525, planted_at: '2026-06-15', weight: 1, survival_status: 'dead' },
+        { lat: -0.229, lng: -78.524, planted_at: '2026-06-01', weight: 0, survival_status: 'alive', period_label: '2026-06' },
+        { lat: -0.230, lng: -78.525, planted_at: '2026-06-15', weight: 1, survival_status: 'dead', period_label: '2026-06' },
       ]);
 
       const result = await analyticsService.getHeatmap({ interval: 'month' });

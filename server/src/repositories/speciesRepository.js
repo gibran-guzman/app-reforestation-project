@@ -1,4 +1,8 @@
 const db = require('../config/db');
+const { MAX_LIST_LIMIT } = require('../config/constants');
+const MemoryCache = require('../utils/memoryCache');
+
+const listCache = new MemoryCache();
 
 const columns = ['id', 'scientific_name', 'common_name', 'description', 'ideal_soil_type', 'recommended_altitude_min', 'recommended_altitude_max', 'created_at'];
 
@@ -8,11 +12,24 @@ const create = async (data) => {
     VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
     [data.scientific_name, data.common_name, data.description, data.ideal_soil_type, data.recommended_altitude_min, data.recommended_altitude_max]
   );
+  listCache.invalidate('all');
   return result.rows[0];
 };
 
 const findAll = async () => {
-  const result = await db.query(`SELECT ${columns.join(', ')} FROM species ORDER BY scientific_name`);
+  const cached = listCache.get('all');
+  if (cached) return cached;
+  const result = await db.query(`SELECT ${columns.join(', ')} FROM species ORDER BY scientific_name LIMIT ${MAX_LIST_LIMIT}`);
+  listCache.set('all', result.rows);
+  return result.rows;
+};
+
+const findByIds = async (ids) => {
+  if (!ids || ids.length === 0) return [];
+  const result = await db.query(
+    `SELECT ${columns.join(', ')} FROM species WHERE id IN (${ids.map((_, i) => `$${i + 1}`).join(',')})`,
+    ids
+  );
   return result.rows;
 };
 
@@ -39,12 +56,14 @@ const update = async (id, data) => {
   const result = await db.query(`
     UPDATE species SET ${sets.join(', ')} WHERE id = $${i}
     RETURNING ${columns.join(', ')}`, values);
+  listCache.invalidate('all');
   return result.rows[0] || null;
 };
 
 const remove = async (id) => {
   const result = await db.query('DELETE FROM species WHERE id = $1 RETURNING id', [id]);
+  listCache.invalidate('all');
   return result.rows[0] || null;
 };
 
-module.exports = { create, findAll, findById, update, remove };
+module.exports = { create, findAll, findByIds, findById, update, remove };

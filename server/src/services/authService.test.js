@@ -73,9 +73,21 @@ describe('authService.signup', () => {
     expect(mockSupabaseClient.auth.admin.deleteUser).toHaveBeenCalledWith('user-456');
   });
 
-  it('throws validation error with invalid data', async () => {
-    await expect(authService.signup({})).rejects.toThrow();
+  it('handles deleteUser failure gracefully during rollback', async () => {
+    mockSupabaseClient.auth.admin.createUser.mockResolvedValue({
+      data: { user: { id: 'user-789' } },
+      error: null,
+    });
+    mockDb.query.mockRejectedValue(new Error('db error'));
+    mockSupabaseClient.auth.admin.deleteUser.mockRejectedValue(new Error('cleanup failed'));
+
+    await expect(authService.signup({
+      email: 'cleanup@example.com',
+      password: 'SecurePass1',
+      full_name: 'Cleanup Test',
+    })).rejects.toThrow('db error');
   });
+
 });
 
 describe('authService.login', () => {
@@ -128,22 +140,21 @@ describe('authService.login', () => {
     }
   });
 
-  it('throws validation error if fields are missing', async () => {
-    await expect(authService.login({})).rejects.toThrow();
-  });
-
-  it('throws the raw authError if signup error is not "already registered"', async () => {
+  it('throws a generic AppError if signup error is not "already registered"', async () => {
     const rawError = new Error('Some other auth error');
     mockSupabaseClient.auth.admin.createUser.mockResolvedValue({
       data: { user: null },
       error: rawError,
     });
 
-    await expect(authService.signup({
+    const err = await authService.signup({
       email: 'test@example.com',
       password: 'SecurePass1',
       full_name: 'Test User',
-    })).rejects.toThrow('Some other auth error');
+    }).catch((e) => e);
+
+    expect(err.status).toBe(500);
+    expect(err.message).toBe('Error al registrar el usuario. Intenta de nuevo.');
   });
 });
 
@@ -152,16 +163,19 @@ describe('authService.login - non-specific errors', () => {
     vi.clearAllMocks();
   });
 
-  it('throws the raw error if login error is not "Invalid login credentials"', async () => {
+  it('throws a generic AppError if login error is not "Invalid login credentials"', async () => {
     const rawError = new Error('Some other login error');
     mockSupabaseClient.auth.signInWithPassword.mockResolvedValue({
       data: { user: null, session: null },
       error: rawError,
     });
 
-    await expect(authService.login({
+    const err = await authService.login({
       email: 'test@example.com',
       password: 'SecurePass1',
-    })).rejects.toThrow('Some other login error');
+    }).catch((e) => e);
+
+    expect(err.status).toBe(500);
+    expect(err.message).toBe('Error al iniciar sesión. Intenta de nuevo.');
   });
 });

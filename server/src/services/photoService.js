@@ -1,9 +1,8 @@
 const crypto = require('node:crypto');
 const supabase = require('../config/supabase');
 const logger = require('../utils/logger');
-const { AppError } = require('../errors/AppError');
-
-const BUCKET = 'planting-photos';
+const { PhotoUploadError } = require('../errors/AppError');
+const { PHOTO_BUCKET: BUCKET } = require('../config/constants');
 
 const ensureBucket = async () => {
   const { data: buckets } = await supabase.storage.listBuckets();
@@ -14,7 +13,7 @@ const ensureBucket = async () => {
     });
     if (error) {
       logger.error({ error }, 'Error al crear el bucket de almacenamiento');
-      throw new AppError('Error al inicializar almacenamiento de fotos', 500);
+      throw new PhotoUploadError('Error al inicializar almacenamiento de fotos');
     }
     logger.info({ bucket: BUCKET }, 'Bucket de almacenamiento creado');
   }
@@ -35,7 +34,7 @@ const uploadPhoto = async (plantingId, file) => {
 
   if (uploadError) {
     logger.error({ error: uploadError, plantingId }, 'Error al subir foto a Supabase Storage');
-    throw new AppError('Error al subir la foto', 500);
+    throw new PhotoUploadError('Error al subir la foto');
   }
 
   const { data: publicUrl } = supabase.storage
@@ -43,7 +42,15 @@ const uploadPhoto = async (plantingId, file) => {
     .getPublicUrl(filePath);
 
   logger.info({ plantingId, filePath }, 'Foto subida exitosamente');
-  return publicUrl.publicUrl;
+  return { publicUrl: publicUrl.publicUrl, filePath };
 };
 
-module.exports = { ensureBucket, uploadPhoto };
+const deletePhoto = async (filePath) => {
+  const { error } = await supabase.storage.from(BUCKET).remove([filePath]);
+  if (error) {
+    logger.error({ error, filePath }, 'Error al limpiar foto huérfana');
+    throw new PhotoUploadError('Error al limpiar la foto anterior');
+  }
+};
+
+module.exports = { ensureBucket, uploadPhoto, deletePhoto };

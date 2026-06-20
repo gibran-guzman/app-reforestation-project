@@ -1,6 +1,12 @@
 const db = require('../config/db');
+const { MAX_LIST_LIMIT } = require('../config/constants');
+const MemoryCache = require('../utils/memoryCache');
+
+const listCache = new MemoryCache();
 
 const findAll = async () => {
+  const cached = listCache.get('all');
+  if (cached) return cached;
   const result = await db.query(`
     SELECT
       id,
@@ -11,7 +17,18 @@ const findAll = async () => {
       updated_at
     FROM intervention_zones
     ORDER BY name
+    LIMIT ${MAX_LIST_LIMIT}
   `);
+  listCache.set('all', result.rows);
+  return result.rows;
+};
+
+const findByIds = async (ids) => {
+  if (!ids || ids.length === 0) return [];
+  const result = await db.query(
+    `SELECT * FROM intervention_zones WHERE id IN (${ids.map((_, i) => `$${i + 1}`).join(',')})`,
+    ids
+  );
   return result.rows;
 };
 
@@ -48,6 +65,7 @@ const create = async (data) => {
     VALUES ($1, $2, ST_GeomFromGeoJSON($3))
     RETURNING id, name, description, ST_AsGeoJSON(geometry)::jsonb AS geometry, created_at, updated_at
   `, [data.name, data.description, JSON.stringify(geometry)]);
+  listCache.invalidate('all');
   return result.rows[0];
 };
 
@@ -80,6 +98,7 @@ const update = async (id, data) => {
     WHERE id = $${paramIndex}
     RETURNING id, name, description, ST_AsGeoJSON(geometry)::jsonb AS geometry, created_at, updated_at
   `, values);
+  listCache.invalidate('all');
   return result.rows[0] || null;
 };
 
@@ -88,7 +107,8 @@ const remove = async (id) => {
     DELETE FROM intervention_zones WHERE id = $1
     RETURNING id
   `, [id]);
+  listCache.invalidate('all');
   return result.rows[0] || null;
 };
 
-module.exports = { findAll, findById, create, update, remove };
+module.exports = { findAll, findByIds, findById, create, update, remove };

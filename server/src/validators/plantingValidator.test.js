@@ -51,6 +51,21 @@ describe('validateCreatePlanting', () => {
     expect(result.planted_at).toBeDefined();
   });
 
+  it('defaults initial_ph to null when not provided', () => {
+    const result = validateCreatePlanting({ ...validData, initial_ph: undefined });
+    expect(result.initial_ph).toBeNull();
+  });
+
+  it('defaults initial_humidity to null when not provided', () => {
+    const result = validateCreatePlanting({ ...validData, initial_humidity: undefined });
+    expect(result.initial_humidity).toBeNull();
+  });
+
+  it('defaults initial_soil_texture to null when not provided', () => {
+    const result = validateCreatePlanting({ ...validData, initial_soil_texture: undefined });
+    expect(result.initial_soil_texture).toBeNull();
+  });
+
   it('throws on zone_id = 0 (falsy)', () => {
     expect(() => validateCreatePlanting({ ...validData, zone_id: 0 })).toThrow(ValidationError);
   });

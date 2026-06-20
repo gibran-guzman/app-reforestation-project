@@ -1,24 +1,19 @@
-const { validateCreateSpecies, validateUpdateSpecies } = require('../validators/speciesValidator');
 const speciesRepository = require('../repositories/speciesRepository');
 const { ConflictError, ValidationError, NotFoundError } = require('../errors/AppError');
+const pgCodes = require('../errors/pgCodes');
 const logger = require('../utils/logger');
 
 const createSpecies = async (body) => {
-  const validatedData = validateCreateSpecies(body);
-
   try {
-    const species = await speciesRepository.create(validatedData);
+    const species = await speciesRepository.create(body);
     logger.info({ species_id: species.id, scientific_name: species.scientific_name }, 'Species registered');
-    return {
-      message: 'Especie registrada correctamente',
-      data: species,
-    };
+    return species;
   } catch (error) {
-    if (error.code === '23505') {
+    if (error.code === pgCodes.UNIQUE_VIOLATION) {
       throw new ConflictError('Ya existe una especie con este nombre científico');
     }
-    if (error.code === '23502') {
-      throw new ValidationError([{ field: error.column, message: `Field ${error.column} cannot be null` }]);
+    if (error.code === pgCodes.NOT_NULL_VIOLATION) {
+      throw new ValidationError([{ field: error.column, message: `El campo ${error.column} no puede estar vacío` }]);
     }
     throw error;
   }
@@ -35,16 +30,26 @@ const getById = async (id) => {
 };
 
 const update = async (id, body) => {
-  await getById(id);
-  const validatedData = validateUpdateSpecies(body);
-  const updated = await speciesRepository.update(id, validatedData);
-  logger.info({ species_id: id }, 'Species updated');
-  return updated;
+  try {
+    const updated = await speciesRepository.update(id, body);
+    if (!updated) throw new NotFoundError('Especie no encontrada');
+    logger.info({ species_id: id }, 'Species updated');
+    return updated;
+  } catch (error) {
+    if (error instanceof NotFoundError) throw error;
+    if (error.code === pgCodes.UNIQUE_VIOLATION) {
+      throw new ConflictError('Ya existe una especie con este nombre científico');
+    }
+    if (error.code === pgCodes.NOT_NULL_VIOLATION) {
+      throw new ValidationError([{ field: error.column, message: `El campo ${error.column} no puede estar vacío` }]);
+    }
+    throw error;
+  }
 };
 
 const remove = async (id) => {
-  await getById(id);
-  await speciesRepository.remove(id);
+  const deleted = await speciesRepository.remove(id);
+  if (!deleted) throw new NotFoundError('Especie no encontrada');
   logger.info({ species_id: id }, 'Species deleted');
 };
 

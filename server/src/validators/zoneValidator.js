@@ -5,35 +5,35 @@ const validateCreateZone = (data) => {
   const { name, description, geometry } = data || {};
 
   if (!name || typeof name !== 'string' || name.trim().length === 0) {
-    errors.push({ field: 'name', message: 'Zone name is required and must be a non-empty string' });
+    errors.push({ field: 'name', message: 'El nombre de la zona es requerido y debe ser un texto no vacío' });
   } else if (name.length > 255) {
-    errors.push({ field: 'name', message: 'Zone name must not exceed 255 characters' });
+    errors.push({ field: 'name', message: 'El nombre de la zona no debe exceder 255 caracteres' });
   }
 
   if (description !== undefined && description !== null && description !== '') {
     if (typeof description !== 'string') {
-      errors.push({ field: 'description', message: 'Description must be a string' });
+      errors.push({ field: 'description', message: 'La descripción debe ser un texto' });
     } else if (description.length > 2000) {
-      errors.push({ field: 'description', message: 'Description must not exceed 2000 characters' });
+      errors.push({ field: 'description', message: 'La descripción no debe exceder 2000 caracteres' });
     }
   }
 
   if (geometry !== undefined) {
     if (typeof geometry !== 'object') {
-      errors.push({ field: 'geometry', message: 'Geometry must be a valid GeoJSON Polygon' });
+      errors.push({ field: 'geometry', message: 'La geometría debe ser un GeoJSON Polygon válido' });
     } else if (geometry.type !== 'Polygon') {
-      errors.push({ field: 'geometry.type', message: 'Geometry type must be "Polygon"' });
+      errors.push({ field: 'geometry.type', message: 'El tipo de geometría debe ser "Polygon"' });
     } else if (!Array.isArray(geometry.coordinates) || geometry.coordinates.length === 0) {
-      errors.push({ field: 'geometry.coordinates', message: 'Geometry coordinates are required' });
+      errors.push({ field: 'geometry.coordinates', message: 'Las coordenadas de la geometría son requeridas' });
     } else {
       const ring = geometry.coordinates[0];
       if (!Array.isArray(ring) || ring.length < 4) {
-        errors.push({ field: 'geometry.coordinates', message: 'Polygon must have at least 4 coordinate pairs (first and last must match)' });
+        errors.push({ field: 'geometry.coordinates', message: 'El polígono debe tener al menos 4 pares de coordenadas (el primero y el último deben coincidir)' });
       } else {
         const first = ring[0];
         const last = ring[ring.length - 1];
         if (first[0] !== last[0] || first[1] !== last[1]) {
-          errors.push({ field: 'geometry.coordinates', message: 'Polygon ring must be closed (first and last coordinates must match)' });
+          errors.push({ field: 'geometry.coordinates', message: 'El anillo del polígono debe estar cerrado (la primera y última coordenada deben coincidir)' });
         }
       }
     }
@@ -55,23 +55,23 @@ const validateUpdateZone = (data) => {
 
   if (data.name !== undefined) {
     if (typeof data.name !== 'string' || data.name.trim().length === 0) {
-      errors.push({ field: 'name', message: 'Zone name must be a non-empty string' });
+      errors.push({ field: 'name', message: 'El nombre de la zona debe ser un texto no vacío' });
     } else if (data.name.length > 255) {
-      errors.push({ field: 'name', message: 'Zone name must not exceed 255 characters' });
+      errors.push({ field: 'name', message: 'El nombre de la zona no debe exceder 255 caracteres' });
     }
   }
 
   if (data.description !== undefined && data.description !== null && data.description !== '') {
     if (typeof data.description !== 'string') {
-      errors.push({ field: 'description', message: 'Description must be a string' });
+      errors.push({ field: 'description', message: 'La descripción debe ser un texto' });
     } else if (data.description.length > 2000) {
-      errors.push({ field: 'description', message: 'Description must not exceed 2000 characters' });
+      errors.push({ field: 'description', message: 'La descripción no debe exceder 2000 caracteres' });
     }
   }
 
   if (data.geometry !== undefined) {
     if (typeof data.geometry !== 'object' || data.geometry.type !== 'Polygon') {
-      errors.push({ field: 'geometry', message: 'Geometry must be a valid GeoJSON Polygon' });
+      errors.push({ field: 'geometry', message: 'La geometría debe ser un GeoJSON Polygon válido' });
     }
   }
 

@@ -26,4 +26,22 @@ class NotFoundError extends AppError {
   }
 }
 
-module.exports = { AppError, ValidationError, ConflictError, NotFoundError };
+class RollbackError extends AppError {
+  constructor(message = 'Error durante la limpieza de la operación anterior') {
+    super(message, 500);
+  }
+}
+
+class PhotoUploadError extends AppError {
+  constructor(message = 'Error al subir la foto') {
+    super(message, 500);
+  }
+}
+
+class ConflictResolutionError extends AppError {
+  constructor(message) {
+    super(message, 409);
+  }
+}
+
+module.exports = { AppError, ValidationError, ConflictError, NotFoundError, RollbackError, PhotoUploadError, ConflictResolutionError };

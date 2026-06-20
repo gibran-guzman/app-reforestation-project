@@ -91,4 +91,14 @@ describe('errorHandler middleware', () => {
 
     expect(res.status).toHaveBeenCalledWith(500);
   });
+
+  it('maps postgres 22P02 to 400 Bad Request', () => {
+    const err = new Error('Invalid input syntax');
+    err.code = '22P02';
+
+    errorHandler(err, req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({ error: 'Parámetro de consulta inválido' });
+  });
 });

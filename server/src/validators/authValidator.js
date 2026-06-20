@@ -1,6 +1,5 @@
 const { ValidationError } = require('../errors/AppError');
-
-const ALLOWED_ROLES = ['admin', 'technician'];
+const { ALLOWED_ROLES } = require('../config/constants');
 
 const validateSignup = (data) => {
   const errors = [];
@@ -25,9 +24,9 @@ const validateSignup = (data) => {
   }
 
   return {
-    email,
+    email: email.trim(),
     password,
-    full_name,
+    full_name: full_name.trim(),
     role: ALLOWED_ROLES.includes(role) ? role : 'technician',
   };
 };
@@ -48,7 +47,7 @@ const validateLogin = (data) => {
     throw new ValidationError(errors);
   }
 
-  return { email, password };
+  return { email: email.trim(), password };
 };
 
 module.exports = { validateSignup, validateLogin };

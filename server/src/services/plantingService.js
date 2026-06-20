@@ -1,27 +1,29 @@
 const plantingRepository = require('../repositories/plantingRepository');
 const speciesRepository = require('../repositories/speciesRepository');
 const zoneRepository = require('../repositories/zoneRepository');
-const { validateCreatePlanting } = require('../validators/plantingValidator');
 const { NotFoundError, ValidationError } = require('../errors/AppError');
+const pgCodes = require('../errors/pgCodes');
 const logger = require('../utils/logger');
+const { CONCURRENCY_LIMIT } = require('../config/constants');
 
 const create = async (body, userId) => {
-  const validatedData = validateCreatePlanting(body);
+  const [zone, species] = await Promise.all([
+    zoneRepository.findById(body.zone_id),
+    speciesRepository.findById(body.species_id),
+  ]);
 
-  const zone = await zoneRepository.findById(validatedData.zone_id);
   if (!zone) {
     throw new NotFoundError('Zona de intervención no encontrada');
   }
 
-  const species = await speciesRepository.findById(validatedData.species_id);
   if (!species) {
     throw new NotFoundError('Especie no encontrada');
   }
 
   const inside = await plantingRepository.isPointInZone(
-    validatedData.location.lat,
-    validatedData.location.lng,
-    validatedData.zone_id,
+    body.location.lat,
+    body.location.lng,
+    body.zone_id,
   );
   if (!inside) {
     throw new ValidationError([
@@ -30,7 +32,7 @@ const create = async (body, userId) => {
   }
 
   const planting = await plantingRepository.create({
-    ...validatedData,
+    ...body,
     planted_by: userId,
   });
 
@@ -38,75 +40,89 @@ const create = async (body, userId) => {
   return planting;
 };
 
+const processItem = async (item, i, zoneMap, speciesMap, userId) => {
+  try {
+    const zone = zoneMap.get(item.zone_id);
+    if (!zone) {
+      return { index: i, status: 'error', error: 'Zona de intervención no encontrada' };
+    }
+
+    const species = speciesMap.get(item.species_id);
+    if (!species) {
+      return { index: i, status: 'error', error: 'Especie no encontrada' };
+    }
+
+    const inside = await plantingRepository.isPointInZone(
+      item.location.lat,
+      item.location.lng,
+      item.zone_id,
+    );
+    if (!inside) {
+      return { index: i, status: 'error', error: 'Las coordenadas no están dentro de la zona de intervención' };
+    }
+
+    try {
+      const planting = await plantingRepository.create({ ...item, planted_by: userId });
+      logger.info({ planting_id: planting.id }, 'Planting created via sync');
+      return { index: i, status: 'success', data: planting };
+    } catch (err) {
+      if (err.code === pgCodes.UNIQUE_VIOLATION) {
+        const existing = await plantingRepository.findByConflictKey(
+          item.zone_id,
+          item.species_id,
+          item.planted_at,
+          userId,
+        );
+        if (!existing || existing.planted_by !== userId) {
+          return { index: i, status: 'error', error: 'El registro en conflicto pertenece a otro usuario' };
+        }
+        const updated = await plantingRepository.update(existing.id, { ...item });
+        logger.info({ planting_id: updated.id }, 'Planting updated via sync (last writer wins)');
+        return { index: i, status: 'success', data: updated, conflict: 'resolved' };
+      }
+      throw err;
+    }
+  } catch (error) {
+    return {
+      index: i,
+      status: 'error',
+      error: error?.message || (typeof error === 'string' ? error : 'Error al procesar el registro'),
+    };
+  }
+};
+
 const syncBatch = async (items, userId) => {
   const uniqueZoneIds = [...new Set(items.map((i) => i.zone_id).filter(Boolean))];
   const uniqueSpeciesIds = [...new Set(items.map((i) => i.species_id).filter(Boolean))];
 
   const [allZones, allSpecies] = await Promise.all([
-    Promise.all(uniqueZoneIds.map((id) => zoneRepository.findById(id))),
-    Promise.all(uniqueSpeciesIds.map((id) => speciesRepository.findById(id))),
+    zoneRepository.findByIds(uniqueZoneIds),
+    speciesRepository.findByIds(uniqueSpeciesIds),
   ]);
 
-  const zoneMap = new Map(allZones.filter(Boolean).map((z) => [z.id, z]));
-  const speciesMap = new Map(allSpecies.filter(Boolean).map((s) => [s.id, s]));
+  const zoneMap = new Map((allZones || []).map((z) => [z.id, z]));
+  const speciesMap = new Map((allSpecies || []).map((s) => [s.id, s]));
 
   const results = [];
-  const pending = items.map(async (item, i) => {
-    try {
-      const validatedData = validateCreatePlanting(item);
 
-      const zone = zoneMap.get(validatedData.zone_id);
-      if (!zone) {
-        return { index: i, status: 'error', error: 'Zona de intervención no encontrada' };
-      }
+  for (let start = 0; start < items.length; start += CONCURRENCY_LIMIT) {
+    const chunk = items.slice(start, start + CONCURRENCY_LIMIT);
+    const settled = await Promise.allSettled(
+      chunk.map((item, offset) => {
+        const index = start + offset;
+        return processItem(item, index, zoneMap, speciesMap, userId);
+      })
+    );
 
-      const species = speciesMap.get(validatedData.species_id);
-      if (!species) {
-        return { index: i, status: 'error', error: 'Especie no encontrada' };
-      }
-
-      const inside = await plantingRepository.isPointInZone(
-        validatedData.location.lat,
-        validatedData.location.lng,
-        validatedData.zone_id,
-      );
-      if (!inside) {
-        return { index: i, status: 'error', error: 'Las coordenadas no están dentro de la zona de intervención' };
-      }
-
-      const existing = await plantingRepository.findByConflictKey(
-        validatedData.zone_id,
-        validatedData.species_id,
-        validatedData.planted_at,
-        userId,
-      );
-
-      if (existing) {
-        const updated = await plantingRepository.update(existing.id, { ...validatedData });
-        logger.info({ planting_id: updated.id }, 'Planting updated via sync (last writer wins)');
-        return { index: i, status: 'success', data: updated, conflict: 'resolved' };
+    for (const result of settled) {
+      if (result.status === 'fulfilled') {
+        results.push(result.value);
       } else {
-        const planting = await plantingRepository.create({ ...validatedData, planted_by: userId });
-        logger.info({ planting_id: planting.id }, 'Planting created via sync');
-        return { index: i, status: 'success', data: planting };
+        results.push({ index: results.length, status: 'error', error: 'Error interno al procesar el lote' });
       }
-    } catch (error) {
-      return {
-        index: i,
-        status: 'error',
-        error: error.message || 'Error al procesar el registro',
-      };
-    }
-  });
-
-  const settled = await Promise.allSettled(pending);
-  for (const result of settled) {
-    if (result.status === 'fulfilled') {
-      results.push(result.value);
-    } else {
-      results.push({ index: results.length, status: 'error', error: 'Error interno al procesar el lote' });
     }
   }
+
   return results;
 };
 
@@ -123,8 +139,9 @@ const getById = async (id) => {
 };
 
 const updatePhotoUrl = async (id, photoUrl) => {
-  await getById(id);
-  return plantingRepository.updatePhotoUrl(id, photoUrl);
+  const updated = await plantingRepository.updatePhotoUrl(id, photoUrl);
+  if (!updated) throw new NotFoundError('Plantación no encontrada');
+  return updated;
 };
 
 const getGeoJson = async (filters = {}) => {

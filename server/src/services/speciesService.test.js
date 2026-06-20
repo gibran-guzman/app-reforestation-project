@@ -24,18 +24,14 @@ describe('speciesService', () => {
       mockSpeciesRepository.create.mockResolvedValue({ id: 1, ...newSpecies });
 
       const result = await speciesService.createSpecies(newSpecies);
-      expect(result.data.id).toBe(1);
-      expect(result.data.scientific_name).toBe('Cedrela odorata');
+      expect(result.id).toBe(1);
+      expect(result.scientific_name).toBe('Cedrela odorata');
     });
 
     it('throws conflict error if scientific name is duplicated', async () => {
       mockSpeciesRepository.create.mockRejectedValue({ code: '23505' });
 
       await expect(speciesService.createSpecies(newSpecies)).rejects.toThrow();
-    });
-
-    it('throws validation error with invalid data', async () => {
-      await expect(speciesService.createSpecies({})).rejects.toThrow();
     });
 
     it('throws validation error for not null violation (code 23502)', async () => {
@@ -94,7 +90,6 @@ describe('speciesService', () => {
 
   describe('update', () => {
     it('updates a species successfully', async () => {
-      mockSpeciesRepository.findById.mockResolvedValue({ id: 1, common_name: 'Cedro' });
       mockSpeciesRepository.update.mockResolvedValue({ id: 1, common_name: 'Cedro rojo' });
 
       const result = await speciesService.update(1, { common_name: 'Cedro rojo' });
@@ -102,28 +97,44 @@ describe('speciesService', () => {
     });
 
     it('throws not found if species does not exist', async () => {
-      mockSpeciesRepository.findById.mockResolvedValue(null);
+      mockSpeciesRepository.update.mockResolvedValue(null);
 
       await expect(speciesService.update(999, { common_name: 'Test' })).rejects.toThrow();
     });
 
-    it('throws error with invalid update data', async () => {
-      mockSpeciesRepository.findById.mockResolvedValue({ id: 1 });
+    it('throws conflict on unique violation during update', async () => {
+      mockSpeciesRepository.update.mockRejectedValue({ code: '23505' });
 
-      await expect(speciesService.update(1, { common_name: '' })).rejects.toThrow();
+      await expect(speciesService.update(1, { scientific_name: 'Duplicate' })).rejects.toThrow();
     });
+
+    it('throws validation on not null violation during update', async () => {
+      mockSpeciesRepository.update.mockRejectedValue({ code: '23502', column: 'scientific_name' });
+
+      try {
+        await speciesService.update(1, { common_name: 'Test' });
+      } catch (err) {
+        expect(err.status).toBe(400);
+      }
+    });
+
+    it('re-throws unknown error during update', async () => {
+      mockSpeciesRepository.update.mockRejectedValue(new Error('DB error'));
+
+      await expect(speciesService.update(1, { common_name: 'Test' })).rejects.toThrow('DB error');
+    });
+
   });
 
   describe('remove', () => {
     it('removes a species successfully', async () => {
-      mockSpeciesRepository.findById.mockResolvedValue({ id: 1 });
       mockSpeciesRepository.remove.mockResolvedValue({ id: 1 });
 
       await expect(speciesService.remove(1)).resolves.toBeUndefined();
     });
 
     it('throws not found if it does not exist', async () => {
-      mockSpeciesRepository.findById.mockResolvedValue(null);
+      mockSpeciesRepository.remove.mockResolvedValue(null);
 
       await expect(speciesService.remove(999)).rejects.toThrow();
     });

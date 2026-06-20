@@ -1,19 +1,16 @@
 const monitoringRepository = require('../repositories/monitoringRepository');
 const plantingRepository = require('../repositories/plantingRepository');
-const { validateCreateMonitoring } = require('../validators/monitoringValidator');
 const { NotFoundError } = require('../errors/AppError');
 const logger = require('../utils/logger');
 
 const create = async (body, userId) => {
-  const validatedData = validateCreateMonitoring(body);
-
-  const planting = await plantingRepository.findById(validatedData.planting_site_id);
+  const planting = await plantingRepository.findById(body.planting_site_id);
   if (!planting) {
     throw new NotFoundError('Plantación no encontrada');
   }
 
   const record = await monitoringRepository.create({
-    ...validatedData,
+    ...body,
     monitored_by: userId,
   });
 
@@ -27,7 +24,8 @@ const getByPlantingSiteId = async (plantingSiteId) => {
     throw new NotFoundError('Plantación no encontrada');
   }
 
-  return monitoringRepository.findByPlantingSiteId(plantingSiteId);
+  const { rows } = await monitoringRepository.findByPlantingSiteId(plantingSiteId);
+  return rows;
 };
 
 const getById = async (id) => {

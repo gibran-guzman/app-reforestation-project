@@ -4,8 +4,10 @@ const cjsRequire = createRequire(import.meta.url);
 const proxyquire = cjsRequire('proxyquire').noPreserveCache();
 
 const mockDb = { query: vi.fn() };
+const mockCache = { get: vi.fn(), set: vi.fn(), invalidate: vi.fn(), invalidateAll: vi.fn() };
 const speciesRepository = proxyquire('./speciesRepository', {
   '../config/db': mockDb,
+  '../utils/memoryCache': vi.fn(() => mockCache),
 });
 
 const fakeRow = {
@@ -34,6 +36,7 @@ describe('speciesRepository', () => {
 
   describe('findAll', () => {
     it('returns all species ordered by scientific_name', async () => {
+      mockCache.get.mockReturnValue(undefined);
       mockDb.query.mockResolvedValue({ rows: [fakeRow, { ...fakeRow, id: 2 }] });
 
       const result = await speciesRepository.findAll();
@@ -45,10 +48,31 @@ describe('speciesRepository', () => {
     });
 
     it('returns empty array when no species', async () => {
+      mockCache.get.mockReturnValue(undefined);
       mockDb.query.mockResolvedValue({ rows: [] });
 
       const result = await speciesRepository.findAll();
 
+      expect(result).toEqual([]);
+    });
+  });
+
+  describe('findByIds', () => {
+    it('returns species matching given ids', async () => {
+      const rows = [fakeRow, { ...fakeRow, id: 2, scientific_name: 'Pinus radiata' }];
+      mockDb.query.mockResolvedValue({ rows });
+
+      const result = await speciesRepository.findByIds([1, 2]);
+
+      expect(result).toHaveLength(2);
+      expect(mockDb.query).toHaveBeenCalledWith(
+        expect.stringContaining('WHERE id IN ($1,$2)'),
+        [1, 2],
+      );
+    });
+
+    it('returns empty array for empty ids list', async () => {
+      const result = await speciesRepository.findByIds([]);
       expect(result).toEqual([]);
     });
   });

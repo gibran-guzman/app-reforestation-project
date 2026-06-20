@@ -4,8 +4,10 @@ const cjsRequire = createRequire(import.meta.url);
 const proxyquire = cjsRequire('proxyquire').noPreserveCache();
 
 const mockDb = { query: vi.fn() };
+const mockCache = { get: vi.fn(), set: vi.fn(), invalidate: vi.fn(), invalidateAll: vi.fn() };
 const zoneRepository = proxyquire('./zoneRepository', {
   '../config/db': mockDb,
+  '../utils/memoryCache': vi.fn(() => mockCache),
 });
 
 const fakeRow = {
@@ -19,6 +21,7 @@ describe('zoneRepository', () => {
 
   describe('findAll', () => {
     it('returns all zones ordered by name', async () => {
+      mockCache.get.mockReturnValue(undefined);
       mockDb.query.mockResolvedValue({ rows: [fakeRow, { ...fakeRow, id: 2, name: 'Zone B' }] });
 
       const result = await zoneRepository.findAll();
@@ -30,10 +33,32 @@ describe('zoneRepository', () => {
     });
 
     it('returns empty array when no zones', async () => {
+      mockCache.get.mockReturnValue(undefined);
       mockDb.query.mockResolvedValue({ rows: [] });
 
       const result = await zoneRepository.findAll();
 
+      expect(result).toEqual([]);
+    });
+  });
+
+  describe('findByIds', () => {
+    it('returns zones matching given ids', async () => {
+      const rows = [fakeRow, { ...fakeRow, id: 2, name: 'Zone B' }];
+      mockDb.query.mockResolvedValue({ rows });
+
+      const result = await zoneRepository.findByIds([1, 2]);
+
+      expect(result).toHaveLength(2);
+      expect(result[0].name).toBe('Zone A');
+      expect(mockDb.query).toHaveBeenCalledWith(
+        expect.stringContaining('WHERE id IN ($1,$2)'),
+        [1, 2],
+      );
+    });
+
+    it('returns empty array for empty ids list', async () => {
+      const result = await zoneRepository.findByIds([]);
       expect(result).toEqual([]);
     });
   });

@@ -53,6 +53,12 @@ describe('validateSignup', () => {
     expect(() => validateSignup({ ...validData, full_name: '' })).toThrow(ValidationError);
   });
 
+  it('trims email and full_name', () => {
+    const result = validateSignup({ ...validData, email: '  test@example.com  ', full_name: '  John Doe  ' });
+    expect(result.email).toBe('test@example.com');
+    expect(result.full_name).toBe('John Doe');
+  });
+
   it('throws with details of missing fields', () => {
     try {
       validateSignup({});
@@ -77,6 +83,11 @@ describe('validateLogin', () => {
     const result = validateLogin(validData);
     expect(result.email).toBe('test@example.com');
     expect(result.password).toBe('SecurePass1');
+  });
+
+  it('trims email on login', () => {
+    const result = validateLogin({ email: '  test@example.com  ', password: 'SecurePass1' });
+    expect(result.email).toBe('test@example.com');
   });
 
   it('throws error if email is empty', () => {

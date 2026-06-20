@@ -1,11 +1,27 @@
 const supabase = require('../config/supabase');
 const db = require('../config/db');
 const { AppError } = require('../errors/AppError');
-const { validateSignup, validateLogin } = require('../validators/authValidator');
 const logger = require('../utils/logger');
 
+const isDuplicateEmailError = (error) => {
+  return (
+    error?.message?.toLowerCase().includes('already registered') ||
+    error?.message?.toLowerCase().includes('duplicate') ||
+    error?.code === '23505' ||
+    error?.code === 'user_already_exists'
+  );
+};
+
+const isInvalidCredentialsError = (error) => {
+  return (
+    error?.message?.toLowerCase().includes('invalid login credentials') ||
+    error?.message?.toLowerCase().includes('invalid credentials') ||
+    error?.code === 'invalid_credentials'
+  );
+};
+
 const signup = async (body) => {
-  const { email, password, full_name, role } = validateSignup(body);
+  const { email, password, full_name, role } = body;
 
   const { data: authData, error: authError } = await supabase.auth.admin.createUser({
     email,
@@ -14,10 +30,11 @@ const signup = async (body) => {
   });
 
   if (authError) {
-    if (authError.message.includes('already registered')) {
+    if (isDuplicateEmailError(authError)) {
       throw new AppError('Ya existe un usuario con este correo electrónico', 409);
     }
-    throw authError;
+    logger.error({ err: authError }, 'Error inesperado al crear usuario en Supabase');
+    throw new AppError('Error al registrar el usuario. Intenta de nuevo.', 500);
   }
 
   try {
@@ -26,7 +43,11 @@ const signup = async (body) => {
       [authData.user.id, full_name, role],
     );
   } catch (profileError) {
-    await supabase.auth.admin.deleteUser(authData.user.id);
+    try {
+      await supabase.auth.admin.deleteUser(authData.user.id);
+    } catch (cleanupError) {
+      logger.fatal({ err: cleanupError, userId: authData.user.id }, 'USUARIO HUÉRFANO CREADO EN SUPABASE — se requiere limpieza manual');
+    }
     throw profileError;
   }
 
@@ -36,15 +57,16 @@ const signup = async (body) => {
 };
 
 const login = async (body) => {
-  const { email, password } = validateLogin(body);
+  const { email, password } = body;
 
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) {
-    if (error.message.includes('Invalid login credentials')) {
+    if (isInvalidCredentialsError(error)) {
       throw new AppError('Correo o contraseña incorrectos', 401);
     }
-    throw error;
+    logger.error({ err: error }, 'Error inesperado al iniciar sesión en Supabase');
+    throw new AppError('Error al iniciar sesión. Intenta de nuevo.', 500);
   }
 
   const { rows } = await db.query(
