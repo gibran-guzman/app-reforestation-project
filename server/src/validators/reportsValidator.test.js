@@ -1,5 +1,8 @@
-const { validateReportFilters } = require('./reportsValidator');
-const { ValidationError } = require('../errors/AppError');
+import { createRequire } from 'module';
+const cjsRequire = createRequire(import.meta.url);
+
+const { validateReportFilters } = cjsRequire('./reportsValidator');
+const { ValidationError } = cjsRequire('../errors/AppError');
 
 describe('validateReportFilters', () => {
   it('passes with no filters', () => {
