@@ -61,12 +61,18 @@ export default class MapPage {
 
     this.speciesService.list().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (res) => this.species.set(res.data),
-      error: () => this.species.set([]),
+      error: () => {
+        this.species.set([]);
+        this.loadingSpecies.set(false);
+      },
       complete: () => this.loadingSpecies.set(false),
     });
     this.zoneService.list().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (res) => this.zones.set(res.data),
-      error: () => this.zones.set([]),
+      error: () => {
+        this.zones.set([]);
+        this.loadingZones.set(false);
+      },
       complete: () => this.loadingZones.set(false),
     });
 

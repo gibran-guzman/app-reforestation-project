@@ -25,7 +25,10 @@ export default class Login {
     this.error.set('');
     this.loading.set(true);
     this.auth.login({ email: this.email(), password: this.password() }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: () => this.router.navigate(['/dashboard']),
+      next: () => {
+        this.loading.set(false);
+        this.router.navigate(['/dashboard']);
+      },
       error: (err) => {
         this.error.set(extractErrorMessage(err, 'Error al iniciar sesión'));
         this.loading.set(false);

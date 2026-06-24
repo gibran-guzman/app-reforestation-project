@@ -59,7 +59,8 @@ export default class PlantingForm implements OnInit, AfterViewInit {
   photoPreview = signal<string | null>(null);
   compressing = signal(false);
 
-  touched = { lat: false, lng: false };
+  readonly touchedLat = signal(false);
+  readonly touchedLng = signal(false);
 
   form = {
     species_id: 0,
@@ -76,10 +77,10 @@ export default class PlantingForm implements OnInit, AfterViewInit {
   private marker: L.Marker | null = null;
 
   readonly latInvalid = computed(() => {
-    return this.touched.lat && (isNaN(this.form.lat) || this.form.lat < -90 || this.form.lat > 90 || (!this.coordsSet() && this.form.lat === 0));
+    return this.touchedLat() && (isNaN(this.form.lat) || this.form.lat < -90 || this.form.lat > 90 || (!this.coordsSet() && this.form.lat === 0));
   });
   readonly lngInvalid = computed(() => {
-    return this.touched.lng && (isNaN(this.form.lng) || this.form.lng < -180 || this.form.lng > 180 || (!this.coordsSet() && this.form.lng === 0));
+    return this.touchedLng() && (isNaN(this.form.lng) || this.form.lng < -180 || this.form.lng > 180 || (!this.coordsSet() && this.form.lng === 0));
   });
 
   ngOnInit() {
@@ -129,8 +130,8 @@ export default class PlantingForm implements OnInit, AfterViewInit {
     this.geolocationService.getCurrentPosition().then(
       (coords) => {
         this.setPosition(coords.lat, coords.lng);
-        this.touched.lat = true;
-        this.touched.lng = true;
+        this.touchedLat.set(true);
+        this.touchedLng.set(true);
         this.gpsStatus.set('Ubicación capturada correctamente');
       },
       () => {
@@ -169,8 +170,8 @@ export default class PlantingForm implements OnInit, AfterViewInit {
     this.placeMarker(this.form.lat, this.form.lng);
   }
 
-  touchLat() { this.touched.lat = true; }
-  touchLng() { this.touched.lng = true; }
+  touchLat() { this.touchedLat.set(true); }
+  touchLng() { this.touchedLng.set(true); }
 
   async onFileSelected(event: Event) {
     const input = event.target as HTMLInputElement;

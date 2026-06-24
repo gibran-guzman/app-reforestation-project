@@ -1,6 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { tap } from 'rxjs';
+import { tap, throwError } from 'rxjs';
 import { environment } from '../../environments/environment';
 import type { ApiResponse, LoginRequest, LoginResponse, SignupRequest, User } from '../models';
 
@@ -48,7 +48,7 @@ export class AuthService {
 
   refresh() {
     const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
-    if (!refreshToken) throw new Error('No refresh token available');
+    if (!refreshToken) return throwError(() => new Error('No refresh token available'));
 
     return this.http.post<LoginResponse>(`${this.api}/refresh`, { refresh_token: refreshToken }).pipe(
       tap((res) => {

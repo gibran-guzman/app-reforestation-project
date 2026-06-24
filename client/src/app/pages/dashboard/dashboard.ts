@@ -101,6 +101,7 @@ export default class Dashboard implements OnInit {
   private loadAuxData() {
     this.reportsService.getEvolution().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (res) => this.evolution.set(res.data),
+      error: () => console.warn('[Dashboard] No se pudo cargar la evolución de plantaciones'),
     });
 
     this.speciesService.list().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
