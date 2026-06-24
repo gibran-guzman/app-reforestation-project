@@ -1,13 +1,13 @@
 <div class="p-3 p-md-4 form-container" style="max-width: 600px;">
   <h2 class="mb-4">{{ isEdit ? 'Editar especie' : 'Nueva especie' }}</h2>
 
-  @if (loading) {
+  @if (loading()) {
     <div class="text-center py-5">
       <div class="spinner-border text-success" role="status"></div>
     </div>
   } @else {
-    @if (error) {
-      <div class="alert alert-danger">{{ error }}</div>
+    @if (error()) {
+      <div class="alert alert-danger">{{ error() }}</div>
     }
 
     <form (ngSubmit)="submit()">
@@ -43,8 +43,8 @@
       </div>
 
       <div class="d-flex flex-column flex-md-row gap-2">
-        <button type="submit" class="btn btn-success" [disabled]="saving">
-          @if (saving) {
+        <button type="submit" class="btn btn-success" [disabled]="saving()">
+          @if (saving()) {
             <span class="spinner-border spinner-border-sm me-1"></span>
           }
           {{ isEdit ? 'Actualizar' : 'Crear' }}

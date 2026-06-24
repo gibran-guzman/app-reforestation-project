@@ -6,17 +6,17 @@
     }
   </div>
 
-  @if (loading) {
+  @if (loading()) {
     <div class="text-center py-5">
       <div class="spinner-border text-success" role="status"></div>
     </div>
-  } @else if (error) {
-    <div class="alert alert-danger">{{ error }}</div>
-  } @else if (zones.length === 0) {
+  } @else if (error()) {
+    <div class="alert alert-danger">{{ error() }}</div>
+  } @else if (zones().length === 0) {
     <div class="alert alert-info">Aún no hay zonas registradas.</div>
   } @else {
     <div class="row g-3">
-      @for (z of zones; track z.id) {
+      @for (z of zones(); track z.id) {
         <div class="col-md-6 col-lg-4">
           <div class="card shadow-sm h-100">
             <div class="card-body">

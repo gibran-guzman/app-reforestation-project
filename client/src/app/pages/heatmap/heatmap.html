@@ -42,7 +42,7 @@
       @if (loading()) {
         Cargando...
       } @else {
-        {{ total }} punto(s) monitoreados
+        {{ total() }} punto(s) monitoreados
       }
     </small>
   </div>
@@ -92,7 +92,7 @@
         </div>
       }
 
-      @if (!loading() && !error() && total === 0) {
+      @if (!loading() && !error() && total() === 0) {
         <div class="heatmap-overlay">
           <div class="text-center px-4">
             <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="%23adb5bd" viewBox="0 0 16 16" class="mb-2">

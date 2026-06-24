@@ -6,13 +6,13 @@
     }
   </div>
 
-  @if (loading) {
+  @if (loading()) {
     <div class="text-center py-5">
       <div class="spinner-border text-success" role="status"></div>
     </div>
-  } @else if (error) {
-    <div class="alert alert-danger">{{ error }}</div>
-  } @else if (species.length === 0) {
+  } @else if (error()) {
+    <div class="alert alert-danger">{{ error() }}</div>
+  } @else if (species().length === 0) {
     <div class="alert alert-info">Aún no hay especies registradas.</div>
   } @else {
     <div class="table-responsive">
@@ -28,7 +28,7 @@
           </tr>
         </thead>
         <tbody>
-          @for (s of species; track s.id) {
+          @for (s of species(); track s.id) {
             <tr>
               <td>{{ s.id }}</td>
               <td><em>{{ s.scientific_name }}</em></td>

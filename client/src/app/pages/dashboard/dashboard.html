@@ -1,10 +1,10 @@
 <div class="p-3 p-md-4">
   <h2 class="mb-4">Panel principal</h2>
 
-  @if (successMsg) {
+  @if (successMsg()) {
     <div class="alert alert-success alert-dismissible d-flex align-items-center gap-2 py-2 pe-4" role="alert">
-      <span>{{ successMsg }}</span>
-      <button type="button" class="btn-close ms-auto" (click)="successMsg = ''" aria-label="Cerrar"></button>
+      <span>{{ successMsg() }}</span>
+      <button type="button" class="btn-close ms-auto" (click)="clearSuccess()" aria-label="Cerrar"></button>
     </div>
   }
 
@@ -52,7 +52,7 @@
                 <path d="M15.354 3.354a.5.5 0 0 0-.708-.708L8 9.293 5.354 6.646a.5.5 0 1 0-.708.708l3 3a.5.5 0 0 0 .708 0l7-7z"/>
               </svg>
             </div>
-            <div class="dashboard-card-value text-success">{{ rate(o.alive, o.monitored) }}%</div>
+            <div class="dashboard-card-value text-success">{{ survivalRate(o.alive, o.monitored) }}%</div>
             <div class="dashboard-card-label">Supervivencia</div>
           </div>
         </div>
@@ -183,7 +183,7 @@
                     </tr>
                   </thead>
                   <tbody>
-                    @for (s of speciesStats(); track s.id) {
+                    @for (s of speciesStats(); track s.id; let i = $index) {
                       <tr>
                         <td>{{ s.common_name }}</td>
                         <td class="text-center">{{ s.total_planted }}</td>
@@ -192,10 +192,10 @@
                         <td class="text-center text-danger fw-semibold">{{ s.dead }}</td>
                         <td class="text-center">
                           <div class="d-flex align-items-center gap-2 justify-content-center">
-<div class="progress flex-grow-1 progress-bar-sm">
-                               <div class="progress-bar {{ survivalColor(s.alive, s.monitored) }}" [style.width.%]="rate(s.alive, s.monitored)"></div>
+ <div class="progress flex-grow-1 progress-bar-sm">
+                               <div class="progress-bar {{ speciesRates()[i]?.color }}" [style.width.%]="speciesRates()[i]?.rate"></div>
                             </div>
-                            <small class="text-muted">{{ rate(s.alive, s.monitored) }}%</small>
+                            <small class="text-muted">{{ speciesRates()[i]?.rate }}%</small>
                           </div>
                         </td>
                       </tr>
@@ -227,7 +227,7 @@
                     </tr>
                   </thead>
                   <tbody>
-                    @for (z of zoneSummary(); track z.id) {
+                    @for (z of zoneSummary(); track z.id; let i = $index) {
                       <tr>
                         <td>{{ z.name }}</td>
                         <td class="text-center">{{ z.total_plantings }}</td>
@@ -236,10 +236,10 @@
                         <td class="text-center text-danger fw-semibold">{{ z.dead }}</td>
                         <td class="text-center">
                           <div class="d-flex align-items-center gap-2 justify-content-center">
-<div class="progress flex-grow-1 progress-bar-sm">
-                               <div class="progress-bar {{ survivalColor(z.alive, z.monitored) }}" [style.width.%]="rate(z.alive, z.monitored)"></div>
+ <div class="progress flex-grow-1 progress-bar-sm">
+                               <div class="progress-bar {{ zoneRates()[i]?.color }}" [style.width.%]="zoneRates()[i]?.rate"></div>
                             </div>
-                            <small class="text-muted">{{ rate(z.alive, z.monitored) }}%</small>
+                            <small class="text-muted">{{ zoneRates()[i]?.rate }}%</small>
                           </div>
                         </td>
                       </tr>
@@ -271,30 +271,30 @@
         {{ offline.pendingCount() }} registro(s) pendiente(s) de sincronizar
       </span>
     }
-    @if (pendingList.length > 0 && connectivity.online()) {
-      <button type="button" class="btn btn-primary btn-sm" (click)="doSync()" [disabled]="syncService.syncing">
-        @if (syncService.syncing) {
+    @if (pendingList().length > 0 && connectivity.online()) {
+      <button type="button" class="btn btn-primary btn-sm" (click)="doSync()" [disabled]="syncService.syncing()">
+        @if (syncService.syncing()) {
           <span class="spinner-border spinner-border-sm me-1"></span>
         }
         Sincronizar ahora
       </button>
-      <button type="button" class="btn btn-outline-secondary btn-sm" (click)="refreshPending()" [disabled]="syncService.syncing">
+      <button type="button" class="btn btn-outline-secondary btn-sm" (click)="refreshPending()" [disabled]="syncService.syncing()">
         Actualizar lista
       </button>
     }
-    @if (syncError) {
-      <span class="text-danger small">{{ syncError }}</span>
+    @if (syncError()) {
+      <span class="text-danger small">{{ syncError() }}</span>
     }
 
     @if (syncService.progress(); as p) {
       <div class="w-100 mt-2">
         <div class="d-flex justify-content-between small mb-1">
           <span>Sincronizando... {{ p.current }}/{{ p.total }}</span>
-          <span>{{ rate(p.current, p.total) }}%</span>
+          <span>{{ survivalRate(p.current, p.total) }}%</span>
         </div>
         <div class="progress progress-bar-xs">
           <div class="progress-bar progress-bar-striped progress-bar-animated bg-success"
-               [style.width.%]="p.total > 0 ? rate(p.current, p.total) : 0">
+               [style.width.%]="p.total > 0 ? survivalRate(p.current, p.total) : 0">
           </div>
         </div>
       </div>
@@ -309,14 +309,14 @@
     }
   </div>
 
-  @if (pendingList.length > 0) {
+  @if (pendingList().length > 0) {
     <div class="card shadow-sm mb-4">
       <div class="card-header d-flex justify-content-between align-items-center">
         <span>Registros pendientes de sincronizar</span>
-        <span class="badge bg-warning text-dark">{{ pendingList.length }}</span>
+        <span class="badge bg-warning text-dark">{{ pendingList().length }}</span>
       </div>
       <div class="list-group list-group-flush">
-        @for (item of pendingList; track item.id) {
+        @for (item of pendingList(); track item.id) {
           <div class="list-group-item d-flex justify-content-between align-items-center">
             <div class="d-flex flex-column">
               <small class="text-muted">Zona #{{ item.payload.zone_id }} · Especie #{{ item.payload.species_id }}</small>

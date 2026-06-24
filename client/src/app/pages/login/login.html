@@ -3,8 +3,8 @@
     <div class="card-body p-4">
       <h3 class="card-title text-center mb-4">Lloa Reforestación</h3>
 
-      @if (error) {
-        <div class="alert alert-danger py-2">{{ error }}</div>
+      @if (error()) {
+        <div class="alert alert-danger py-2">{{ error() }}</div>
       }
 
       <form (ngSubmit)="submit()">
@@ -18,8 +18,8 @@
           <input id="password" type="password" class="form-control" [(ngModel)]="password" name="password" required autocomplete="current-password">
         </div>
 
-        <button type="submit" class="btn btn-primary w-100" [disabled]="loading">
-          @if (loading) {
+        <button type="submit" class="btn btn-primary w-100" [disabled]="loading()">
+          @if (loading()) {
             <span class="spinner-border spinner-border-sm me-1"></span>
           }
           Iniciar sesión

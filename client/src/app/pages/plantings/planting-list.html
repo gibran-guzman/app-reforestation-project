@@ -47,7 +47,7 @@
           <button class="page-link" (click)="loadPage(currentPage() - 1)" [disabled]="currentPage() <= 1">Anterior</button>
         </li>
         @if (meta(); as m) {
-          @for (p of pageArray(m.totalPages); track $index) {
+          @for (p of zeroBasedPageRange(m.totalPages); track $index) {
             <li class="page-item" [class.active]="currentPage() === $index + 1">
               <button class="page-link" (click)="loadPage($index + 1)">{{ $index + 1 }}</button>
             </li>

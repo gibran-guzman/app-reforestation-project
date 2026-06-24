@@ -1,8 +1,8 @@
 <div class="p-3 p-md-4 form-container">
   <h2 class="mb-4">Registrar nueva plántula</h2>
 
-  @if (error) {
-    <div class="alert alert-danger">{{ error }}</div>
+  @if (error()) {
+    <div class="alert alert-danger">{{ error() }}</div>
   }
 
   <form (ngSubmit)="submit()">
@@ -14,16 +14,16 @@
         <div class="row">
           <div class="col-md-6 mb-3">
             <label for="species_id" class="form-label">Especie *</label>
-            @if (loadingSpecies) {
+            @if (loadingSpecies()) {
               <div class="form-control-plaintext">
                 <span class="spinner-border spinner-border-sm me-1"></span>Cargando especies...
               </div>
-            } @else if (speciesError) {
-              <div class="alert alert-warning py-1 small mb-0">{{ speciesError }}</div>
+            } @else if (speciesError()) {
+              <div class="alert alert-warning py-1 small mb-0">{{ speciesError() }}</div>
             } @else {
               <select id="species_id" class="form-select" [(ngModel)]="form.species_id" name="species_id" required>
                 <option value="0" disabled>Seleccionar especie</option>
-                @for (s of speciesList; track s.id) {
+                @for (s of speciesList(); track s.id) {
                   <option [value]="s.id">{{ s.common_name }} ({{ s.scientific_name }})</option>
                 }
               </select>
@@ -32,16 +32,16 @@
 
           <div class="col-md-6 mb-3">
             <label for="zone_id" class="form-label">Zona de intervención *</label>
-            @if (loadingZones) {
+            @if (loadingZones()) {
               <div class="form-control-plaintext">
                 <span class="spinner-border spinner-border-sm me-1"></span>Cargando zonas...
               </div>
-            } @else if (zoneError) {
-              <div class="alert alert-warning py-1 small mb-0">{{ zoneError }}</div>
+            } @else if (zoneError()) {
+              <div class="alert alert-warning py-1 small mb-0">{{ zoneError() }}</div>
             } @else {
               <select id="zone_id" class="form-select" [(ngModel)]="form.zone_id" name="zone_id" required>
                 <option value="0" disabled>Seleccionar zona</option>
-                @for (z of zonesList; track z.id) {
+                @for (z of zonesList(); track z.id) {
                   <option [value]="z.id">{{ z.name }}</option>
                 }
               </select>
@@ -56,33 +56,33 @@
         <h6 class="card-title text-secondary mb-3">Ubicación *</h6>
 
         <div class="d-flex flex-wrap gap-2 mb-2">
-          <button type="button" class="btn btn-outline-primary" (click)="captureGps()" [disabled]="gpsStatus === 'Obteniendo ubicación...'">
-            @if (gpsStatus === 'Obteniendo ubicación...') {
+          <button type="button" class="btn btn-outline-primary" (click)="captureGps()" [disabled]="gpsStatus() === 'Obteniendo ubicación...'">
+            @if (gpsStatus() === 'Obteniendo ubicación...') {
               <span class="spinner-border spinner-border-sm me-1"></span>
             }
             Capturar GPS
           </button>
-          @if (gpsFailed) {
+          @if (gpsFailed()) {
             <button type="button" class="btn btn-outline-warning" (click)="captureGps()">
               Reintentar GPS
             </button>
           }
         </div>
 
-        @if (gpsStatus) {
-          <div class="small mb-2" [class.text-success]="!gpsFailed" [class.text-muted]="gpsFailed">{{ gpsStatus }}</div>
+        @if (gpsStatus()) {
+          <div class="small mb-2" [class.text-success]="!gpsFailed()" [class.text-muted]="gpsFailed()">{{ gpsStatus() }}</div>
         }
 
         <div class="row g-2 mb-2">
           <div class="col-6">
-            <input type="number" class="form-control" [class.is-invalid]="latInvalid" placeholder="Latitud" [(ngModel)]="form.lat" name="lat" step="any" (change)="updateMarkerFromCoords()" (blur)="touchLat()">
-            @if (latInvalid) {
+            <input type="number" class="form-control" [class.is-invalid]="latInvalid()" placeholder="Latitud" [(ngModel)]="form.lat" name="lat" step="any" (change)="updateMarkerFromCoords()" (blur)="touchLat()">
+            @if (latInvalid()) {
               <div class="invalid-feedback">Ingresa una latitud válida (-90 a 90)</div>
             }
           </div>
           <div class="col-6">
-            <input type="number" class="form-control" [class.is-invalid]="lngInvalid" placeholder="Longitud" [(ngModel)]="form.lng" name="lng" step="any" (change)="updateMarkerFromCoords()" (blur)="touchLng()">
-            @if (lngInvalid) {
+            <input type="number" class="form-control" [class.is-invalid]="lngInvalid()" placeholder="Longitud" [(ngModel)]="form.lng" name="lng" step="any" (change)="updateMarkerFromCoords()" (blur)="touchLng()">
+            @if (lngInvalid()) {
               <div class="invalid-feedback">Ingresa una longitud válida (-180 a 180)</div>
             }
           </div>
@@ -91,7 +91,7 @@
         <div #mapContainer class="map-container border"></div>
         <div class="form-text d-flex flex-wrap gap-2 mt-1">
           <span>Haz clic en el mapa, arrastra el marcador, o captura tu ubicación con GPS.</span>
-          @if (coordsSet) {
+          @if (coordsSet()) {
             <span class="text-success fw-medium">
               {{ form.lat.toFixed(6) }}, {{ form.lng.toFixed(6) }}
             </span>
@@ -123,14 +123,14 @@
 
         <div class="mb-0">
           <label for="initial_soil_texture" class="form-label">Textura del suelo</label>
-          @if (loadingTextures) {
+          @if (loadingTextures()) {
             <div class="form-control-plaintext">
               <span class="spinner-border spinner-border-sm me-1"></span>Cargando...
             </div>
           } @else {
             <select id="initial_soil_texture" class="form-select" [(ngModel)]="form.initial_soil_texture" name="initial_soil_texture">
               <option value="">Sin especificar</option>
-              @for (t of soilTextures; track t.value) {
+              @for (t of soilTextures(); track t.value) {
                 <option [value]="t.value">{{ t.label }}</option>
               }
             </select>
@@ -143,20 +143,20 @@
       <div class="card-body">
         <h6 class="card-title text-secondary mb-3">Foto de la plántula <span class="fw-normal text-muted">(opcional)</span></h6>
 
-        @if (photoPreview) {
+        @if (photoPreview()) {
           <div class="d-flex flex-wrap align-items-start gap-3">
             <div class="position-relative">
-              <img [src]="photoPreview" alt="Vista previa de la foto de la plántula" class="photo-preview border">
+              <img [src]="photoPreview()" alt="Vista previa de la foto de la plántula" class="photo-preview border">
               <button type="button" class="btn btn-sm btn-outline-danger position-absolute top-0 end-0 rounded-circle" style="transform: translate(50%, -50%);" (click)="removePhoto()" title="Eliminar foto">&times;</button>
             </div>
             <div class="small text-muted">
-              <div>{{ photoFile?.name }}</div>
-              <div>{{ (photoFile!.size / 1024).toFixed(0) }} KB</div>
+              <div>{{ photoFile()?.name }}</div>
+              <div>{{ (photoFile()!.size / 1024).toFixed(0) }} KB</div>
             </div>
           </div>
         } @else {
           <div class="photo-zone d-flex flex-column align-items-center justify-content-center py-4" role="button" tabindex="0" (click)="photoInput.click()" (keydown)="onPhotoZoneKeydown($event)">
-            @if (compressing) {
+            @if (compressing()) {
               <span class="spinner-border text-muted mb-1"></span>
               <span class="small text-muted">Comprimiendo imagen...</span>
             } @else {
@@ -176,18 +176,18 @@
     </div>
 
     <div class="d-flex flex-column flex-md-row gap-2">
-      <button type="submit" class="btn btn-success" [disabled]="saving || !form.species_id || !form.zone_id || !coordsSet">
-        @if (uploading) {
+      <button type="submit" class="btn btn-success" [disabled]="saving() || !form.species_id || !form.zone_id || !coordsSet()">
+        @if (uploading()) {
           <span class="spinner-border spinner-border-sm me-1"></span>
           Subiendo foto...
-        } @else if (saving) {
+        } @else if (saving()) {
           <span class="spinner-border spinner-border-sm me-1"></span>
           Registrando...
         } @else {
           Registrar plántula
         }
       </button>
-      <a routerLink="/dashboard" class="btn btn-outline-secondary" [class.disabled]="saving">Cancelar</a>
+      <a routerLink="/dashboard" class="btn btn-outline-secondary" [class.disabled]="saving()">Cancelar</a>
     </div>
   </form>
 </div>
