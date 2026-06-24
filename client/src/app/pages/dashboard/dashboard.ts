@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal, ElementRef, viewChild, effect, DestroyRef } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, OnInit, signal, computed, ElementRef, viewChild, effect, untracked, DestroyRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
@@ -11,6 +11,8 @@ import { ReportsService } from '../../services/reports.service';
 import { SpeciesService } from '../../services/species.service';
 import { ZoneService } from '../../services/zone.service';
 import { PlantingService } from '../../services/planting.service';
+import { survivalRate, survivalColorClass, statusLabel } from '../../helpers/survival';
+import { RECENT_PLANTINGS_LIMIT } from '../../constants/map';
 import type { PendingPlanting } from '../../services/offline.service';
 import type { SurvivalRate, SpeciesStat, ZoneSummary, EvolutionPoint, PlantingSite } from '../../models';
 
@@ -21,6 +23,7 @@ Chart.register(...registerables);
   imports: [RouterLink, DatePipe],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export default class Dashboard implements OnInit {
   protected auth = inject(AuthService);
@@ -34,36 +37,48 @@ export default class Dashboard implements OnInit {
   private zoneService = inject(ZoneService);
   private plantingService = inject(PlantingService);
 
-  successMsg = '';
-  pendingList: PendingPlanting[] = [];
-  syncError = '';
+  readonly successMsg = signal('');
+  readonly pendingList = signal<PendingPlanting[]>([]);
+  readonly syncError = signal('');
 
-  overall = signal<SurvivalRate | null>(null);
-  speciesStats = signal<SpeciesStat[]>([]);
-  zoneSummary = signal<ZoneSummary[]>([]);
-  evolution = signal<EvolutionPoint[]>([]);
-  recentPlantings = signal<PlantingSite[]>([]);
-  speciesCount = signal(0);
-  zoneCount = signal(0);
-  loadingStats = signal(true);
-  statsError = signal('');
+  readonly overall = signal<SurvivalRate | null>(null);
+  readonly speciesStats = signal<SpeciesStat[]>([]);
+  readonly zoneSummary = signal<ZoneSummary[]>([]);
+  readonly evolution = signal<EvolutionPoint[]>([]);
+  readonly recentPlantings = signal<PlantingSite[]>([]);
+  readonly speciesCount = signal(0);
+  readonly zoneCount = signal(0);
+  readonly loadingStats = signal(true);
+  readonly statsError = signal('');
+
+  protected survivalRate = survivalRate;
+  protected survivalColorClass = survivalColorClass;
+  protected statusLabel = statusLabel;
+
+  readonly speciesRates = computed(() =>
+    this.speciesStats().map(s => ({ id: s.id, rate: survivalRate(s.alive, s.monitored), color: survivalColorClass(s.alive, s.monitored) }))
+  );
+  readonly zoneRates = computed(() =>
+    this.zoneSummary().map(z => ({ id: z.id, rate: survivalRate(z.alive, z.monitored), color: survivalColorClass(z.alive, z.monitored) }))
+  );
 
   evolutionChartRef = viewChild<ElementRef<HTMLCanvasElement>>('evolutionChart');
   private evolutionChart: Chart | null = null;
 
   constructor() {
-    /* istanbul ignore next */
     effect(() => {
-      if (this.evolutionChartRef() && this.evolution().length > 0) {
-        this.renderEvolutionChart();
+      const data = this.evolution();
+      const chartRef = untracked(this.evolutionChartRef);
+      if (data.length > 0 && chartRef) {
+        this.renderEvolutionChart(data, chartRef.nativeElement);
       }
     });
   }
 
   async ngOnInit() {
     const nav = this.router.getCurrentNavigation() as { extras: { state: Record<string, string> } } | null;
-    this.successMsg = nav?.extras?.state?.['success'] || '';
-    this.pendingList = await this.offline.getPendingPlantings();
+    this.successMsg.set(nav?.extras?.state?.['success'] || '');
+    this.pendingList.set(await this.offline.getPendingPlantings());
     this.loadStats();
     this.loadAuxData();
   }
@@ -96,40 +111,28 @@ export default class Dashboard implements OnInit {
       next: (res) => this.zoneCount.set(res.data.length),
     });
 
-    this.plantingService.list(1, 5).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+    this.plantingService.list(1, RECENT_PLANTINGS_LIMIT).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (res) => this.recentPlantings.set(res.data),
     });
   }
 
   async doSync() {
-    this.syncError = '';
+    this.syncError.set('');
     try {
       await this.syncService.sync();
-      this.pendingList = await this.offline.getPendingPlantings();
-    } catch {
-      this.syncError = 'Error al sincronizar. Intenta de nuevo.';
+      this.pendingList.set(await this.offline.getPendingPlantings());
+    } catch (err) {
+      console.error('Sync failed:', err);
+      this.syncError.set('Error al sincronizar. Intenta de nuevo.');
     }
   }
 
   async refreshPending() {
-    this.pendingList = await this.offline.getPendingPlantings();
+    this.pendingList.set(await this.offline.getPendingPlantings());
   }
 
-  rate(value: number, total: number): number {
-    if (!total) return 0;
-    return Math.round((value / total) * 100);
-  }
-
-  survivalColor(value: number, total: number): string {
-    const pct = this.rate(value, total);
-    if (pct >= 70) return 'bg-success';
-    if (pct >= 40) return 'bg-warning';
-    return 'bg-danger';
-  }
-
-  statusLabel(status: string): string {
-    const map: Record<string, string> = { alive: 'Vivas', struggling: 'Estresadas', dead: 'Muertas' };
-    return map[status] || status;
+  clearSuccess() {
+    this.successMsg.set('');
   }
 
   trendClass(current: number, previous: number): string {
@@ -140,19 +143,15 @@ export default class Dashboard implements OnInit {
   }
 
   trendIcon(current: number, previous: number): string {
-    if (previous === 0) return '–';
-    if (current > previous) return '↑';
-    if (current < previous) return '↓';
-    return '→';
+    if (previous === 0) return '\u2013';
+    if (current > previous) return '\u2191';
+    if (current < previous) return '\u2193';
+    return '\u2192';
   }
 
-  private renderEvolutionChart() {
-    const canvas = this.evolutionChartRef();
-    if (!canvas) return;
-
+  private renderEvolutionChart(data: EvolutionPoint[], canvas: HTMLCanvasElement) {
     this.evolutionChart?.destroy();
 
-    const data = this.evolution();
     const labels = data.map((e) => {
       const [y, m] = e.period.split('-');
       const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
@@ -160,7 +159,7 @@ export default class Dashboard implements OnInit {
     });
     const values = data.map((e) => e.total);
 
-    this.evolutionChart = new Chart(canvas.nativeElement, {
+    this.evolutionChart = new Chart(canvas, {
       type: 'line',
       data: {
         labels,

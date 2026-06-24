@@ -1,24 +1,28 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, OnInit, signal, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { SpeciesService } from '../../services/species.service';
+import { extractErrorMessage } from '../../helpers/api-error';
 import type { Species } from '../../models';
 
 @Component({
   selector: 'app-species-form',
   imports: [FormsModule, RouterLink],
   templateUrl: './species-form.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export default class SpeciesForm implements OnInit {
   private service = inject(SpeciesService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
+  private destroyRef = inject(DestroyRef);
 
   isEdit = false;
   id = 0;
-  loading = false;
-  saving = false;
-  error = '';
+  readonly loading = signal(false);
+  readonly saving = signal(false);
+  readonly error = signal('');
 
   form = {
     scientific_name: '',
@@ -34,8 +38,8 @@ export default class SpeciesForm implements OnInit {
     if (idParam) {
       this.isEdit = true;
       this.id = Number(idParam);
-      this.loading = true;
-      this.service.getById(this.id).subscribe({
+      this.loading.set(true);
+      this.service.getById(this.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
         next: (res) => {
           const s = res.data;
           this.form = {
@@ -46,16 +50,16 @@ export default class SpeciesForm implements OnInit {
             recommended_altitude_min: s.recommended_altitude_min,
             recommended_altitude_max: s.recommended_altitude_max,
           };
-          this.loading = false;
+          this.loading.set(false);
         },
-        error: (err) => { this.error = err.error?.error || 'Error al cargar especie'; this.loading = false; },
+        error: (err) => { this.error.set(extractErrorMessage(err, 'Error al cargar especie')); this.loading.set(false); },
       });
     }
   }
 
   submit() {
-    this.error = '';
-    this.saving = true;
+    this.error.set('');
+    this.saving.set(true);
 
     const body = {
       scientific_name: this.form.scientific_name,
@@ -70,11 +74,11 @@ export default class SpeciesForm implements OnInit {
       ? this.service.update(this.id, body)
       : this.service.create(body);
 
-    obs.subscribe({
+    obs.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => this.router.navigate(['/species']),
       error: (err) => {
-        this.error = err.error?.error || err.error?.details?.[0]?.message || 'Error al guardar';
-        this.saving = false;
+        this.error.set(extractErrorMessage(err, 'Error al guardar'));
+        this.saving.set(false);
       },
     });
   }

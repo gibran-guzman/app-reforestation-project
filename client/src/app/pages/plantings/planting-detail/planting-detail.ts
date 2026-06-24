@@ -1,8 +1,10 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, OnInit, signal, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { DatePipe } from '@angular/common';
 import { PlantingService } from '../../../services/planting.service';
 import { MonitoringService } from '../../../services/monitoring.service';
+import { extractErrorMessage } from '../../../helpers/api-error';
 import type { PlantingSite, MonitoringRecord } from '../../../models';
 
 @Component({
@@ -10,11 +12,13 @@ import type { PlantingSite, MonitoringRecord } from '../../../models';
   imports: [RouterLink, DatePipe],
   templateUrl: './planting-detail.html',
   styleUrl: './planting-detail.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export default class PlantingDetail implements OnInit {
   private route = inject(ActivatedRoute);
   private plantingService = inject(PlantingService);
   private monitoringService = inject(MonitoringService);
+  private destroyRef = inject(DestroyRef);
 
   planting = signal<PlantingSite | null>(null);
   monitoring = signal<MonitoringRecord[]>([]);
@@ -28,26 +32,26 @@ export default class PlantingDetail implements OnInit {
       this.loading.set(false);
       return;
     }
-    this.plantingService.getById(id).subscribe({
+    this.plantingService.getById(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (res) => {
         this.planting.set(res.data);
-        this.loadMonitories(id);
+        this.loadMonitoringRecords(id);
       },
       error: (err) => {
-        this.error.set(err.error?.error || 'Error al cargar la plantación');
+        this.error.set(extractErrorMessage(err, 'Error al cargar la plantación'));
         this.loading.set(false);
       },
     });
   }
 
-  private loadMonitories(plantingSiteId: number) {
-    this.monitoringService.getByPlantingSiteId(plantingSiteId).subscribe({
+  private loadMonitoringRecords(plantingSiteId: number) {
+    this.monitoringService.getByPlantingSiteId(plantingSiteId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (res) => {
         this.monitoring.set(res.data);
         this.loading.set(false);
       },
       error: (err) => {
-        this.error.set(err.error?.error || 'Error al cargar el historial de monitoreo');
+        this.error.set(extractErrorMessage(err, 'Error al cargar el historial de monitoreo'));
         this.loading.set(false);
       },
     });

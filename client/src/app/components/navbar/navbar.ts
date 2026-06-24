@@ -1,4 +1,4 @@
-import { Component, inject, HostListener } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { ConnectivityService } from '../../services/connectivity.service';
@@ -9,25 +9,32 @@ import { OfflineService } from '../../services/offline.service';
   imports: [RouterLink, RouterLinkActive],
   templateUrl: './navbar.html',
   styleUrl: './navbar.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  host: {
+    '(document:click)': 'closeDropdown()',
+  },
 })
 export class Navbar {
   protected auth = inject(AuthService);
   protected connectivity = inject(ConnectivityService);
   protected offline = inject(OfflineService);
-  collapsed = true;
-  dropdownOpen = false;
+  readonly collapsed = signal(true);
+  readonly dropdownOpen = signal(false);
 
   toggleCollapse() {
-    this.collapsed = !this.collapsed;
+    this.collapsed.update(v => !v);
   }
 
   toggleDropdown(event: MouseEvent) {
     event.stopPropagation();
-    this.dropdownOpen = !this.dropdownOpen;
+    this.dropdownOpen.update(v => !v);
   }
 
-  @HostListener('document:click')
+  closeNav() {
+    this.collapsed.set(true);
+  }
+
   closeDropdown() {
-    this.dropdownOpen = false;
+    this.dropdownOpen.set(false);
   }
 }

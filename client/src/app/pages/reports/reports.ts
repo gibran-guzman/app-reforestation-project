@@ -1,12 +1,16 @@
-import { Component, inject, OnInit, signal, ElementRef, viewChild, effect } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, OnInit, signal, ElementRef, viewChild, effect, untracked, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe } from '@angular/common';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { Chart, registerables } from 'chart.js';
 import { ReportsService } from '../../services/reports.service';
 import { SpeciesService } from '../../services/species.service';
 import { ZoneService } from '../../services/zone.service';
+import { extractErrorMessage } from '../../helpers/api-error';
+import { survivalRate, survivalColorClass } from '../../helpers/survival';
+import { buildFilterParams, type Filters } from '../../helpers/filters';
 import type { SurvivalReport, SpeciesStat, ZoneSummary, Species, Zone } from '../../models';
-
-type ReportFilters = { species_id?: number; zone_id?: number };
 
 Chart.register(...registerables);
 
@@ -15,80 +19,104 @@ Chart.register(...registerables);
   imports: [DatePipe],
   templateUrl: './reports.html',
   styleUrl: './reports.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export default class Reports implements OnInit {
   private reportsService = inject(ReportsService);
   private speciesService = inject(SpeciesService);
   private zoneService = inject(ZoneService);
+  private destroyRef = inject(DestroyRef);
 
-  report = signal<SurvivalReport | null>(null);
-  speciesStats = signal<SpeciesStat[]>([]);
-  zoneSummary = signal<ZoneSummary[]>([]);
-  species = signal<Species[]>([]);
-  zones = signal<Zone[]>([]);
-  loading = signal(true);
-  error = signal('');
-  filterSpecies = signal<number | ''>('');
-  filterZone = signal<number | ''>('');
-  downloading = signal(false);
+  readonly report = signal<SurvivalReport | null>(null);
+  readonly speciesStats = signal<SpeciesStat[]>([]);
+  readonly zoneSummary = signal<ZoneSummary[]>([]);
+  readonly species = signal<Species[]>([]);
+  readonly zones = signal<Zone[]>([]);
+  readonly loading = signal(true);
+  readonly error = signal('');
+  readonly filterSpecies = signal<number | ''>('');
+  readonly filterZone = signal<number | ''>('');
+  readonly downloading = signal(false);
 
-  survivalChartRef = viewChild<ElementRef<HTMLCanvasElement>>('survivalChart');
-  speciesChartRef = viewChild<ElementRef<HTMLCanvasElement>>('speciesChart');
+  readonly survivalChartRef = viewChild<ElementRef<HTMLCanvasElement>>('survivalChart');
+  readonly speciesChartRef = viewChild<ElementRef<HTMLCanvasElement>>('speciesChart');
   private survivalChart: Chart | null = null;
   private speciesChart: Chart | null = null;
 
+  protected survivalRate = survivalRate;
+  protected survivalColorClass = survivalColorClass;
+
   constructor() {
     effect(() => {
-      if (this.survivalChartRef() && this.speciesChartRef()) {
-        this.renderCharts();
+      const report = this.report();
+      const sStats = this.speciesStats();
+      const survivalRef = untracked(this.survivalChartRef);
+      const speciesRef = untracked(this.speciesChartRef);
+      if (report && survivalRef) {
+        this.renderSurvivalChart(report, survivalRef.nativeElement);
+      }
+      if (sStats.length && speciesRef) {
+        this.renderSpeciesChart(sStats, speciesRef.nativeElement);
       }
     });
   }
 
   ngOnInit() {
-    this.speciesService.list().subscribe((res) => this.species.set(res.data));
-    this.zoneService.list().subscribe((res) => this.zones.set(res.data));
+    this.speciesService.list().pipe(takeUntilDestroyed(this.destroyRef)).subscribe((res) => this.species.set(res.data));
+    this.zoneService.list().pipe(takeUntilDestroyed(this.destroyRef)).subscribe((res) => this.zones.set(res.data));
     this.loadData();
   }
 
-  private buildFilters(): ReportFilters {
-    const filters: ReportFilters = {};
-    if (this.filterSpecies()) filters.species_id = Number(this.filterSpecies());
-    if (this.filterZone()) filters.zone_id = Number(this.filterZone());
-    return filters;
+  private apiFilters(): Filters {
+    const f: Filters = {};
+    const speciesId = this.filterSpecies();
+    const zoneId = this.filterZone();
+    if (speciesId) f.species_id = Number(speciesId);
+    if (zoneId) f.zone_id = Number(zoneId);
+    return f;
   }
 
   loadData() {
     this.loading.set(true);
     this.error.set('');
 
-    const filters = this.buildFilters();
+    const filters = this.apiFilters();
+    let hasError = false;
 
-    this.reportsService.getSurvivalRate(filters).subscribe({
-      next: (res) => {
-        this.report.set(res.data);
+    forkJoin({
+      report: this.reportsService.getSurvivalRate(filters).pipe(
+        catchError((err) => {
+          hasError = true;
+          this.error.set(extractErrorMessage(err, 'Error al cargar reportes'));
+          return of(null);
+        }),
+      ),
+      species: this.reportsService.getSpeciesStats(filters).pipe(
+        catchError((err) => {
+          if (!hasError) {
+            hasError = true;
+            this.error.set(extractErrorMessage(err, 'Error al cargar estadísticas por especie'));
+          }
+          return of(null);
+        }),
+      ),
+      zones: this.reportsService.getZoneSummary(filters).pipe(
+        catchError((err) => {
+          if (!hasError) {
+            hasError = true;
+            this.error.set(extractErrorMessage(err, 'Error al cargar resumen por zona'));
+          }
+          return of(null);
+        }),
+      ),
+    }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (results) => {
+        if (results.report?.data) this.report.set(results.report.data);
+        if (results.species?.data) this.speciesStats.set(results.species.data);
+        if (results.zones?.data) this.zoneSummary.set(results.zones.data);
         this.loading.set(false);
       },
-      error: (err) => {
-        this.error.set(err.error?.error || 'Error al cargar reportes');
-        this.loading.set(false);
-      },
-    });
-
-    this.reportsService.getSpeciesStats(filters).subscribe({
-      next: (res) => {
-        this.speciesStats.set(res.data);
-      },
-      error: (err) => {
-        this.error.set(err.error?.error || 'Error al cargar estadísticas por especie');
-        this.loading.set(false);
-      },
-    });
-
-    this.reportsService.getZoneSummary(filters).subscribe({
-      next: (res) => this.zoneSummary.set(res.data),
-      error: (err) => {
-        this.error.set(err.error?.error || 'Error al cargar resumen por zona');
+      error: () => {
         this.loading.set(false);
       },
     });
@@ -96,9 +124,9 @@ export default class Reports implements OnInit {
 
   downloadPdf() {
     this.downloading.set(true);
-    const filters = this.buildFilters();
+    const filters = this.apiFilters();
 
-    this.reportsService.exportPdf(filters).subscribe({
+    this.reportsService.exportPdf(filters).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (blob) => {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -108,27 +136,17 @@ export default class Reports implements OnInit {
         window.URL.revokeObjectURL(url);
         this.downloading.set(false);
       },
-      error: () => {
+      error: (err) => {
+        this.error.set(extractErrorMessage(err, 'Error al generar el PDF'));
         this.downloading.set(false);
       },
     });
   }
 
-  private renderCharts() {
-    this.renderSurvivalChart();
-    this.renderSpeciesChart();
-  }
-
-  private renderSurvivalChart() {
-    const r = this.report();
-    if (!r) return;
-
-    const canvas = this.survivalChartRef();
-    if (!canvas) return;
-
+  private renderSurvivalChart(r: SurvivalReport, canvas: HTMLCanvasElement) {
     this.survivalChart?.destroy();
 
-    this.survivalChart = new Chart(canvas.nativeElement, {
+    this.survivalChart = new Chart(canvas, {
       type: 'doughnut',
       data: {
         labels: ['Vivas', 'Estresadas', 'Muertas', 'Sin monitoreo'],
@@ -147,13 +165,7 @@ export default class Reports implements OnInit {
     });
   }
 
-  private renderSpeciesChart() {
-    const stats = this.speciesStats();
-    if (stats.length === 0) return;
-
-    const canvas = this.speciesChartRef();
-    if (!canvas) return;
-
+  private renderSpeciesChart(stats: SpeciesStat[], canvas: HTMLCanvasElement) {
     this.speciesChart?.destroy();
 
     const labels = stats.map((s) => s.common_name);
@@ -161,7 +173,7 @@ export default class Reports implements OnInit {
     const struggling = stats.map((s) => s.struggling);
     const dead = stats.map((s) => s.dead);
 
-    this.speciesChart = new Chart(canvas.nativeElement, {
+    this.speciesChart = new Chart(canvas, {
       type: 'bar',
       data: {
         labels,

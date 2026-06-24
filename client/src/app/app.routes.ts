@@ -1,8 +1,8 @@
 import { Routes } from '@angular/router';
-import { authGuard, adminGuard } from './guards/auth.guard';
+import { authGuard, adminGuard, loginGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
-  { path: 'login', loadComponent: () => import('./pages/login/login') },
+  { path: 'login', canActivate: [loginGuard], loadComponent: () => import('./pages/login/login') },
   { path: 'register', canActivate: [authGuard, adminGuard], loadComponent: () => import('./pages/register/register') },
   {
     path: 'dashboard',

@@ -1,9 +1,12 @@
-import { Component, inject, OnInit, OnDestroy, signal, DestroyRef } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, afterNextRender, signal, DestroyRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { AnalyticsService, type HeatmapResponse, type HeatmapPoint } from '../../services/analytics.service';
 import { SpeciesService } from '../../services/species.service';
 import { ZoneService } from '../../services/zone.service';
+import { extractErrorMessage } from '../../helpers/api-error';
+import { DEFAULT_CENTER, DEFAULT_ZOOM, ANIMATION_INTERVAL_MS } from '../../constants/map';
+import '../../helpers/leaflet';
 import type { Species, Zone } from '../../models';
 import L from 'leaflet';
 import 'leaflet.heat';
@@ -13,8 +16,9 @@ import 'leaflet.heat';
   imports: [FormsModule],
   templateUrl: './heatmap.html',
   styleUrl: './heatmap.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export default class HeatmapPage implements OnInit, OnDestroy {
+export default class HeatmapPage {
   private analyticsService = inject(AnalyticsService);
   private speciesService = inject(SpeciesService);
   private zoneService = inject(ZoneService);
@@ -55,7 +59,12 @@ export default class HeatmapPage implements OnInit, OnDestroy {
     return Math.max(0, this.periods.length - 1);
   }
 
-  ngOnInit() {
+  constructor() {
+    this.destroyRef.onDestroy(() => {
+      this.stopAnimation();
+      this.map?.remove();
+    });
+
     this.speciesService.list().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (res) => this.species.set(res.data),
       error: () => this.species.set([]),
@@ -64,19 +73,17 @@ export default class HeatmapPage implements OnInit, OnDestroy {
       next: (res) => this.zones.set(res.data),
       error: () => this.zones.set([]),
     });
-    this.initMap();
-    this.loadData();
-  }
 
-  ngOnDestroy() {
-    this.stopAnimation();
-    this.map?.remove();
+    afterNextRender(() => {
+      this.initMap();
+      this.loadData();
+    });
   }
 
   private initMap() {
     this.map = L.map('heatmap-container', {
-      center: [-0.229, -78.524],
-      zoom: 12,
+      center: DEFAULT_CENTER,
+      zoom: DEFAULT_ZOOM,
     });
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -117,7 +124,7 @@ export default class HeatmapPage implements OnInit, OnDestroy {
         this.renderPeriod(0);
       },
       error: (err) => {
-        this.error.set(err.error?.error || 'Error al cargar datos del mapa de calor');
+        this.error.set(extractErrorMessage(err, 'Error al cargar datos del mapa de calor'));
         this.loading.set(false);
       },
     });

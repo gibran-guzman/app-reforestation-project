@@ -1,9 +1,12 @@
-import { Component, inject, OnInit, OnDestroy, signal, DestroyRef } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, afterNextRender, signal, DestroyRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { PlantingService } from '../../services/planting.service';
 import { SpeciesService } from '../../services/species.service';
 import { ZoneService } from '../../services/zone.service';
+import { extractErrorMessage } from '../../helpers/api-error';
+import { DEFAULT_CENTER, DEFAULT_ZOOM } from '../../constants/map';
+import '../../helpers/leaflet';
 import type { Species, Zone, GeoJsonFeature, GeoJsonFeatureCollection } from '../../models';
 import L from 'leaflet';
 
@@ -26,8 +29,9 @@ const STATUS_LABELS: Record<string, string> = {
   imports: [FormsModule],
   templateUrl: './map.html',
   styleUrl: './map.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export default class MapPage implements OnInit, OnDestroy {
+export default class MapPage {
   private plantingService = inject(PlantingService);
   private speciesService = inject(SpeciesService);
   private zoneService = inject(ZoneService);
@@ -50,7 +54,11 @@ export default class MapPage implements OnInit, OnDestroy {
   private map: L.Map | null = null;
   private layerGroup: L.LayerGroup | null = null;
 
-  ngOnInit() {
+  constructor() {
+    this.destroyRef.onDestroy(() => {
+      this.map?.remove();
+    });
+
     this.speciesService.list().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (res) => this.species.set(res.data),
       error: () => this.species.set([]),
@@ -61,18 +69,17 @@ export default class MapPage implements OnInit, OnDestroy {
       error: () => this.zones.set([]),
       complete: () => this.loadingZones.set(false),
     });
-    this.initMap();
-    this.loadGeoJson();
-  }
 
-  ngOnDestroy() {
-    this.map?.remove();
+    afterNextRender(() => {
+      this.initMap();
+      this.loadGeoJson();
+    });
   }
 
   private initMap() {
     this.map = L.map('map-container', {
-      center: [-0.229, -78.524],
-      zoom: 12,
+      center: DEFAULT_CENTER,
+      zoom: DEFAULT_ZOOM,
     });
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -105,7 +112,7 @@ export default class MapPage implements OnInit, OnDestroy {
         this.renderMarkers(res);
       },
       error: (err) => {
-        this.error.set(err.error?.error || 'Error al cargar los datos del mapa');
+        this.error.set(extractErrorMessage(err, 'Error al cargar los datos del mapa'));
         this.loading.set(false);
       },
     });
@@ -128,43 +135,74 @@ export default class MapPage implements OnInit, OnDestroy {
         fillOpacity: 0.9,
       });
 
-      const planted = p.planted_at
-        ? new Date(p.planted_at + 'T00:00:00').toLocaleDateString('es-EC', { day: 'numeric', month: 'short', year: 'numeric' })
-        : '-';
-      const lastMon = p.last_monitoring_date
-        ? new Date(p.last_monitoring_date + 'T00:00:00').toLocaleDateString('es-EC', { day: 'numeric', month: 'short', year: 'numeric' })
-        : 'Nunca';
-
-      const popupHtml = `
-        <div class="map-popup">
-          <div class="map-popup-header" style="border-left:4px solid ${color}">
-            <strong>${p.species_name}</strong>
-            <span class="map-popup-status" style="background:${color}">${STATUS_LABELS[p.survival_status]}</span>
-          </div>
-          <div class="map-popup-body">
-            <div class="map-popup-row">
-              <span class="map-popup-label">Nombre científico</span>
-              <span class="map-popup-value"><em>${p.scientific_name}</em></span>
-            </div>
-            <div class="map-popup-row">
-              <span class="map-popup-label">Zona</span>
-              <span class="map-popup-value">${p.zone_name}</span>
-            </div>
-            <div class="map-popup-row">
-              <span class="map-popup-label">Plantado</span>
-              <span class="map-popup-value">${planted}</span>
-            </div>
-            <div class="map-popup-row">
-              <span class="map-popup-label">Últ. monitoreo</span>
-              <span class="map-popup-value">${lastMon}</span>
-            </div>
-            ${p.photo_url ? `<img src="${p.photo_url}" alt="Foto" class="map-popup-photo">` : ''}
-          </div>
-        </div>
-      `;
-
-      marker.bindPopup(popupHtml, { maxWidth: 300, className: 'map-popup-wrapper' });
+      marker.bindPopup(this.buildPopupContent(p, color), { maxWidth: 300, className: 'map-popup-wrapper' });
       this.layerGroup?.addLayer(marker);
     }
+  }
+
+  private buildPopupContent(p: GeoJsonFeature['properties'], color: string): HTMLElement {
+    const planted = p.planted_at
+      ? new Date(p.planted_at + 'T00:00:00').toLocaleDateString('es-EC', { day: 'numeric', month: 'short', year: 'numeric' })
+      : '-';
+    const lastMon = p.last_monitoring_date
+      ? new Date(p.last_monitoring_date + 'T00:00:00').toLocaleDateString('es-EC', { day: 'numeric', month: 'short', year: 'numeric' })
+      : 'Nunca';
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'map-popup';
+
+    const header = document.createElement('div');
+    header.className = 'map-popup-header';
+    header.style.borderLeft = `4px solid ${color}`;
+
+    const nameStrong = document.createElement('strong');
+    nameStrong.textContent = p.species_name;
+    header.appendChild(nameStrong);
+
+    const statusSpan = document.createElement('span');
+    statusSpan.className = 'map-popup-status';
+    statusSpan.style.background = color;
+    statusSpan.textContent = STATUS_LABELS[p.survival_status];
+    header.appendChild(statusSpan);
+
+    wrapper.appendChild(header);
+
+    const body = document.createElement('div');
+    body.className = 'map-popup-body';
+
+    body.appendChild(this.popupRow('Nombre científico', p.scientific_name, true));
+    body.appendChild(this.popupRow('Zona', p.zone_name));
+    body.appendChild(this.popupRow('Plantado', planted));
+    body.appendChild(this.popupRow('Últ. monitoreo', lastMon));
+
+    if (p.photo_url) {
+      const img = document.createElement('img');
+      img.src = p.photo_url;
+      img.alt = 'Foto';
+      img.className = 'map-popup-photo';
+      body.appendChild(img);
+    }
+
+    wrapper.appendChild(body);
+    return wrapper;
+  }
+
+  private popupRow(label: string, value: string, italic = false): HTMLElement {
+    const row = document.createElement('div');
+    row.className = 'map-popup-row';
+
+    const labelSpan = document.createElement('span');
+    labelSpan.className = 'map-popup-label';
+    labelSpan.textContent = label;
+    row.appendChild(labelSpan);
+
+    const valueSpan = document.createElement('span');
+    valueSpan.className = 'map-popup-value';
+    const valueEl = italic ? document.createElement('em') : document.createElement('span');
+    valueEl.textContent = value;
+    valueSpan.appendChild(valueEl);
+    row.appendChild(valueSpan);
+
+    return row;
   }
 }

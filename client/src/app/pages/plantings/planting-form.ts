@@ -1,4 +1,4 @@
-import { Component, inject, NgZone, OnInit, AfterViewInit, ViewChild, ElementRef, OnDestroy, DestroyRef } from '@angular/core';
+import { Component, inject, OnInit, AfterViewInit, viewChild, ElementRef, DestroyRef, ChangeDetectionStrategy, signal, computed } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -11,23 +11,20 @@ import { OfflineService } from '../../services/offline.service';
 import { ConfigService, type SoilTexture } from '../../services/config.service';
 import { ImageService } from '../../services/image.service';
 import { GeolocationService } from '../../services/geolocation.service';
+import { extractErrorMessage } from '../../helpers/api-error';
+import { DEFAULT_CENTER, DEFAULT_ZOOM } from '../../constants/map';
+import '../../helpers/leaflet';
 import type { Species, Zone } from '../../models';
 import L from 'leaflet';
 
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-});
-
 @Component({
   selector: 'app-planting-form',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [FormsModule, RouterLink],
   templateUrl: './planting-form.html',
   styleUrl: './planting-form.scss',
 })
-export default class PlantingForm implements OnInit, AfterViewInit, OnDestroy {
+export default class PlantingForm implements OnInit, AfterViewInit {
   private plantingService = inject(PlantingService);
   private speciesService = inject(SpeciesService);
   private zoneService = inject(ZoneService);
@@ -37,31 +34,30 @@ export default class PlantingForm implements OnInit, AfterViewInit, OnDestroy {
   private imageService = inject(ImageService);
   private geolocationService = inject(GeolocationService);
   private router = inject(Router);
-  private ngZone = inject(NgZone);
   private destroyRef = inject(DestroyRef);
 
-  @ViewChild('mapContainer') mapContainer!: ElementRef;
-  @ViewChild('photoInput') photoInput!: ElementRef<HTMLInputElement>;
+  readonly mapContainer = viewChild.required<ElementRef>('mapContainer');
+  readonly photoInput = viewChild.required<ElementRef<HTMLInputElement>>('photoInput');
 
-  speciesList: Species[] = [];
-  zonesList: Zone[] = [];
-  soilTextures: SoilTexture[] = [];
-  loadingSpecies = true;
-  loadingZones = true;
-  loadingTextures = true;
-  speciesError = '';
-  zoneError = '';
-  saving = false;
-  uploading = false;
-  offlineSave = false;
-  error = '';
-  gpsStatus = '';
-  gpsFailed = false;
-  coordsSet = false;
+  speciesList = signal<Species[]>([]);
+  zonesList = signal<Zone[]>([]);
+  soilTextures = signal<SoilTexture[]>([]);
+  loadingSpecies = signal(true);
+  loadingZones = signal(true);
+  loadingTextures = signal(true);
+  speciesError = signal('');
+  zoneError = signal('');
+  saving = signal(false);
+  uploading = signal(false);
+  offlineSave = signal(false);
+  error = signal('');
+  gpsStatus = signal('');
+  gpsFailed = signal(false);
+  coordsSet = signal(false);
 
-  photoFile: File | null = null;
-  photoPreview: string | null = null;
-  compressing = false;
+  photoFile = signal<File | null>(null);
+  photoPreview = signal<string | null>(null);
+  compressing = signal(false);
 
   touched = { lat: false, lng: false };
 
@@ -79,32 +75,32 @@ export default class PlantingForm implements OnInit, AfterViewInit, OnDestroy {
   private map: L.Map | null = null;
   private marker: L.Marker | null = null;
 
-  get latInvalid(): boolean {
-    return this.touched.lat && (isNaN(this.form.lat) || this.form.lat < -90 || this.form.lat > 90 || (!this.coordsSet && this.form.lat === 0));
-  }
-  get lngInvalid(): boolean {
-    return this.touched.lng && (isNaN(this.form.lng) || this.form.lng < -180 || this.form.lng > 180 || (!this.coordsSet && this.form.lng === 0));
-  }
+  readonly latInvalid = computed(() => {
+    return this.touched.lat && (isNaN(this.form.lat) || this.form.lat < -90 || this.form.lat > 90 || (!this.coordsSet() && this.form.lat === 0));
+  });
+  readonly lngInvalid = computed(() => {
+    return this.touched.lng && (isNaN(this.form.lng) || this.form.lng < -180 || this.form.lng > 180 || (!this.coordsSet() && this.form.lng === 0));
+  });
 
   ngOnInit() {
     this.speciesService.list().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: (res) => { this.speciesList = res.data; this.loadingSpecies = false; },
-      error: () => { this.speciesError = 'No se pudieron cargar las especies'; this.loadingSpecies = false; },
+      next: (res) => { this.speciesList.set(res.data); this.loadingSpecies.set(false); },
+      error: () => { this.speciesError.set('No se pudieron cargar las especies'); this.loadingSpecies.set(false); },
     });
     this.zoneService.list().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: (res) => { this.zonesList = res.data; this.loadingZones = false; },
-      error: () => { this.zoneError = 'No se pudieron cargar las zonas'; this.loadingZones = false; },
+      next: (res) => { this.zonesList.set(res.data); this.loadingZones.set(false); },
+      error: () => { this.zoneError.set('No se pudieron cargar las zonas'); this.loadingZones.set(false); },
     });
     this.configService.getSoilTextures().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: (res) => { this.soilTextures = res.data; this.loadingTextures = false; },
-      error: () => { this.loadingTextures = false; },
+      next: (res) => { this.soilTextures.set(res.data); this.loadingTextures.set(false); },
+      error: () => { this.loadingTextures.set(false); },
     });
   }
 
   ngAfterViewInit() {
-    this.map = L.map(this.mapContainer.nativeElement, {
-      center: [-0.229, -78.524],
-      zoom: 12,
+    this.map = L.map(this.mapContainer().nativeElement, {
+      center: DEFAULT_CENTER,
+      zoom: DEFAULT_ZOOM,
       attributionControl: false,
       scrollWheelZoom: false,
     });
@@ -115,45 +111,37 @@ export default class PlantingForm implements OnInit, AfterViewInit, OnDestroy {
     }).addTo(this.map);
 
     this.map.on('click', (e: L.LeafletMouseEvent) => {
-      this.ngZone.run(() => this.setPosition(e.latlng.lat, e.latlng.lng));
+      this.setPosition(e.latlng.lat, e.latlng.lng);
     });
 
     setTimeout(() => this.map?.invalidateSize(), 200);
   }
 
-  ngOnDestroy() {
-    this.map?.remove();
-  }
-
   captureGps() {
     if (!this.geolocationService.isAvailable()) {
-      this.gpsStatus = 'La geolocalización no está disponible en este navegador';
+      this.gpsStatus.set('La geolocalización no está disponible en este navegador');
       return;
     }
 
-    this.gpsStatus = 'Obteniendo ubicación...';
-    this.gpsFailed = false;
+    this.gpsStatus.set('Obteniendo ubicación...');
+    this.gpsFailed.set(false);
 
     this.geolocationService.getCurrentPosition().then(
       (coords) => {
-        this.ngZone.run(() => {
-          this.setPosition(coords.lat, coords.lng);
-          this.touched.lat = true;
-          this.touched.lng = true;
-          this.gpsStatus = 'Ubicación capturada correctamente';
-        });
+        this.setPosition(coords.lat, coords.lng);
+        this.touched.lat = true;
+        this.touched.lng = true;
+        this.gpsStatus.set('Ubicación capturada correctamente');
       },
       () => {
-        this.ngZone.run(() => {
-          this.gpsFailed = true;
-          this.gpsStatus = 'No se pudo obtener la ubicación. Ingresa las coordenadas manualmente o intenta de nuevo.';
-        });
+        this.gpsFailed.set(true);
+        this.gpsStatus.set('No se pudo obtener la ubicación. Ingresa las coordenadas manualmente o intenta de nuevo.');
       },
     );
   }
 
   private placeMarker(lat: number, lng: number) {
-    this.coordsSet = true;
+    this.coordsSet.set(true);
     this.form.lat = Math.round(lat * 1000000) / 1000000;
     this.form.lng = Math.round(lng * 1000000) / 1000000;
 
@@ -163,10 +151,8 @@ export default class PlantingForm implements OnInit, AfterViewInit, OnDestroy {
       this.marker = L.marker([this.form.lat, this.form.lng], { draggable: true }).addTo(this.map);
       this.marker.on('dragend', () => {
         const pos = this.marker!.getLatLng();
-        this.ngZone.run(() => {
-          this.form.lat = Math.round(pos.lat * 1000000) / 1000000;
-          this.form.lng = Math.round(pos.lng * 1000000) / 1000000;
-        });
+        this.form.lat = Math.round(pos.lat * 1000000) / 1000000;
+        this.form.lng = Math.round(pos.lng * 1000000) / 1000000;
       });
     }
 
@@ -179,7 +165,7 @@ export default class PlantingForm implements OnInit, AfterViewInit, OnDestroy {
 
   updateMarkerFromCoords() {
     if (this.form.lat === null || this.form.lng === null || isNaN(this.form.lat) || isNaN(this.form.lng)) return;
-    this.coordsSet = true;
+    this.coordsSet.set(true);
     this.placeMarker(this.form.lat, this.form.lng);
   }
 
@@ -193,41 +179,41 @@ export default class PlantingForm implements OnInit, AfterViewInit, OnDestroy {
 
     const sizeError = this.imageService.validateSize(file);
     if (sizeError) {
-      this.error = sizeError;
+      this.error.set(sizeError);
       input.value = '';
       return;
     }
 
-    this.error = '';
-    this.compressing = true;
+    this.error.set('');
+    this.compressing.set(true);
 
     try {
       const compressed = await this.imageService.compress(file);
-      this.photoFile = compressed;
-      this.photoPreview = await this.imageService.readAsDataUrl(compressed);
-      this.compressing = false;
+      this.photoFile.set(compressed);
+      this.photoPreview.set(await this.imageService.readAsDataUrl(compressed));
+      this.compressing.set(false);
     } catch {
-      this.error = 'Error al procesar la imagen';
-      this.compressing = false;
+      this.error.set('Error al procesar la imagen');
+      this.compressing.set(false);
     }
   }
 
   removePhoto() {
-    this.photoFile = null;
-    this.photoPreview = null;
+    this.photoFile.set(null);
+    this.photoPreview.set(null);
   }
 
   onPhotoZoneKeydown(event: KeyboardEvent) {
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
-      this.photoInput.nativeElement.click();
+      this.photoInput().nativeElement.click();
     }
   }
 
   submit() {
-    this.error = '';
-    this.saving = true;
-    this.offlineSave = false;
+    this.error.set('');
+    this.saving.set(true);
+    this.offlineSave.set(false);
 
     this.updateMarkerFromCoords();
 
@@ -242,9 +228,9 @@ export default class PlantingForm implements OnInit, AfterViewInit, OnDestroy {
     };
 
     if (!this.connectivity.online()) {
-      this.offline.savePlanting(payload, this.photoFile ?? undefined).then(() => {
-        this.offlineSave = true;
-        this.saving = false;
+      this.offline.savePlanting(payload, this.photoFile() ?? undefined).then(() => {
+        this.offlineSave.set(true);
+        this.saving.set(false);
         this.router.navigate(['/dashboard'], { state: { success: 'Plántula guardada offline. Se sincronizará al recuperar conexión.' } });
       });
       return;
@@ -252,9 +238,9 @@ export default class PlantingForm implements OnInit, AfterViewInit, OnDestroy {
 
     const create$ = this.plantingService.create(payload).pipe(
       switchMap((res) => {
-        if (this.photoFile && res.data?.id) {
-          this.uploading = true;
-          return this.plantingService.uploadPhoto(res.data.id, this.photoFile).pipe(
+        if (this.photoFile() && res.data?.id) {
+          this.uploading.set(true);
+          return this.plantingService.uploadPhoto(res.data.id, this.photoFile()!).pipe(
             switchMap(() => of({ success: 'Plántula registrada con foto' })),
             catchError(() => of({ success: 'Plántula registrada, pero la foto no pudo subirse' })),
           );
@@ -267,8 +253,8 @@ export default class PlantingForm implements OnInit, AfterViewInit, OnDestroy {
     create$.subscribe({
       next: (msg) => this.router.navigate(['/dashboard'], { state: { success: msg.success } }),
       error: (err) => {
-        this.error = err.error?.error || err.error?.details?.[0]?.message || 'Error al registrar plántula';
-        this.saving = false;
+        this.error.set(extractErrorMessage(err, 'Error al registrar plántula'));
+        this.saving.set(false);
       },
     });
   }
