@@ -1,4 +1,4 @@
-import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { of, throwError } from 'rxjs';
 import { SyncService } from './sync.service';
@@ -100,7 +100,7 @@ describe('SyncService', () => {
       await service.sync();
 
       expect(plantingMock.syncBatch).not.toHaveBeenCalled();
-      expect(service.syncing).toBeFalse();
+      expect(service.syncing()).toBeFalse();
     });
 
     it('processes pending batch successfully', async () => {
@@ -114,7 +114,7 @@ describe('SyncService', () => {
 
       expect(plantingMock.syncBatch).toHaveBeenCalledWith([mockPending.payload]);
       expect(offlineMock.removePlanting).toHaveBeenCalledWith(1);
-      expect(service.syncing).toBeFalse();
+      expect(service.syncing()).toBeFalse();
     });
 
     it('handles conflict resolution', async () => {
@@ -180,7 +180,7 @@ describe('SyncService', () => {
       await service.sync();
 
       expect(offlineMock.removePlanting).toHaveBeenCalledWith(1);
-      expect(service.errorItems()[0]).toContain('error de red');
+      expect(service.errorItems()[0]).toContain('descartado tras 5 intentos');
     });
 
     it('filters out items past max retries from batch', async () => {
@@ -273,7 +273,7 @@ describe('SyncService', () => {
   });
 
   describe('effect auto-triggers sync', () => {
-    it('calls sync when coming online with pending items', fakeAsync(() => {
+    it('calls sync when coming online with pending items', async () => {
       const pendingCountSig = signal(2);
       const onlineSig = signal(false);
 
@@ -299,10 +299,10 @@ describe('SyncService', () => {
       svc.syncing.set(false);
 
       onlineSig.set(true);
-      tick(100);
+      await new Promise(resolve => setTimeout(resolve, 100));
 
       expect(om.getPendingPlantings).toHaveBeenCalled();
-    }));
+    });
   });
 
   it('skips results with out-of-bounds index in processBatch', async () => {

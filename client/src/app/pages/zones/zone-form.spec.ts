@@ -66,7 +66,7 @@ describe('ZoneForm', () => {
     expect(comp.id).toBe(2);
     expect(comp.form.name).toBe('Zona Alta');
     expect(comp.form.description).toBe('Zona de montaña');
-    expect(comp.loading).toBeFalse();
+    expect(comp.loading()).toBeFalse();
   });
 
   it('should call service.create and navigate on submit in create mode', () => {
@@ -107,8 +107,8 @@ describe('ZoneForm', () => {
     const comp = fixture.componentInstance;
     comp.submit();
 
-    expect(comp.error).toBe('Nombre duplicado');
-    expect(comp.saving).toBeFalse();
+    expect(comp.error()).toBe('Nombre duplicado');
+    expect(comp.saving()).toBeFalse();
   });
 
   it('should show default error on submit failure when no server fields', () => {
@@ -118,8 +118,8 @@ describe('ZoneForm', () => {
     const comp = fixture.componentInstance;
     comp.submit();
 
-    expect(comp.error).toBe('Error al guardar');
-    expect(comp.saving).toBeFalse();
+    expect(comp.error()).toBe('Error al guardar');
+    expect(comp.saving()).toBeFalse();
   });
 
   it('should show error on getById failure in edit mode', () => {
@@ -132,8 +132,8 @@ describe('ZoneForm', () => {
     const comp = fixture.componentInstance;
     comp.ngOnInit();
 
-    expect(comp.error).toBe('No encontrado');
-    expect(comp.loading).toBeFalse();
+    expect(comp.error()).toBe('No encontrado');
+    expect(comp.loading()).toBeFalse();
   });
 
   it('should show default error on getById failure when no server error', () => {
@@ -146,7 +146,7 @@ describe('ZoneForm', () => {
     const comp = fixture.componentInstance;
     comp.ngOnInit();
 
-    expect(comp.error).toBe('Error al cargar zona');
-    expect(comp.loading).toBeFalse();
+    expect(comp.error()).toBe('Error al cargar zona');
+    expect(comp.loading()).toBeFalse();
   });
 });

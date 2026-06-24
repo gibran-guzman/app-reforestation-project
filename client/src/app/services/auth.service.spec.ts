@@ -174,7 +174,6 @@ describe('AuthService', () => {
     it('returns token from localStorage', () => {
       localStorage.setItem('access_token', 'my-token');
       const service = TestBed.inject(AuthService);
-      httpTesting.expectOne('/api/auth/me').flush({ data: mockUser });
       expect(service.getToken()).toBe('my-token');
     });
 

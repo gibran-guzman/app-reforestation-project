@@ -71,7 +71,7 @@ describe('SpeciesForm', () => {
     expect(comp.form.scientific_name).toBe('Pinus');
     expect(comp.form.common_name).toBe('Pino');
     expect(comp.form.recommended_altitude_min).toBe(1000);
-    expect(comp.loading).toBeFalse();
+    expect(comp.loading()).toBeFalse();
   });
 
   it('should call service.create and navigate on submit in create mode', () => {
@@ -116,8 +116,8 @@ describe('SpeciesForm', () => {
     const comp = fixture.componentInstance;
     comp.submit();
 
-    expect(comp.error).toBe('Nombre duplicado');
-    expect(comp.saving).toBeFalse();
+    expect(comp.error()).toBe('Nombre duplicado');
+    expect(comp.saving()).toBeFalse();
   });
 
   it('should show error from details array on submit failure', () => {
@@ -127,7 +127,7 @@ describe('SpeciesForm', () => {
     const comp = fixture.componentInstance;
     comp.submit();
 
-    expect(comp.error).toBe('Campo requerido');
+    expect(comp.error()).toBe('Campo requerido');
   });
 
   it('should show default error on submit failure when no server fields', () => {
@@ -137,8 +137,8 @@ describe('SpeciesForm', () => {
     const comp = fixture.componentInstance;
     comp.submit();
 
-    expect(comp.error).toBe('Error al guardar');
-    expect(comp.saving).toBeFalse();
+    expect(comp.error()).toBe('Error al guardar');
+    expect(comp.saving()).toBeFalse();
   });
 
   it('should show error on getById failure in edit mode', () => {
@@ -151,8 +151,8 @@ describe('SpeciesForm', () => {
     const comp = fixture.componentInstance;
     comp.ngOnInit();
 
-    expect(comp.error).toBe('No encontrado');
-    expect(comp.loading).toBeFalse();
+    expect(comp.error()).toBe('No encontrado');
+    expect(comp.loading()).toBeFalse();
   });
 
   it('should show default error on getById failure when no server error', () => {
@@ -165,7 +165,7 @@ describe('SpeciesForm', () => {
     const comp = fixture.componentInstance;
     comp.ngOnInit();
 
-    expect(comp.error).toBe('Error al cargar especie');
-    expect(comp.loading).toBeFalse();
+    expect(comp.error()).toBe('Error al cargar especie');
+    expect(comp.loading()).toBeFalse();
   });
 });

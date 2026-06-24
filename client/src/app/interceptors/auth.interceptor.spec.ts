@@ -82,7 +82,7 @@ describe('authInterceptor', () => {
     expect(routerSpy.navigate).toHaveBeenCalledWith(['/login']);
   });
 
-  it('does not redirect on 403 error', () => {
+  it('redirects to /dashboard on 403 error', () => {
     localStorage.setItem('access_token', 'tok');
 
     httpClient.get('/api/test').subscribe({
@@ -91,7 +91,7 @@ describe('authInterceptor', () => {
     const req = httpTesting.expectOne('/api/test');
     req.flush({ message: 'Forbidden' }, { status: 403, statusText: 'Forbidden' });
 
-    expect(routerSpy.navigate).not.toHaveBeenCalled();
+    expect(routerSpy.navigate).toHaveBeenCalledWith(['/dashboard']);
     expect(localStorage.getItem('access_token')).toBe('tok');
   });
 
