@@ -27,7 +27,7 @@ const create = async (body, userId) => {
       body.location.lng,
       body.zone_id,
     );
-  } catch (error) {
+  } catch {
     throw new AppError('Error al validar la ubicación contra la zona de intervención', 500);
   }
   if (!inside) {
@@ -64,7 +64,7 @@ const processItem = async (item, i, zoneMap, speciesMap, userId) => {
         item.location.lng,
         item.zone_id,
       );
-    } catch (_err) {
+    } catch {
       return { index: i, status: 'error', error: 'Error al validar la ubicación contra la zona de intervención' };
     }
     if (!inside) {

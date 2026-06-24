@@ -57,6 +57,11 @@ export default class PlantingDetail implements OnInit {
     });
   }
 
+  formatCoords(p: PlantingSite | null): string {
+    if (!p?.location?.coordinates) return '—';
+    return `${p.location.coordinates[1]}, ${p.location.coordinates[0]}`;
+  }
+
   survivalBadge(status: string): string {
     const map: Record<string, string> = { alive: 'bg-success', struggling: 'bg-warning text-dark', dead: 'bg-danger' };
     return map[status] || 'bg-secondary';

@@ -65,7 +65,7 @@
 
           <span class="fw-semibold small text-nowrap">{{ currentLabel }}</span>
 
-          <input type="range" class="form-range heatmap-slider" [min]="0" [max]="maxIndex" [value]="currentPeriod()" (input)="goToPeriod(Number($any($event.target).value))" [disabled]="periods.length <= 1" aria-label="Línea de tiempo del mapa de calor">
+          <input type="range" class="form-range heatmap-slider" [min]="0" [max]="maxIndex" [value]="currentPeriod()" (input)="goToPeriod(+$any($event.target).value)" [disabled]="periods.length <= 1" aria-label="Línea de tiempo del mapa de calor">
 
           <span class="small text-muted text-nowrap">{{ currentPeriod() + 1 }} / {{ periods.length }}</span>
         </div>

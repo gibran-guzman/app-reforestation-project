@@ -21,7 +21,7 @@
             <table class="table table-sm mb-0">
               <tbody>
                 <tr><th class="ps-0 th-label">Fecha</th><td>{{ p.planted_at | date:'mediumDate' }}</td></tr>
-                <tr><th class="ps-0">Coordenadas</th><td>{{ p.location?.coordinates?.[1] }}, {{ p.location?.coordinates?.[0] }}</td></tr>
+                <tr><th class="ps-0">Coordenadas</th><td>{{ formatCoords(p) }}</td></tr>
                 <tr><th class="ps-0">pH inicial</th><td>{{ p.initial_ph ?? '—' }}</td></tr>
                 <tr><th class="ps-0">Humedad inicial</th><td>{{ p.initial_humidity != null ? p.initial_humidity + '%' : '—' }}</td></tr>
                 <tr><th class="ps-0">Textura del suelo</th><td>{{ p.initial_soil_texture || '—' }}</td></tr>

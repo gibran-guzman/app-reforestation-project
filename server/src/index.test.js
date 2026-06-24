@@ -84,9 +84,6 @@ describe('Express app', () => {
 
   it('uses helmet middleware', () => {
     loadIndex();
-    const helmetCall = mockApp.use.mock.calls.find(
-      ([fn]) => fn.name === '' || fn === mockApp.use.mock.calls[0][0],
-    );
     expect(mockApp.use).toHaveBeenCalled();
   });
 
