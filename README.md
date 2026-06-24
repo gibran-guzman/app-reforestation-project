@@ -13,14 +13,18 @@ Sistema de Control para Proyectos de Reforestación Ambiental en la Parroquia Ru
 | Capa | Tecnología | Versión |
 |------|-----------|---------|
 | Frontend | Angular + Bootstrap 5 + TypeScript | 20 |
-| Backend | Node.js + Express | 4 |
+| Backend | Node.js + Express | 4.22.2 |
 | Base de datos | PostgreSQL + PostGIS | 16+ |
 | Infraestructura | Supabase | — |
 | Mapas | Leaflet | — |
 | Logger | Pino | — |
-| Autenticación | JWT (Supabase Auth) | — |
+| Autenticación | JWT (Supabase Auth + HttpOnly cookies) | — |
 | Almacenamiento | Supabase Storage | — |
 | Subida de archivos | Multer | 2.1 |
+| Error tracking | Sentry (condicional) | 10 |
+| Migraciones | node-pg-migrate | — |
+| CI/CD | GitHub Actions | — |
+| Contenedor | Docker | — |
 
 ---
 
@@ -71,9 +75,12 @@ Sistema de Control para Proyectos de Reforestación Ambiental en la Parroquia Ru
 - [x] Integrar Supabase Auth
 - [x] Roles: Admin, Técnico
 - [x] Login + refresh token con Supabase
+- [x] Tokens en HttpOnly cookies (elimina vector XSS de localStorage)
+- [x] `POST /api/auth/logout` limpia cookies
 - [x] Rate limiting en auth endpoints
-- [x] Protección de rutas backend con middleware
+- [x] Protección de rutas backend con middleware (cookie + header)
 - [x] Protección de rutas frontend (guards)
+- [x] Interceptor HTTP con `withCredentials: true`
 - [ ] Registro de usuarios solo por Admin (endpoint existe sin restricción)
 
 **HU5 — Modelado geoespacial**
@@ -175,15 +182,17 @@ Sistema de Control para Proyectos de Reforestación Ambiental en la Parroquia Ru
 │  │ Angular  │   │  Leaflet │   │  Service Worker     │  │
 │  │ (UI)     │   │  (Mapas) │   │  + IndexedDB        │  │
 │  └────┬─────┘   └──────────┘   └─────────┬──────────┘  │
-│       │                                  │              │
-│       │          HTTP/REST               │  Sync Queue  │
-│       ▼                                  ▼              │
+│       │          tokens en                │              │
+│       │          memoria (no localStorage)│  Sync Queue  │
+│       │          HTTP/REST                │              │
+│       ▼          withCredentials: true    ▼              │
 └─────────────────────────────────────────────────────────┘
+               │ HttpOnly cookies (JWT)      │
                │                              │
-               │                     ┌────────┘
-               ▼                     ▼
+               └──────────────┬───────────────┘
+                              ▼
 ┌─────────────────────────────────────────────────────────┐
-│                   SERVER (Express 5)                     │
+│                   SERVER (Express 4.22.2)                │
 │                                                         │
 │  ┌──────────┐   ┌──────────┐   ┌────────────────────┐  │
 │  │  Routes  │──▶│Controller│──▶│     Service         │  │
@@ -195,7 +204,9 @@ Sistema de Control para Proyectos de Reforestación Ambiental en la Parroquia Ru
 │                                 └────────┬────────┘     │
 │                                          │              │
 │  ┌───────────────────────────────────────┘              │
-│  │  Middleware: Auth(JWT) → ErrorHandler → Logger       │
+│  │  Middleware: cookie-parser → Auth (cookie/header)    │
+│  │  → pino-http → ErrorHandler → rate-limit → Sentry   │
+│  │  Cluster (opt-in) | requestTimeout: 30s              │
 └──┼──────────────────────────────────────────────────────┘
    │
    ▼
@@ -204,6 +215,8 @@ Sistema de Control para Proyectos de Reforestación Ambiental en la Parroquia Ru
 │                                                         │
 │  species_catalog │ intervention_zones │ planting_sites  │
 │  soil_readings   │ health_monitoring  │ users           │
+│                                                         │
+│  Migraciones: node-pg-migrate (001, 002)                │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -213,26 +226,31 @@ Sistema de Control para Proyectos de Reforestación Ambiental en la Parroquia Ru
 
 ```
 app-reforestation-project/
+├── .github/workflows/               # CI/CD (GitHub Actions)
 ├── client/                          # Angular 20 PWA
 │   └── src/app/
 │       ├── components/              # Componentes reutilizables
 │       ├── pages/                   # Páginas (rutas)
 │       ├── services/                # Servicios HTTP + offline
 │       ├── guards/                  # Route guards (auth, admin)
+│       ├── interceptors/            # Auth interceptor (withCredentials)
 │       └── models/                  # Interfaces TypeScript
 │
-├── server/                          # API Express 4
+├── server/                          # API Express 4.22.2
 │   └── src/
-│       ├── config/                  # DB, env
+│       ├── config/                  # DB, env, cookie helper
 │       ├── controllers/             # Capa de presentación (req/res)
 │       ├── services/                # Lógica de negocio
 │       ├── repositories/            # Acceso a datos (SQL)
 │       ├── validators/              # Validación de entrada
-│       ├── middleware/              # Auth, error handler
-│       ├── utils/                   # Logger, helpers
+│       ├── middleware/              # Auth (cookie/header), error handler
+│       ├── utils/                   # Logger, response helpers
 │       ├── errors/                  # Clases de error custom
-│       └── routes/                  # Definición de rutas
+│       ├── routes/                  # Definición de rutas
+│       └── db/                      # Migraciones (node-pg-migrate)
 │
+├── Dockerfile                       # Multi-stage build
+├── .dockerignore
 └── package.json                     # Orquestación monorepo
 ```
 
@@ -242,8 +260,8 @@ app-reforestation-project/
 
 ```bash
 # Requisitos
-# - Node.js >= 20
-# - pnpm >= 8
+# - Node.js >= 22 (server), >= 20 (client)
+# - pnpm >= 11
 # - PostgreSQL 16+ con PostGIS
 # - Una cuenta en Supabase (o PostgreSQL local)
 
@@ -254,11 +272,11 @@ npm --prefix client install
 
 # 2. Configurar variables de entorno
 cp server/.env.example server/.env
-# Editar DATABASE_URL, CORS_ORIGIN, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_ANON_KEY
+# Editar: DATABASE_URL, CORS_ORIGIN, SUPABASE_URL, SUPABASE_ANON_KEY
+# Opcional: SENTRY_DSN, SESSION_SECRET, CLUSTER_ENABLED
 
-# 3. Crear tablas base
-psql "$DATABASE_URL" -f server/scripts/sql/01-is-point-in-zone.sql
-# Las migraciones se ejecutan automáticamente o mediante el schema SQL en Supabase
+# 3. Ejecutar migraciones de base de datos
+pnpm --dir server migrate
 
 # 4. Iniciar servidor (http://localhost:3000)
 pnpm --dir server start
@@ -266,6 +284,41 @@ pnpm --dir server start
 # 5. Iniciar cliente (http://localhost:4200)
 npm --prefix client start
 ```
+
+---
+
+## 🐳 Despliegue con Docker
+
+```bash
+# Construir imagen multi-stage
+docker build -t app-reforestation .
+
+# Ejecutar (las migraciones corren automáticamente al iniciar)
+docker run -p 3000:3000 \
+  -e DATABASE_URL=postgres://... \
+  -e SUPABASE_URL=https://... \
+  -e SUPABASE_ANON_KEY=... \
+  -e CORS_ORIGIN=http://localhost:4200 \
+  -e SENTRY_DSN=... \
+  -e SESSION_SECRET=... \
+  app-reforestation
+
+# Modo cluster (usa todos los CPUs)
+docker run -p 3000:3000 -e CLUSTER_ENABLED=true ... app-reforestation
+```
+
+El servidor Express sirve el build de producción de Angular desde `/app/public`. Las migraciones se ejecutan con `node-pg-migrate` antes de iniciar el servidor.
+
+---
+
+## 🤖 CI/CD
+
+El workflow de GitHub Actions (`.github/workflows/ci.yml`) ejecuta en cada PR/push a `main`:
+
+| Job | Pasos |
+|-----|-------|
+| **Server** | `pnpm lint` + `pnpm test` (526 tests) |
+| **Client** | `npm test` (349 tests, ChromeHeadless) + `npm run build --production` |
 
 ---
 
@@ -278,6 +331,7 @@ npm --prefix client start
 | `POST` | `/api/auth/signup` | HU4 | ✅ |
 | `POST` | `/api/auth/login` | HU4 | ✅ |
 | `POST` | `/api/auth/refresh` | HU4 | ✅ |
+| `POST` | `/api/auth/logout` | HU4 | ✅ |
 | `GET` | `/api/auth/me` | HU4 | ✅ |
 | `GET` | `/api/zones` | — | ✅ |
 | `GET` | `/api/zones/:id` | — | ✅ |
