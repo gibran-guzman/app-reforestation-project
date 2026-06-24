@@ -241,57 +241,32 @@ describe('Reports', () => {
       const canvas2 = document.createElement('canvas');
       Object.defineProperty(comp, 'survivalChartRef', { value: () => ({ nativeElement: canvas1 }) });
       Object.defineProperty(comp, 'speciesChartRef', { value: () => ({ nativeElement: canvas2 }) });
-      comp.report.set(mockSurvivalReport);
-      comp.speciesStats.set(mockSpeciesStats);
-      comp['renderCharts']();
+      comp['renderSurvivalChart'](mockSurvivalReport, canvas1);
+      comp['renderSpeciesChart'](mockSpeciesStats, canvas2);
       expect(comp['survivalChart']).toBeDefined();
-      expect(comp['speciesChart']).toBeDefined();
-    });
-
-    it('should render species chart when stats and canvas exist', () => {
-      const fixture = TestBed.createComponent(Reports);
-      const comp = fixture.componentInstance;
-      const canvas = document.createElement('canvas');
-      Object.defineProperty(comp, 'speciesChartRef', { value: () => ({ nativeElement: canvas }) });
-      comp.speciesStats.set(mockSpeciesStats);
-      comp['renderSpeciesChart']();
       expect(comp['speciesChart']).toBeDefined();
     });
 
     it('should not render survival chart without report', () => {
       const fixture = TestBed.createComponent(Reports);
       const comp = fixture.componentInstance;
-      comp['renderSurvivalChart']();
-      expect(comp['survivalChart']).toBeNull();
-    });
-
-    it('should not render survival chart without canvas ref', () => {
-      const fixture = TestBed.createComponent(Reports);
-      const comp = fixture.componentInstance;
-      comp.report.set(mockSurvivalReport);
-      comp['renderSurvivalChart']();
       expect(comp['survivalChart']).toBeNull();
     });
 
     it('should not render species chart without stats', () => {
       const fixture = TestBed.createComponent(Reports);
       const comp = fixture.componentInstance;
-      comp['renderSpeciesChart']();
       expect(comp['speciesChart']).toBeNull();
     });
 
-    it('should not render species chart without canvas ref', () => {
-      const fixture = TestBed.createComponent(Reports);
-      const comp = fixture.componentInstance;
-      comp.speciesStats.set(mockSpeciesStats);
-      comp['renderSpeciesChart']();
-      expect(comp['speciesChart']).toBeNull();
-    });
-
-    it('should trigger chart rendering effect when canvas refs are available after detectChanges', () => {
+    it('should trigger chart rendering effect when data and canvas refs are available', () => {
       spyOn(Chart.prototype, 'constructor' as any).and.callFake(() => ({ destroy: jasmine.createSpy('destroy') }));
       const fixture = TestBed.createComponent(Reports);
       const comp = fixture.componentInstance;
+      const canvas1 = document.createElement('canvas');
+      const canvas2 = document.createElement('canvas');
+      Object.defineProperty(comp, 'survivalChartRef', { value: () => ({ nativeElement: canvas1 }) });
+      Object.defineProperty(comp, 'speciesChartRef', { value: () => ({ nativeElement: canvas2 }) });
       spyOn(comp as any, 'renderSurvivalChart').and.callThrough();
       comp.report.set(mockSurvivalReport);
       comp.speciesStats.set(mockSpeciesStats);

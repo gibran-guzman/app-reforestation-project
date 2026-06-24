@@ -51,8 +51,8 @@ describe('SpeciesList', () => {
     comp.ngOnInit();
 
     expect(service.list).toHaveBeenCalled();
-    expect(comp.species).toEqual([mockSpecies] as any);
-    expect(comp.loading).toBeFalse();
+    expect(comp.species()).toEqual([mockSpecies] as any);
+    expect(comp.loading()).toBeFalse();
   });
 
   it('should set error on load failure', () => {
@@ -62,8 +62,8 @@ describe('SpeciesList', () => {
     const comp = fixture.componentInstance;
     comp.ngOnInit();
 
-    expect(comp.error).toBe('Error de red');
-    expect(comp.loading).toBeFalse();
+    expect(comp.error()).toBe('Error de red');
+    expect(comp.loading()).toBeFalse();
   });
 
   it('deleteSpecies should call service.remove and filter on success', () => {
@@ -72,16 +72,16 @@ describe('SpeciesList', () => {
 
     const fixture = TestBed.createComponent(SpeciesList);
     const comp = fixture.componentInstance;
-    comp.species = [
+    comp.species.set([
       { ...mockSpecies, id: 1 },
       { ...mockSpecies, id: 2, scientific_name: 'Pinus' },
-    ];
+    ]);
 
     comp.deleteSpecies(1);
 
     expect(service.remove).toHaveBeenCalledWith(1);
-    expect(comp.species.length).toBe(1);
-    expect(comp.species[0].id).toBe(2);
+    expect(comp.species().length).toBe(1);
+    expect(comp.species()[0].id).toBe(2);
   });
 
   it('deleteSpecies should not call remove when confirm is false', () => {
@@ -125,7 +125,7 @@ describe('SpeciesList', () => {
     const comp = fixture.componentInstance;
     comp.ngOnInit();
 
-    expect(comp.error).toBe('Error al cargar especies');
-    expect(comp.loading).toBeFalse();
+    expect(comp.error()).toBe('Error al cargar especies');
+    expect(comp.loading()).toBeFalse();
   });
 });

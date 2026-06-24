@@ -277,8 +277,8 @@ describe('MapPage', () => {
     };
 
     comp['renderMarkers'](geoJson);
-    const popupHtml = mockCircleMarker.bindPopup.calls.mostRecent().args[0] as string;
-    expect(popupHtml).not.toContain('<img');
+    const popupEl = mockCircleMarker.bindPopup.calls.mostRecent().args[0] as HTMLElement;
+    expect(popupEl.querySelector('.map-popup-photo')).toBeNull();
     expect(mockCircleMarker.bindPopup).toHaveBeenCalled();
   });
 });

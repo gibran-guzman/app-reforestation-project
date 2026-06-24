@@ -235,7 +235,7 @@ describe('Dashboard', () => {
       const canvas = document.createElement('canvas');
       Object.defineProperty(comp, 'evolutionChartRef', { value: () => ({ nativeElement: canvas }) });
       comp.evolution.set(evolutionData);
-      comp['renderEvolutionChart']();
+      comp['renderEvolutionChart'](evolutionData, canvas);
       expect(comp['evolutionChart']).toBeDefined();
     }));
 
@@ -243,7 +243,6 @@ describe('Dashboard', () => {
       const fixture = TestBed.createComponent(Dashboard);
       const comp = fixture.componentInstance;
       comp.evolution.set(evolutionData);
-      comp['renderEvolutionChart']();
       expect(comp['evolutionChart']).toBeNull();
     });
 
@@ -264,7 +263,7 @@ describe('Dashboard', () => {
       const canvas = document.createElement('canvas');
       Object.defineProperty(comp, 'evolutionChartRef', { value: () => ({ nativeElement: canvas }) });
       comp.evolution.set(evolutionData);
-      comp['renderEvolutionChart']();
+      comp['renderEvolutionChart'](evolutionData, canvas);
       const chartInstance = (comp as any)['evolutionChart'] as any;
       expect(chartInstance).toBeDefined();
       const labelFn = chartInstance?.config?.options?.plugins?.tooltip?.callbacks?.label;

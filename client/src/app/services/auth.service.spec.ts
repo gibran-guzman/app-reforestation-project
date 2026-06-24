@@ -40,7 +40,7 @@ describe('AuthService', () => {
     expect(service).toBeTruthy();
   });
 
-  describe('constructor', () => {
+  describe('initialize', () => {
     beforeEach(() => {
       TestBed.resetTestingModule();
       TestBed.configureTestingModule({
@@ -53,6 +53,7 @@ describe('AuthService', () => {
       localStorage.setItem('access_token', 'test-token');
       const service = TestBed.inject(AuthService);
       expect(service.isAuthenticated()).toBeTrue();
+      service.initialize();
       const req = httpTesting.expectOne('/api/auth/me');
       req.flush({ data: mockUser });
       expect(service.user()).toEqual(mockUser);
@@ -61,6 +62,8 @@ describe('AuthService', () => {
     it('handles me() error and resets state', () => {
       localStorage.setItem('access_token', 'test-token');
       const service = TestBed.inject(AuthService);
+      service.initialize();
+      service.isAuthenticated.set(true);
       const req = httpTesting.expectOne('/api/auth/me');
       req.flush({ message: 'Unauthorized' }, { status: 401, statusText: 'Unauthorized' });
       expect(service.isAuthenticated()).toBeFalse();
@@ -71,6 +74,7 @@ describe('AuthService', () => {
 
     it('does nothing when no token exists', () => {
       const service = TestBed.inject(AuthService);
+      service.initialize();
       httpTesting.expectNone('/api/auth/me');
       expect(service.isAuthenticated()).toBeFalse();
       expect(service.user()).toBeNull();
