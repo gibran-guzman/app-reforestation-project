@@ -1,25 +1,54 @@
-import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
+import { HttpInterceptorFn, HttpErrorResponse, HttpRequest } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { catchError, throwError } from 'rxjs';
+import { catchError, switchMap, throwError } from 'rxjs';
+import { AuthService } from '../services/auth.service';
+
+function addAuthHeader(req: HttpRequest<unknown>, token: string): HttpRequest<unknown> {
+  return req.clone({ setHeaders: { Authorization: `Bearer ${token}` } });
+}
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const router = inject(Router);
-  const token = localStorage.getItem('access_token');
+  const auth = inject(AuthService);
 
-  if (token) {
-    req = req.clone({
-      setHeaders: { Authorization: `Bearer ${token}` },
-    });
-  }
+  const token = auth.getToken();
+  const authedReq = token ? addAuthHeader(req, token) : req;
 
-  return next(req).pipe(
+  return next(authedReq).pipe(
     catchError((err: HttpErrorResponse) => {
-      if (err.status === 401) {
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
-        router.navigate(['/login']);
+      if (err.status === 401 && !req.url.includes('/auth/refresh')) {
+        const refreshToken = localStorage.getItem('refresh_token');
+        if (!refreshToken) {
+          auth.logout();
+          router.navigate(['/login']);
+          return throwError(() => err);
+        }
+
+        return auth.refresh().pipe(
+          switchMap(() => {
+            const newToken = auth.getToken();
+            const retryReq = newToken ? addAuthHeader(req.clone(), newToken) : req;
+            return next(retryReq);
+          }),
+          catchError(() => {
+            auth.logout();
+            router.navigate(['/login']);
+            return throwError(() => err);
+          }),
+        );
       }
+
+      if (err.status === 403) {
+        router.navigate(['/dashboard']);
+      }
+
+      if (err.status === 0) {
+        console.error('Network error - no se pudo conectar con el servidor');
+      } else if (err.status >= 500) {
+        console.error(`Server error ${err.status}:`, err.message);
+      }
+
       return throwError(() => err);
     }),
   );
