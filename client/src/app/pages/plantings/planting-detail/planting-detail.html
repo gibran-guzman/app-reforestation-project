@@ -1,0 +1,74 @@
+<div class="p-3 p-md-4">
+  <a routerLink="/plantings" class="btn btn-outline-secondary btn-sm mb-3">&larr; Volver a plantaciones</a>
+
+  @if (loading()) {
+    <div class="text-center py-5">
+      <div class="spinner-border text-success" role="status"></div>
+    </div>
+  } @else if (error()) {
+    <div class="alert alert-danger">{{ error() }}</div>
+  } @else if (planting(); as p) {
+    <div class="row g-4">
+      <div class="col-lg-6">
+        <div class="card shadow-sm">
+          @if (p.photo_url) {
+            <img [src]="p.photo_url" alt="Foto de {{ p.species_name || 'plantación' }}" class="card-img-top detail-photo">
+          }
+          <div class="card-body">
+            <h4 class="card-title mb-1">{{ p.species_name || 'Sin especie' }}</h4>
+            <p class="text-muted mb-3">{{ p.zone_name || 'Sin zona' }}</p>
+
+            <table class="table table-sm mb-0">
+              <tbody>
+                <tr><th class="ps-0 th-label">Fecha</th><td>{{ p.planted_at | date:'mediumDate' }}</td></tr>
+                <tr><th class="ps-0">Coordenadas</th><td>{{ formatCoords(p) }}</td></tr>
+                <tr><th class="ps-0">pH inicial</th><td>{{ p.initial_ph ?? '—' }}</td></tr>
+                <tr><th class="ps-0">Humedad inicial</th><td>{{ p.initial_humidity != null ? p.initial_humidity + '%' : '—' }}</td></tr>
+                <tr><th class="ps-0">Textura del suelo</th><td>{{ p.initial_soil_texture || '—' }}</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-6">
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <h5 class="card-title d-flex align-items-center gap-2 mb-3">
+              Historial de monitoreo
+              <span class="badge bg-secondary rounded-pill">{{ monitoring().length }}</span>
+            </h5>
+
+            @if (monitoring().length === 0) {
+              <p class="text-muted mb-0">Aún no hay registros de monitoreo para esta plantación.</p>
+            } @else {
+              <div class="timeline">
+                @for (m of monitoring(); track m.id) {
+                  <div class="timeline-item">
+                    <div class="timeline-marker"></div>
+                    <div class="timeline-content card">
+                      <div class="card-body py-2 px-3">
+                        <div class="d-flex justify-content-between align-items-start">
+                          <small class="text-muted">{{ m.visit_date | date:'mediumDate' }}</small>
+                          <span class="badge {{ survivalBadge(m.survival_status) }}">{{ survivalLabel(m.survival_status) }}</span>
+                        </div>
+                        <div class="mt-1 small">
+                          @if (m.ph != null) { <span class="me-3">pH: {{ m.ph }}</span> }
+                          @if (m.humidity != null) { <span class="me-3">Humedad: {{ m.humidity }}%</span> }
+                          @if (m.vigor) { <span class="me-3">Vigor: {{ m.vigor }}</span> }
+                        </div>
+                        @if (m.notes) {
+                          <p class="mb-0 mt-1 small">{{ m.notes }}</p>
+                        }
+                      </div>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

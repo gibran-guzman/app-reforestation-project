@@ -1,0 +1,56 @@
+<div class="p-3 p-md-4">
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2 mb-4">
+    <h2 class="mb-0">Catálogo de especies</h2>
+    @if (auth.user()?.role === 'admin') {
+      <a routerLink="/species/new" class="btn btn-success">+ Nueva especie</a>
+    }
+  </div>
+
+  @if (loading()) {
+    <div class="text-center py-5">
+      <div class="spinner-border text-success" role="status"></div>
+    </div>
+  } @else if (error()) {
+    <div class="alert alert-danger">{{ error() }}</div>
+  } @else if (species().length === 0) {
+    <div class="alert alert-info">Aún no hay especies registradas.</div>
+  } @else {
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>#</th>
+            <th>Nombre científico</th>
+            <th>Nombre común</th>
+            <th>Tipo de suelo</th>
+            <th>Rango altitud</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (s of species(); track s.id) {
+            <tr>
+              <td>{{ s.id }}</td>
+              <td><em>{{ s.scientific_name }}</em></td>
+              <td>{{ s.common_name }}</td>
+              <td>{{ s.ideal_soil_type || '—' }}</td>
+              <td>
+                @if (s.recommended_altitude_min != null && s.recommended_altitude_max != null) {
+                  {{ s.recommended_altitude_min }} – {{ s.recommended_altitude_max }} m
+                } @else {
+                  —
+                }
+              </td>
+              <td class="text-nowrap text-end">
+                @if (auth.user()?.role === 'admin') {
+                  <a [routerLink]="['/species', s.id, 'edit']" class="btn btn-sm btn-outline-secondary me-1">Editar</a>
+                  <button class="btn btn-sm btn-outline-danger" (click)="deleteSpecies(s.id)">Eliminar</button>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>

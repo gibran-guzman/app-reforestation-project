@@ -1,0 +1,40 @@
+<div class="p-3 p-md-4">
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2 mb-4">
+    <h2 class="mb-0">Zonas de intervención</h2>
+    @if (auth.user()?.role === 'admin') {
+      <a routerLink="/zones/new" class="btn btn-success">+ Nueva zona</a>
+    }
+  </div>
+
+  @if (loading()) {
+    <div class="text-center py-5">
+      <div class="spinner-border text-success" role="status"></div>
+    </div>
+  } @else if (error()) {
+    <div class="alert alert-danger">{{ error() }}</div>
+  } @else if (zones().length === 0) {
+    <div class="alert alert-info">Aún no hay zonas registradas.</div>
+  } @else {
+    <div class="row g-3">
+      @for (z of zones(); track z.id) {
+        <div class="col-md-6 col-lg-4">
+          <div class="card shadow-sm h-100">
+            <div class="card-body">
+              <h5 class="card-title">{{ z.name }}</h5>
+              <p class="card-text text-muted">{{ z.description || 'Sin descripción' }}</p>
+              <p class="card-text">
+                <small class="text-muted">Creada {{ z.created_at | date }}</small>
+              </p>
+            </div>
+            @if (auth.user()?.role === 'admin') {
+              <div class="card-footer bg-transparent d-flex gap-2 justify-content-end">
+                <a [routerLink]="['/zones', z.id, 'edit']" class="btn btn-sm btn-outline-secondary">Editar</a>
+                <button class="btn btn-sm btn-outline-danger" (click)="deleteZone(z.id)">Eliminar</button>
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

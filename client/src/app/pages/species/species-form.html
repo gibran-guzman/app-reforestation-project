@@ -1,0 +1,56 @@
+<div class="p-3 p-md-4 form-container" style="max-width: 600px;">
+  <h2 class="mb-4">{{ isEdit ? 'Editar especie' : 'Nueva especie' }}</h2>
+
+  @if (loading()) {
+    <div class="text-center py-5">
+      <div class="spinner-border text-success" role="status"></div>
+    </div>
+  } @else {
+    @if (error()) {
+      <div class="alert alert-danger">{{ error() }}</div>
+    }
+
+    <form (ngSubmit)="submit()">
+      <div class="mb-3">
+        <label for="scientific_name" class="form-label">Nombre científico *</label>
+        <input id="scientific_name" type="text" class="form-control" [(ngModel)]="form.scientific_name" name="scientific_name" required maxlength="500">
+      </div>
+
+      <div class="mb-3">
+        <label for="common_name" class="form-label">Nombre común *</label>
+        <input id="common_name" type="text" class="form-control" [(ngModel)]="form.common_name" name="common_name" required maxlength="300">
+      </div>
+
+      <div class="mb-3">
+        <label for="description" class="form-label">Descripción</label>
+        <textarea id="description" class="form-control" [(ngModel)]="form.description" name="description" rows="3" maxlength="2000"></textarea>
+      </div>
+
+      <div class="mb-3">
+        <label for="ideal_soil_type" class="form-label">Tipo de suelo ideal</label>
+        <input id="ideal_soil_type" type="text" class="form-control" [(ngModel)]="form.ideal_soil_type" name="ideal_soil_type" maxlength="200" placeholder="ej. franco, arenoso">
+      </div>
+
+      <div class="row mb-4">
+        <div class="col-6">
+          <label for="alt_min" class="form-label">Altitud mín (m)</label>
+          <input id="alt_min" type="number" class="form-control" [(ngModel)]="form.recommended_altitude_min" name="recommended_altitude_min" min="0" max="6000">
+        </div>
+        <div class="col-6">
+          <label for="alt_max" class="form-label">Altitud máx (m)</label>
+          <input id="alt_max" type="number" class="form-control" [(ngModel)]="form.recommended_altitude_max" name="recommended_altitude_max" min="0" max="6000">
+        </div>
+      </div>
+
+      <div class="d-flex flex-column flex-md-row gap-2">
+        <button type="submit" class="btn btn-success" [disabled]="saving()">
+          @if (saving()) {
+            <span class="spinner-border spinner-border-sm me-1"></span>
+          }
+          {{ isEdit ? 'Actualizar' : 'Crear' }}
+        </button>
+        <a routerLink="/species" class="btn btn-outline-secondary">Cancelar</a>
+      </div>
+    </form>
+  }
+</div>

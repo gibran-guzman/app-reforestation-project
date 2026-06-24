@@ -1,0 +1,367 @@
+<div class="p-3 p-md-4">
+  <h2 class="mb-4">Panel principal</h2>
+
+  @if (successMsg()) {
+    <div class="alert alert-success alert-dismissible d-flex align-items-center gap-2 py-2 pe-4" role="alert">
+      <span>{{ successMsg() }}</span>
+      <button type="button" class="btn-close ms-auto" (click)="clearSuccess()" aria-label="Cerrar"></button>
+    </div>
+  }
+
+  @if (loadingStats()) {
+    <div class="text-center py-5">
+      <div class="spinner-border text-success" role="status"></div>
+    </div>
+  } @else if (statsError()) {
+    <div class="alert alert-danger">{{ statsError() }}</div>
+  } @else if (overall(); as o) {
+    <div class="row g-3 mb-4">
+      <div class="col-6 col-md-4 col-lg-2">
+        <div class="card dashboard-card border-0 shadow-sm h-100">
+          <div class="card-body">
+            <div class="dashboard-card-icon bg-success-subtle">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#198754" viewBox="0 0 16 16">
+                <path d="M6.5 14.5v-3.482c0-.697-.488-1.303-1.166-1.459l-.405-.096a3.515 3.515 0 0 1-.835-.272c-.606-.285-.942-1.01-.942-1.833 0-.776.314-1.5.825-2.02.424-.43.991-.692 1.623-.784A1.5 1.5 0 0 1 8 3.5c.43 0 .83.157 1.136.438.591.54 1.13 1.298 1.13 2.31 0 .823-.336 1.548-.942 1.833a3.515 3.515 0 0 1-.835.272l-.405.096c-.678.156-1.166.762-1.166 1.459v3.482m4 0v-1.518c.575.196 1.108.618 1.622 1.064.256.224.522.424.755.566.15.092.31.17.48.215.255.067.518.123.643.123V14.5z"/>
+              </svg>
+            </div>
+            <div class="dashboard-card-value text-success">{{ o.total }}</div>
+            <div class="dashboard-card-label">Total plantaciones</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-4 col-lg-2">
+        <div class="card dashboard-card border-0 shadow-sm h-100">
+          <div class="card-body">
+            <div class="dashboard-card-icon bg-info-subtle">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#0dcaf0" viewBox="0 0 16 16">
+                <path d="M8 3.5a.5.5 0 0 0-1 0V4H6a.5.5 0 0 0 0 1h1v1a.5.5 0 0 0 1 0V5h1a.5.5 0 0 0 0-1H8v-.5z"/>
+                <path d="M2 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2zm10-1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1z"/>
+              </svg>
+            </div>
+            <div class="dashboard-card-value text-info">{{ o.monitored }}</div>
+            <div class="dashboard-card-label">Monitoreadas</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-4 col-lg-2">
+        <div class="card dashboard-card border-0 shadow-sm h-100">
+          <div class="card-body">
+            <div class="dashboard-card-icon bg-success-subtle">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#198754" viewBox="0 0 16 16">
+                <path d="M2.5 8a5.5 5.5 0 0 1 8.25-4.764.5.5 0 0 0 .5-.866A6.5 6.5 0 1 0 14.5 8a.5.5 0 0 0-1 0 5.5 5.5 0 1 1-11 0z"/>
+                <path d="M15.354 3.354a.5.5 0 0 0-.708-.708L8 9.293 5.354 6.646a.5.5 0 1 0-.708.708l3 3a.5.5 0 0 0 .708 0l7-7z"/>
+              </svg>
+            </div>
+            <div class="dashboard-card-value text-success">{{ survivalRate(o.alive, o.monitored) }}%</div>
+            <div class="dashboard-card-label">Supervivencia</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-4 col-lg-2">
+        <div class="card dashboard-card border-0 shadow-sm h-100">
+          <div class="card-body">
+            <div class="dashboard-card-icon bg-secondary-subtle">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#6c757d" viewBox="0 0 16 16">
+                <path d="M4 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H4zm0 1h8a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1z"/>
+                <path d="M5.5 6.5A.5.5 0 0 1 6 6h4a.5.5 0 0 1 0 1H6a.5.5 0 0 1-.5-.5zM6 8a.5.5 0 0 0 0 1h4a.5.5 0 0 0 0-1H6zm0 2a.5.5 0 0 0 0 1h4a.5.5 0 0 0 0-1H6z"/>
+              </svg>
+            </div>
+            <div class="dashboard-card-value text-secondary">{{ o.unmonitored }}</div>
+            <div class="dashboard-card-label">Sin monitoreo</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-4 col-lg-2">
+        <div class="card dashboard-card border-0 shadow-sm h-100">
+          <div class="card-body">
+            <div class="dashboard-card-icon bg-primary-subtle">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#0d6efd" viewBox="0 0 16 16">
+                <path d="M7.27 1.047a1 1 0 0 1 1.46 0l6.345 6.77c.6.638.146 1.683-.73 1.683H11.5v1a1 1 0 0 1-1 1h-5a1 1 0 0 1-1-1v-1H1.654C.78 9.5.326 8.455.924 7.816L7.27 1.047zM14.346 8.5 8 1.73 1.654 8.5H4.5a.5.5 0 0 1 .5.5v1h6v-1a.5.5 0 0 1 .5-.5h2.846z"/>
+              </svg>
+            </div>
+            <div class="dashboard-card-value text-primary">{{ speciesCount() }}</div>
+            <div class="dashboard-card-label">Especies</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-4 col-lg-2">
+        <div class="card dashboard-card border-0 shadow-sm h-100">
+          <div class="card-body">
+            <div class="dashboard-card-icon bg-warning-subtle">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#ffc107" viewBox="0 0 16 16">
+                <path d="M8 1.5a.5.5 0 0 1 .5.5v3.793l2.646-2.647a.5.5 0 0 1 .708.708L9.207 6.5H12.5a.5.5 0 0 1 0 1H9.207l2.647 2.646a.5.5 0 0 1-.708.708L8.5 8.207V12a.5.5 0 0 1-1 0V8.207l-2.646 2.647a.5.5 0 0 1-.708-.708L6.793 7.5H3.5a.5.5 0 0 1 0-1h3.293L4.146 3.854a.5.5 0 1 1 .708-.708L7.5 5.793V2a.5.5 0 0 1 .5-.5z"/>
+              </svg>
+            </div>
+            <div class="dashboard-card-value text-warning">{{ zoneCount() }}</div>
+            <div class="dashboard-card-label">Zonas</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+      <div class="col-md-7">
+        <div class="card shadow-sm h-100">
+          <div class="card-header fw-semibold d-flex align-items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+              <path fill-rule="evenodd" d="M0 0h1v15h15v1H0V0zm10 3.5a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 .5.5v4a.5.5 0 0 1-1 0V4.9l-3.613 4.417a.5.5 0 0 1-.74.037L7.06 6.767l-3.656 5.243a.5.5 0 0 1-.808-.588l4-5.5a.5.5 0 0 1 .758-.064l2.609 2.61L12.197 4h-1.697a.5.5 0 0 1-.5-.5z"/>
+            </svg>
+            Evolución de plantaciones
+          </div>
+          <div class="card-body">
+            @if (evolution().length === 0) {
+              <p class="text-muted text-center small mb-0 py-3">Sin datos de evolución.</p>
+            } @else {
+              <div class="chart-container">
+                <canvas #evolutionChart aria-label="Gráfico de evolución de plantaciones"></canvas>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+      <div class="col-md-5">
+        <div class="card shadow-sm h-100">
+          <div class="card-header fw-semibold d-flex align-items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M6.5 14.5v-3.482c0-.697-.488-1.303-1.166-1.459l-.405-.096a3.515 3.515 0 0 1-.835-.272c-.606-.285-.942-1.01-.942-1.833 0-.776.314-1.5.825-2.02.424-.43.991-.692 1.623-.784A1.5 1.5 0 0 1 8 3.5c.43 0 .83.157 1.136.438.591.54 1.13 1.298 1.13 2.31 0 .823-.336 1.548-.942 1.833a3.515 3.515 0 0 1-.835.272l-.405.096c-.678.156-1.166.762-1.166 1.459v3.482m4 0v-1.518c.575.196 1.108.618 1.622 1.064.256.224.522.424.755.566.15.092.31.17.48.215.255.067.518.123.643.123V14.5z"/>
+            </svg>
+            Últimas plantaciones
+          </div>
+          <div class="card-body p-0">
+            @if (recentPlantings().length === 0) {
+              <div class="p-3 text-muted small text-center">Aún no hay plantaciones registradas.</div>
+            } @else {
+              <div class="list-group list-group-flush">
+                @for (p of recentPlantings(); track p.id) {
+                  <a [routerLink]="['/plantings', p.id]" class="list-group-item list-group-item-action d-flex align-items-center gap-3 px-3 py-2">
+                    <div class="rounded-circle bg-success-subtle d-flex align-items-center justify-content-center dashboard-avatar-icon">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#198754" viewBox="0 0 16 16">
+                        <path d="M6.5 14.5v-3.482c0-.697-.488-1.303-1.166-1.459l-.405-.096a3.515 3.515 0 0 1-.835-.272c-.606-.285-.942-1.01-.942-1.833 0-.776.314-1.5.825-2.02.424-.43.991-.692 1.623-.784A1.5 1.5 0 0 1 8 3.5c.43 0 .83.157 1.136.438.591.54 1.13 1.298 1.13 2.31 0 .823-.336 1.548-.942 1.833a3.515 3.515 0 0 1-.835.272l-.405.096c-.678.156-1.166.762-1.166 1.459v3.482m4 0v-1.518c.575.196 1.108.618 1.622 1.064.256.224.522.424.755.566.15.092.31.17.48.215.255.067.518.123.643.123V14.5z"/>
+                      </svg>
+                    </div>
+                    <div class="flex-grow-1 min-width-0">
+                      <div class="fw-semibold small text-truncate">{{ p.species_name || 'Sin especie' }}</div>
+                      <div class="text-muted small">
+                        <span class="text-truncate">{{ p.zone_name || 'Sin zona' }}</span>
+                        <span class="mx-1">·</span>
+                        <span>{{ p.planted_at | date:'shortDate' }}</span>
+                      </div>
+                    </div>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="%23adb5bd" viewBox="0 0 16 16">
+                      <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+                    </svg>
+                  </a>
+                }
+              </div>
+              <div class="card-footer text-center p-2">
+                <a routerLink="/plantings" class="btn btn-sm btn-outline-success w-100">Ver todas</a>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+      <div class="col-md-6">
+        <div class="card shadow-sm h-100">
+          <div class="card-header fw-semibold">Supervivencia por especie</div>
+          <div class="card-body p-0">
+            @if (speciesStats().length === 0) {
+              <div class="p-3 text-muted small">Sin datos</div>
+            } @else {
+              <div class="table-responsive">
+                <table class="table table-sm table-hover mb-0">
+                  <thead class="table-light">
+                    <tr>
+                      <th>Especie</th>
+                      <th class="text-center">Total</th>
+                      <th class="text-center">Vivas</th>
+                      <th class="text-center">Estresadas</th>
+                      <th class="text-center">Muertas</th>
+                      <th class="text-center">Supervivencia</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (s of speciesStats(); track s.id; let i = $index) {
+                      <tr>
+                        <td>{{ s.common_name }}</td>
+                        <td class="text-center">{{ s.total_planted }}</td>
+                        <td class="text-center text-success fw-semibold">{{ s.alive }}</td>
+                        <td class="text-center text-warning fw-semibold">{{ s.struggling }}</td>
+                        <td class="text-center text-danger fw-semibold">{{ s.dead }}</td>
+                        <td class="text-center">
+                          <div class="d-flex align-items-center gap-2 justify-content-center">
+ <div class="progress flex-grow-1 progress-bar-sm">
+                               <div class="progress-bar {{ speciesRates()[i]?.color }}" [style.width.%]="speciesRates()[i]?.rate"></div>
+                            </div>
+                            <small class="text-muted">{{ speciesRates()[i]?.rate }}%</small>
+                          </div>
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="card shadow-sm h-100">
+          <div class="card-header fw-semibold">Supervivencia por zona</div>
+          <div class="card-body p-0">
+            @if (zoneSummary().length === 0) {
+              <div class="p-3 text-muted small">Sin datos</div>
+            } @else {
+              <div class="table-responsive">
+                <table class="table table-sm table-hover mb-0">
+                  <thead class="table-light">
+                    <tr>
+                      <th>Zona</th>
+                      <th class="text-center">Total</th>
+                      <th class="text-center">Vivas</th>
+                      <th class="text-center">Estresadas</th>
+                      <th class="text-center">Muertas</th>
+                      <th class="text-center">Supervivencia</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (z of zoneSummary(); track z.id; let i = $index) {
+                      <tr>
+                        <td>{{ z.name }}</td>
+                        <td class="text-center">{{ z.total_plantings }}</td>
+                        <td class="text-center text-success fw-semibold">{{ z.alive }}</td>
+                        <td class="text-center text-warning fw-semibold">{{ z.struggling }}</td>
+                        <td class="text-center text-danger fw-semibold">{{ z.dead }}</td>
+                        <td class="text-center">
+                          <div class="d-flex align-items-center gap-2 justify-content-center">
+ <div class="progress flex-grow-1 progress-bar-sm">
+                               <div class="progress-bar {{ zoneRates()[i]?.color }}" [style.width.%]="zoneRates()[i]?.rate"></div>
+                            </div>
+                            <small class="text-muted">{{ zoneRates()[i]?.rate }}%</small>
+                          </div>
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <div class="d-flex flex-wrap gap-2 mb-4">
+    @if (connectivity.online()) {
+      <span class="badge bg-success fs-6 px-3 py-2 d-flex align-items-center gap-2">
+        <span class="rounded-circle d-inline-block badge-status-dot"></span>
+        Online
+      </span>
+    } @else {
+      <span class="badge bg-warning text-dark fs-6 px-3 py-2 d-flex align-items-center gap-2">
+        <span class="rounded-circle d-inline-block badge-status-dot badge-status-dot-dark"></span>
+        Offline
+      </span>
+    }
+    @if (offline.pendingCount() > 0) {
+      <span class="badge bg-danger fs-6 px-3 py-2">
+        {{ offline.pendingCount() }} registro(s) pendiente(s) de sincronizar
+      </span>
+    }
+    @if (pendingList().length > 0 && connectivity.online()) {
+      <button type="button" class="btn btn-primary btn-sm" (click)="doSync()" [disabled]="syncService.syncing()">
+        @if (syncService.syncing()) {
+          <span class="spinner-border spinner-border-sm me-1"></span>
+        }
+        Sincronizar ahora
+      </button>
+      <button type="button" class="btn btn-outline-secondary btn-sm" (click)="refreshPending()" [disabled]="syncService.syncing()">
+        Actualizar lista
+      </button>
+    }
+    @if (syncError()) {
+      <span class="text-danger small">{{ syncError() }}</span>
+    }
+
+    @if (syncService.progress(); as p) {
+      <div class="w-100 mt-2">
+        <div class="d-flex justify-content-between small mb-1">
+          <span>Sincronizando... {{ p.current }}/{{ p.total }}</span>
+          <span>{{ survivalRate(p.current, p.total) }}%</span>
+        </div>
+        <div class="progress progress-bar-xs">
+          <div class="progress-bar progress-bar-striped progress-bar-animated bg-success"
+               [style.width.%]="p.total > 0 ? survivalRate(p.current, p.total) : 0">
+          </div>
+        </div>
+      </div>
+    }
+
+    @if (syncService.errorItems().length > 0) {
+      <div class="w-100 mt-2">
+        @for (err of syncService.errorItems(); track $index) {
+          <div class="small text-danger">{{ err }}</div>
+        }
+      </div>
+    }
+  </div>
+
+  @if (pendingList().length > 0) {
+    <div class="card shadow-sm mb-4">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span>Registros pendientes de sincronizar</span>
+        <span class="badge bg-warning text-dark">{{ pendingList().length }}</span>
+      </div>
+      <div class="list-group list-group-flush">
+        @for (item of pendingList(); track item.id) {
+          <div class="list-group-item d-flex justify-content-between align-items-center">
+            <div class="d-flex flex-column">
+              <small class="text-muted">Zona #{{ item.payload.zone_id }} · Especie #{{ item.payload.species_id }}</small>
+              <small class="text-muted">{{ item.created_at | date:'short' }}</small>
+              @if (item.photo) {
+                <small class="text-success">Foto incluida</small>
+              }
+            </div>
+            <small class="text-muted">{{ item.retries > 0 ? 'Reintento ' + item.retries : 'Pendiente' }}</small>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  <div class="row g-3">
+    <div class="col-md-4">
+      <div class="card shadow-sm h-100">
+        <div class="card-body d-flex flex-column">
+          <h5 class="card-title">Especies</h5>
+          <p class="card-text text-muted">Gestionar catálogo de especies</p>
+          <a routerLink="/species" class="btn btn-outline-success mt-auto">Ver catálogo</a>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card shadow-sm h-100">
+        <div class="card-body d-flex flex-column">
+          <h5 class="card-title">Zonas</h5>
+          <p class="card-text text-muted">Gestionar zonas de intervención</p>
+          <a routerLink="/zones" class="btn btn-outline-success mt-auto">Ver zonas</a>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card shadow-sm h-100">
+        <div class="card-body d-flex flex-column">
+          <h5 class="card-title">Plantaciones</h5>
+          <p class="card-text text-muted">Ver y registrar plántulas</p>
+          <div class="d-flex gap-2 mt-auto">
+            <a routerLink="/plantings" class="btn btn-outline-success flex-fill">Ver</a>
+            <a routerLink="/plantings/new" class="btn btn-success flex-fill">Registrar</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

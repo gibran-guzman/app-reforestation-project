@@ -1,0 +1,65 @@
+<nav class="navbar navbar-expand-lg navbar-dark bg-success px-3">
+  <a class="navbar-brand" routerLink="/dashboard">Lloa Reforestación</a>
+
+  <button class="navbar-toggler border-0" type="button" (click)="toggleCollapse()" aria-controls="navbarNav" [attr.aria-expanded]="!collapsed()" aria-label="Menú de navegación">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+
+  <div class="collapse navbar-collapse" [class.show]="!collapsed()" id="navbarNav">
+    <ul class="navbar-nav me-auto">
+      <li class="nav-item">
+        <a class="nav-link" routerLink="/species" routerLinkActive="active" (click)="closeNav()">Especies</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" routerLink="/zones" routerLinkActive="active" (click)="closeNav()">Zonas</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" routerLink="/plantings" routerLinkActive="active" (click)="closeNav()">Plantaciones</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" routerLink="/plantings/new" routerLinkActive="active" (click)="closeNav()">Plantar</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" routerLink="/map" routerLinkActive="active" (click)="closeNav()">Mapa</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" routerLink="/heatmap" routerLinkActive="active" (click)="closeNav()">Calor</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" routerLink="/reports" routerLinkActive="active" (click)="closeNav()">Reportes</a>
+      </li>
+    </ul>
+
+    <ul class="navbar-nav align-items-center gap-1">
+      @if (connectivity.online()) {
+        <li class="nav-item small text-success-emphasis d-flex align-items-center gap-1">
+          <span class="rounded-circle d-inline-block status-dot status-dot-online"></span>
+          Online
+        </li>
+      } @else {
+        <li class="nav-item small text-warning d-flex align-items-center gap-1">
+          <span class="rounded-circle d-inline-block status-dot status-dot-offline"></span>
+          Offline
+        </li>
+      }
+      @if (offline.pendingCount() > 0) {
+        <li class="nav-item">
+          <span class="badge bg-warning text-dark">{{ offline.pendingCount() }} pendientes</span>
+        </li>
+      }
+      <li class="nav-item dropdown" [class.show]="dropdownOpen()">
+        <a class="nav-link dropdown-toggle" (click)="toggleDropdown($event)" role="button" aria-haspopup="true" [attr.aria-expanded]="dropdownOpen()">
+          {{ auth.user()?.full_name || auth.user()?.email }}
+        </a>
+        <ul class="dropdown-menu dropdown-menu-end" [class.show]="dropdownOpen()">
+          <li><span class="dropdown-item-text small text-muted">{{ auth.user()?.role }}</span></li>
+          @if (auth.user()?.role === 'admin') {
+            <li><a class="dropdown-item" routerLink="/register" (click)="closeNav()">Crear usuario</a></li>
+          }
+          <li><hr class="dropdown-divider"></li>
+          <li><a class="dropdown-item" (click)="auth.logout()" routerLink="/login">Cerrar sesión</a></li>
+        </ul>
+      </li>
+    </ul>
+  </div>
+</nav>

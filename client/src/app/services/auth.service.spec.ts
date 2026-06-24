@@ -1,0 +1,171 @@
+import { TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
+import { AuthService } from './auth.service';
+
+describe('AuthService', () => {
+  let httpTesting: HttpTestingController;
+
+  const mockUser = {
+    id: '1',
+    email: 'test@test.com',
+    full_name: 'Test User',
+    role: 'technician' as const,
+    created_at: '2024-01-01T00:00:00Z',
+  };
+
+  const mockLoginResponse = {
+    message: 'Login successful',
+    data: {
+      session: { access_token: 'access-123', refresh_token: 'refresh-123', expires_at: 9999999999 },
+      user: mockUser,
+    },
+  };
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    });
+    httpTesting = TestBed.inject(HttpTestingController);
+  });
+
+  afterEach(() => {
+    httpTesting.verify();
+  });
+
+  it('should be created', () => {
+    const service = TestBed.inject(AuthService);
+    expect(service).toBeTruthy();
+  });
+
+  describe('initialize', () => {
+    it('calls me() and sets authenticated on success', () => {
+      const service = TestBed.inject(AuthService);
+      service.initialize();
+      const req = httpTesting.expectOne('/api/auth/me');
+      req.flush({ data: { ...mockUser, access_token: 'access-123' } });
+      expect(service.user()).toEqual(mockUser);
+      expect(service.isAuthenticated()).toBeTrue();
+      expect(service.getToken()).toBe('access-123');
+    });
+
+    it('handles me() error and resets state', () => {
+      const service = TestBed.inject(AuthService);
+      service.initialize();
+      service.isAuthenticated.set(true);
+      const req = httpTesting.expectOne('/api/auth/me');
+      req.flush({ message: 'Unauthorized' }, { status: 401, statusText: 'Unauthorized' });
+      expect(service.isAuthenticated()).toBeFalse();
+      expect(service.user()).toBeNull();
+      expect(service.getToken()).toBeNull();
+    });
+  });
+
+  describe('login', () => {
+    it('sends POST request and stores tokens in memory', () => {
+      const service = TestBed.inject(AuthService);
+      const body = { email: 'test@test.com', password: 'pwd' };
+
+      service.login(body).subscribe(res => {
+        expect(res.data.user).toEqual(mockUser);
+      });
+
+      const req = httpTesting.expectOne('/api/auth/login');
+      expect(req.request.method).toBe('POST');
+      expect(req.request.body).toEqual(body);
+      req.flush(mockLoginResponse);
+
+      expect(service.getToken()).toBe('access-123');
+      expect(service.user()).toEqual(mockUser);
+      expect(service.isAuthenticated()).toBeTrue();
+    });
+  });
+
+  describe('signup', () => {
+    it('sends POST request', () => {
+      const service = TestBed.inject(AuthService);
+      const body = { email: 'test@test.com', password: 'pwd', full_name: 'Test' };
+
+      service.signup(body).subscribe(res => {
+        expect(res.data).toEqual(mockUser);
+      });
+
+      const req = httpTesting.expectOne('/api/auth/signup');
+      expect(req.request.method).toBe('POST');
+      expect(req.request.body).toEqual(body);
+      req.flush({ data: mockUser });
+    });
+
+    it('handles signup error', () => {
+      const service = TestBed.inject(AuthService);
+      const body = { email: 'exists@test.com', password: 'pwd', full_name: 'Test' };
+      let error: any;
+
+      service.signup(body).subscribe({ error: e => { error = e; } });
+      const req = httpTesting.expectOne('/api/auth/signup');
+      req.flush({ message: 'Already exists' }, { status: 409, statusText: 'Conflict' });
+
+      expect(error.status).toBe(409);
+    });
+  });
+
+  describe('me', () => {
+    it('sends GET request and sets user and token', () => {
+      const service = TestBed.inject(AuthService);
+      service.me().subscribe(res => {
+        expect(res.data).toEqual({ ...mockUser, access_token: 'access-123' } as any);
+      });
+
+      const req = httpTesting.expectOne('/api/auth/me');
+      expect(req.request.method).toBe('GET');
+      req.flush({ data: { ...mockUser, access_token: 'access-123' } });
+
+      expect(service.user()).toEqual(mockUser);
+      expect(service.isAuthenticated()).toBeTrue();
+      expect(service.getToken()).toBe('access-123');
+    });
+
+    it('handles error', () => {
+      const service = TestBed.inject(AuthService);
+      let error: any;
+
+      service.me().subscribe({ error: e => { error = e; } });
+      const req = httpTesting.expectOne('/api/auth/me');
+      req.flush({ message: 'Unauthorized' }, { status: 401, statusText: 'Unauthorized' });
+
+      expect(error.status).toBe(401);
+    });
+  });
+
+  describe('logout', () => {
+    it('clears session and sends POST to server', () => {
+      const service = TestBed.inject(AuthService);
+      service.user.set(mockUser);
+      service.isAuthenticated.set(true);
+
+      service.logout();
+
+      expect(service.user()).toBeNull();
+      expect(service.isAuthenticated()).toBeFalse();
+
+      const req = httpTesting.expectOne('/api/auth/logout');
+      expect(req.request.method).toBe('POST');
+      req.flush({ data: null });
+    });
+  });
+
+  describe('getToken', () => {
+    it('returns null when no token stored', () => {
+      const service = TestBed.inject(AuthService);
+      expect(service.getToken()).toBeNull();
+    });
+
+    it('returns token after me() call', () => {
+      const service = TestBed.inject(AuthService);
+      service.me().subscribe();
+      const req = httpTesting.expectOne('/api/auth/me');
+      req.flush({ data: { ...mockUser, access_token: 'my-token' } });
+      expect(service.getToken()).toBe('my-token');
+    });
+  });
+});

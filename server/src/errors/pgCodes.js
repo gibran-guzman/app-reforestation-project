@@ -1,0 +1,5 @@
+module.exports = {
+  UNIQUE_VIOLATION: '23505',
+  NOT_NULL_VIOLATION: '23502',
+  INVALID_INPUT_SYNTAX: '22P02',
+};

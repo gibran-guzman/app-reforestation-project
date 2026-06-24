@@ -1,0 +1,114 @@
+# Node.js & pnpm dependencies
+node_modules/
+pnpm-lock.yaml
+
+# Build output
+dist/
+build/
+tmp/
+temp/
+out-tsc/
+public/build/
+
+# Angular specific
+.angular/
+.angular/cache/
+.angular/config.json
+
+# Environment files
+.env
+.env.*.local
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+logs/
+*.log
+
+# OS generated files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Icon?
+Desktop.ini
+
+# Editor directories and files
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+
+# Agent and IDE-specific folders
+.agents/
+.windsurf/
+
+
+# Agent/IDE artifacts (if any)
+*.agent.md
+*.instructions.md
+*.prompt.md
+SKILL.md
+copilot-instructions.md
+AGENTS.md
+
+# Do not ignore .editorconfig (should be versioned)
+
+# Test & coverage
+coverage/
+*.lcov
+*.lcov.info
+
+# Compiled JavaScript/TypeScript
+*.tsbuildinfo
+
+# Miscellaneous
+*.tgz
+*.gz
+*.zip
+
+# Database scripts and migrations (good practice)
+server/src/models/*.sql
+server/src/models/migrations/
+server/src/models/seeds/
+
+# Track the migration runner and migration SQL files
+# but ignore other potential artifacts in db/
+server/src/db/*
+!server/src/db/migrations/
+!server/src/db/migrate.js
+
+# Ignore most SQL files but track versioned migrations
+*.sql
+!server/src/db/migrations/*.sql
+
+# Optional: lock Angular CLI analytics
+.angular-analytics.json
+
+# Optional: ignore skill lock if generated
+skills-lock.json
+
+# Optional: ignore proxy config if sensitive
+proxy.conf.json
+
+# Server specific
+server/logs/
+server/*.log
+
+# MacOS
+.AppleDouble
+.LSOverride
+
+# Windows
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msm
+*.msp
+*.lnk
