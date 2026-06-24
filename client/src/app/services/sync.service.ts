@@ -1,4 +1,5 @@
 import { Injectable, inject, effect, signal } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { OfflineService, type PendingPlanting } from './offline.service';
 import { ConnectivityService } from './connectivity.service';
@@ -14,13 +15,13 @@ export class SyncService {
   private connectivity = inject(ConnectivityService);
   private plantingService = inject(PlantingService);
 
-  syncing = false;
+  readonly syncing = signal(false);
   readonly progress = signal<{ current: number; total: number } | null>(null);
   readonly errorItems = signal<string[]>([]);
 
   constructor() {
     effect(() => {
-      if (this.connectivity.online() && !this.syncing) {
+      if (this.connectivity.online() && !this.syncing()) {
         const count = this.offline.pendingCount();
         if (count > 0) {
           this.sync();
@@ -30,8 +31,8 @@ export class SyncService {
   }
 
   async sync() {
-    if (this.syncing) return;
-    this.syncing = true;
+    if (this.syncing()) return;
+    this.syncing.set(true);
     this.errorItems.set([]);
 
     try {
@@ -49,7 +50,7 @@ export class SyncService {
 
       this.progress.set(null);
     } finally {
-      this.syncing = false;
+      this.syncing.set(false);
     }
   }
 
@@ -80,12 +81,29 @@ export class SyncService {
 
         this.progress.update(p => p ? { ...p, current: p.current + 1 } : null);
       }
-    } catch {
-      await this.handleBatchError(batch);
+    } catch (err: unknown) {
+      console.error('[SyncService] processBatch falló — lote completo diferido', err);
+      if (this.isPermanentError(err)) {
+        for (const p of batch) {
+          if (!p.id) continue;
+          await this.offline.removePlanting(p.id);
+          this.errorItems.update(list => [...list, `Registro #${p.id}: error permanente, descartado`]);
+        }
+      } else {
+        await this.applyTransientBackoff(batch);
+      }
     }
   }
 
-  private async handleBatchError(batch: PendingPlanting[]) {
+  private isPermanentError(err: unknown): boolean {
+    if (err instanceof HttpErrorResponse) {
+      return err.status >= 400 && err.status !== 429 && err.status < 500;
+    }
+    if (err instanceof SyntaxError) return true;
+    return false;
+  }
+
+  private async applyTransientBackoff(batch: PendingPlanting[]) {
     for (const pending of batch) {
       if (!pending.id) continue;
       await this.offline.incrementRetry(pending.id);
@@ -93,7 +111,7 @@ export class SyncService {
       const current = updated.find(p => p.id === pending.id);
       if (current && current.retries >= MAX_RETRIES) {
         await this.offline.removePlanting(pending.id);
-        this.errorItems.update(list => [...list, `Registro #${pending.id} descartado por error de red`]);
+        this.errorItems.update(list => [...list, `Registro #${pending.id} descartado tras ${MAX_RETRIES} intentos`]);
       }
       this.progress.update(p => p ? { ...p, current: p.current + 1 } : null);
     }
@@ -104,7 +122,8 @@ export class SyncService {
     try {
       const photoFile = new File([pending.photo.data], pending.photo.name, { type: pending.photo.data.type });
       await firstValueFrom(this.plantingService.uploadPhoto(plantingId, photoFile));
-    } catch {
+    } catch (err: unknown) {
+      console.error(`[SyncService] Error al subir foto de plantación #${plantingId}`, err);
       this.errorItems.update(list => [...list, `No se pudo subir la foto de la plantación #${plantingId}`]);
     }
   }
