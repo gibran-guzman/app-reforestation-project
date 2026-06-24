@@ -1,4 +1,5 @@
 const reportsService = require('../services/reportsService');
+const { respond } = require('../utils/response');
 const asyncHandler = require('../utils/asyncHandler');
 
 /**
@@ -10,17 +11,17 @@ const asyncHandler = require('../utils/asyncHandler');
 
 const getSurvivalRate = asyncHandler(async (req, res) => {
   const result = await reportsService.getSurvivalRate(req.filters);
-  res.json({ data: result });
+  respond(res, result);
 });
 
 const getSpeciesStats = asyncHandler(async (req, res) => {
   const result = await reportsService.getSpeciesStats(req.filters);
-  res.json({ data: result });
+  respond(res, result);
 });
 
 const getZoneSummary = asyncHandler(async (req, res) => {
   const result = await reportsService.getZoneSummary(req.filters);
-  res.json({ data: result });
+  respond(res, result);
 });
 
 const exportPdf = asyncHandler(async (req, res) => {
@@ -35,7 +36,7 @@ const exportPdf = asyncHandler(async (req, res) => {
 
 const getPlantingEvolution = asyncHandler(async (req, res) => {
   const result = await reportsService.getPlantingEvolution(req.filters);
-  res.json({ data: result });
+  respond(res, result);
 });
 
 module.exports = { getSurvivalRate, getSpeciesStats, getZoneSummary, exportPdf, getPlantingEvolution };

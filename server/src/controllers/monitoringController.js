@@ -1,20 +1,21 @@
 const monitoringService = require('../services/monitoringService');
 const asyncHandler = require('../utils/asyncHandler');
+const { respond } = require('../utils/response');
 const parseId = require('../utils/parseId');
 
 const create = asyncHandler(async (req, res) => {
   const record = await monitoringService.create(req.body, req.user.id);
-  res.status(201).json({ message: 'Monitoreo registrado correctamente', data: record });
+  respond(res, record, { status: 201, message: 'Monitoreo registrado correctamente' });
 });
 
 const getByPlantingSiteId = asyncHandler(async (req, res) => {
   const records = await monitoringService.getByPlantingSiteId(parseId(req.params.plantingSiteId));
-  res.json({ data: records });
+  respond(res, records);
 });
 
 const getById = asyncHandler(async (req, res) => {
   const record = await monitoringService.getById(parseId(req.params.id));
-  res.json({ data: record });
+  respond(res, record);
 });
 
 module.exports = { create, getByPlantingSiteId, getById };

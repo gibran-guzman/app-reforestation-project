@@ -1,8 +1,9 @@
 const { SOIL_TEXTURES } = require('../config/constants');
+const { respond } = require('../utils/response');
 const asyncHandler = require('../utils/asyncHandler');
 
 const getSoilTextures = asyncHandler(async (req, res) => {
-  res.json({ data: SOIL_TEXTURES });
+  respond(res, SOIL_TEXTURES);
 });
 
 module.exports = { getSoilTextures };

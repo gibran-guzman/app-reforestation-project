@@ -67,8 +67,10 @@ export class SyncService {
           if (item.conflict === 'resolved') {
             this.errorItems.update(list => [...list, `Registro #${pending.id}: datos actualizados (conflicto resuelto)`]);
           }
-          await this.uploadPhotoIfNeeded(pending, item.data?.id);
-          await this.offline.removePlanting(pending.id);
+          const photoUploaded = await this.uploadPhotoIfNeeded(pending, item.data?.id);
+          if (photoUploaded) {
+            await this.offline.removePlanting(pending.id);
+          }
         } else {
           await this.offline.incrementRetry(pending.id);
           const updated = await this.offline.getPendingPlantings();
@@ -82,7 +84,6 @@ export class SyncService {
         this.progress.update(p => p ? { ...p, current: p.current + 1 } : null);
       }
     } catch (err: unknown) {
-      console.error('[SyncService] processBatch falló — lote completo diferido', err);
       if (this.isPermanentError(err)) {
         for (const p of batch) {
           if (!p.id) continue;
@@ -112,19 +113,23 @@ export class SyncService {
       if (current && current.retries >= MAX_RETRIES) {
         await this.offline.removePlanting(pending.id);
         this.errorItems.update(list => [...list, `Registro #${pending.id} descartado tras ${MAX_RETRIES} intentos`]);
+      } else if (current) {
+        const delay = BACKOFF_BASE_MS * Math.pow(2, current.retries - 1);
+        await new Promise(resolve => setTimeout(resolve, Math.min(delay, 60000)));
       }
       this.progress.update(p => p ? { ...p, current: p.current + 1 } : null);
     }
   }
 
-  private async uploadPhotoIfNeeded(pending: PendingPlanting, plantingId: number | undefined) {
-    if (!pending.photo || !plantingId) return;
+  private async uploadPhotoIfNeeded(pending: PendingPlanting, plantingId: number | undefined): Promise<boolean> {
+    if (!pending.photo || !plantingId) return true;
     try {
       const photoFile = new File([pending.photo.data], pending.photo.name, { type: pending.photo.data.type });
       await firstValueFrom(this.plantingService.uploadPhoto(plantingId, photoFile));
+      return true;
     } catch (err: unknown) {
-      console.error(`[SyncService] Error al subir foto de plantación #${plantingId}`, err);
       this.errorItems.update(list => [...list, `No se pudo subir la foto de la plantación #${plantingId}`]);
+      return false;
     }
   }
 }

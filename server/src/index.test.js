@@ -14,6 +14,7 @@ const mockServer = {
 const mockApp = {
   use: vi.fn().mockReturnThis(),
   get: vi.fn().mockReturnThis(),
+  set: vi.fn().mockReturnThis(),
   listen: vi.fn((port, cb) => {
     listenCallback = cb;
     return mockServer;
@@ -28,9 +29,12 @@ const mockLogger = {
   info: vi.fn(),
   error: vi.fn(),
   warn: vi.fn(),
+  fatal: vi.fn(),
+  child: vi.fn(() => mockLogger),
 };
 
 const mockEnsureBucket = vi.fn().mockResolvedValue(undefined);
+const mockDb = { query: vi.fn().mockResolvedValue({ rows: [] }) };
 
 function loadIndex() {
   return proxyquire('./index', {
@@ -52,7 +56,9 @@ function loadIndex() {
       signupLimiter: mockMiddleware(),
     },
     './middleware/errorHandler': mockMiddleware(),
+    'pino-http': vi.fn(() => mockMiddleware()),
     './utils/logger': mockLogger,
+    './config/db': mockDb,
     './services/photoService': { ensureBucket: mockEnsureBucket },
   });
 }
@@ -111,7 +117,7 @@ describe('Express app', () => {
     expect(healthHandler).toBeDefined();
     const req = {};
     const res = { json: vi.fn() };
-    healthHandler(req, res);
+    await healthHandler(req, res, vi.fn());
     expect(res.json).toHaveBeenCalledWith({
       status: 'ok',
       service: 'Lloa Reforestation API',
@@ -237,7 +243,7 @@ describe('Express app', () => {
     await sigtermHandler();
 
     expect(mockLogger.info).toHaveBeenCalledWith(
-      { signal: 'SIGTERM' },
+      expect.objectContaining({ signal: 'SIGTERM' }),
       'Received shutdown signal',
     );
     expect(mockServer.close).toHaveBeenCalled();
@@ -257,7 +263,7 @@ describe('Express app', () => {
     await sigintHandler();
 
     expect(mockLogger.info).toHaveBeenCalledWith(
-      { signal: 'SIGINT' },
+      expect.objectContaining({ signal: 'SIGINT' }),
       'Received shutdown signal',
     );
     expect(mockServer.close).toHaveBeenCalled();
@@ -279,7 +285,7 @@ describe('Express app', () => {
     const timeoutFn = timeoutSpy.mock.calls[0][0];
 
     timeoutFn();
-    expect(mockLogger.error).toHaveBeenCalledWith('Forced shutdown after timeout');
+    expect(mockLogger.error).toHaveBeenCalledWith(expect.objectContaining({ pid: expect.any(Number) }), 'Forced shutdown after timeout');
     expect(exitSpy).toHaveBeenCalledWith(1);
     exitSpy.mockRestore();
   });
@@ -288,8 +294,8 @@ describe('Express app', () => {
     loadIndex();
     await listenCallback();
     expect(mockLogger.info).toHaveBeenCalledWith(
-      { port: 3000 },
-      'Servidor iniciado',
+      expect.objectContaining({ port: 3000 }),
+      'Worker started',
     );
   });
 
@@ -317,6 +323,7 @@ describe('Express app', () => {
       },
       './middleware/errorHandler': mockMiddleware(),
       './utils/logger': mockLogger,
+      './config/db': mockDb,
       './services/photoService': { ensureBucket: mockEnsureBucket },
     });
     const helmetCall = helmetMock.mock.calls[0][0];

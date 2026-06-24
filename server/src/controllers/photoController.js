@@ -1,6 +1,7 @@
 const photoService = require('../services/photoService');
 const plantingService = require('../services/plantingService');
 const { AppError } = require('../errors/AppError');
+const { respond } = require('../utils/response');
 const asyncHandler = require('../utils/asyncHandler');
 const parseId = require('../utils/parseId');
 const logger = require('../utils/logger');
@@ -18,7 +19,7 @@ const upload = asyncHandler(async (req, res) => {
 
   try {
     const updated = await plantingService.updatePhotoUrl(id, publicUrl);
-    res.json({ message: 'Foto subida correctamente', data: { photo_url: updated.photo_url } });
+    respond(res, { photo_url: updated.photo_url }, { message: 'Foto subida correctamente' });
   } catch (error) {
     try {
       await photoService.deletePhoto(filePath);

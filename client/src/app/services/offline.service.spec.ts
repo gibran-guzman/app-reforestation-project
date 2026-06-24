@@ -24,8 +24,6 @@ describe('OfflineService', () => {
     spyOn(db.pendingPlantings, 'update').and.resolveTo(1);
     spyOn(db.pendingPlantings, 'clear').and.resolveTo();
     spyOn(db.pendingPlantings, 'orderBy').and.returnValue({ toArray: mockToArray });
-    spyOn(db.pendingPhotos, 'clear').and.resolveTo();
-    spyOn(db.pendingPhotos, 'orderBy').and.returnValue({ toArray: mockToArray });
   }
 
   beforeEach(async () => {
@@ -116,24 +114,12 @@ describe('OfflineService', () => {
     });
   });
 
-  describe('getPendingPhotos', () => {
-    it('returns ordered photos', async () => {
-      const mockPhotos = [{ id: 1, planting_id: 1, file_name: 'test.jpg', data: new Blob(), created_at: new Date(), retries: 0 }];
-      mockToArray.and.resolveTo(mockPhotos);
-
-      const result = await service.getPendingPhotos();
-      expect(result).toEqual(mockPhotos);
-      expect(db.pendingPhotos.orderBy).toHaveBeenCalledWith('created_at');
-    });
-  });
-
   describe('clearAll', () => {
-    it('clears both tables and resets count', async () => {
+    it('clears table and resets count', async () => {
       (service as any).pendingCount.set(5);
       await service.clearAll();
 
       expect(db.pendingPlantings.clear).toHaveBeenCalled();
-      expect(db.pendingPhotos.clear).toHaveBeenCalled();
       expect(service.pendingCount()).toBe(0);
     });
   });

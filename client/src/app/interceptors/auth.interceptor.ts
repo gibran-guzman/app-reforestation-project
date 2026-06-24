@@ -43,12 +43,6 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
         router.navigate(['/dashboard']);
       }
 
-      if (err.status === 0) {
-        console.error('Network error - no se pudo conectar con el servidor');
-      } else if (err.status >= 500) {
-        console.error(`Server error ${err.status}:`, err.message);
-      }
-
       return throwError(() => err);
     }),
   );

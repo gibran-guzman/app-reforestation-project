@@ -9,7 +9,7 @@ describe('configController', () => {
 
   beforeEach(() => {
     req = {};
-    res = { json: vi.fn().mockReturnThis() };
+    res = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
     next = vi.fn();
   });
 

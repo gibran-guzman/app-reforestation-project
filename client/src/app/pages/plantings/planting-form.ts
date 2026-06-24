@@ -233,6 +233,9 @@ export default class PlantingForm implements OnInit, AfterViewInit {
         this.offlineSave.set(true);
         this.saving.set(false);
         this.router.navigate(['/dashboard'], { state: { success: 'Plántula guardada offline. Se sincronizará al recuperar conexión.' } });
+      }).catch(() => {
+        this.error.set('Error al guardar offline. Intenta de nuevo.');
+        this.saving.set(false);
       });
       return;
     }

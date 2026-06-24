@@ -17,7 +17,7 @@ describe('photoController', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     req = { params: { id: '1' }, file: null };
-    res = { json: vi.fn().mockReturnThis() };
+    res = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
     next = vi.fn();
   });
 

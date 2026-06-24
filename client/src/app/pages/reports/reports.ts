@@ -46,6 +46,11 @@ export default class Reports implements OnInit {
   protected survivalColorClass = survivalColorClass;
 
   constructor() {
+    this.destroyRef.onDestroy(() => {
+      this.survivalChart?.destroy();
+      this.speciesChart?.destroy();
+    });
+
     effect(() => {
       const report = this.report();
       const sStats = this.speciesStats();

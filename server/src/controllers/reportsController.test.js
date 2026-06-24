@@ -21,7 +21,7 @@ describe('reportsController', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     req = { filters: {} };
-    res = { json: vi.fn().mockReturnThis(), set: vi.fn().mockReturnThis(), send: vi.fn().mockReturnThis() };
+    res = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis(), set: vi.fn().mockReturnThis(), send: vi.fn().mockReturnThis() };
     next = vi.fn();
   });
 

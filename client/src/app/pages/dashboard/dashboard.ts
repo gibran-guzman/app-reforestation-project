@@ -66,6 +66,8 @@ export default class Dashboard implements OnInit {
   private evolutionChart: Chart | null = null;
 
   constructor() {
+    this.destroyRef.onDestroy(() => this.evolutionChart?.destroy());
+
     effect(() => {
       const data = this.evolution();
       const chartRef = untracked(this.evolutionChartRef);
@@ -123,7 +125,6 @@ export default class Dashboard implements OnInit {
       await this.syncService.sync();
       this.pendingList.set(await this.offline.getPendingPlantings());
     } catch (err) {
-      console.error('Sync failed:', err);
       this.syncError.set('Error al sincronizar. Intenta de nuevo.');
     }
   }

@@ -88,4 +88,39 @@ const login = async (body) => {
   };
 };
 
-module.exports = { signup, login };
+const refresh = async (body) => {
+  const { refresh_token } = body;
+  if (!refresh_token) {
+    throw new AppError('refresh_token es requerido', 400);
+  }
+
+  const { data, error } = await supabaseAnon.auth.refreshSession({ refresh_token });
+
+  if (error) {
+    logger.warn({ err: error }, 'Error al refrescar sesión');
+    throw new AppError('Sesión expirada. Inicia sesión nuevamente.', 401);
+  }
+
+  const profile = await authRepository.findProfileById(data.user.id);
+  if (!profile) {
+    throw new NotFoundError('Perfil de usuario no encontrado');
+  }
+
+  logger.info({ user_id: data.user.id }, 'Token refreshed');
+
+  return {
+    session: {
+      access_token: data.session.access_token,
+      refresh_token: data.session.refresh_token,
+      expires_at: data.session.expires_at,
+    },
+    user: {
+      id: data.user.id,
+      email: data.user.email,
+      full_name: profile.full_name,
+      role: profile.role,
+    },
+  };
+};
+
+module.exports = { signup, login, refresh };

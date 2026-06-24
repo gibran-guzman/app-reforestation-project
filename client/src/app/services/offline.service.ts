@@ -10,24 +10,17 @@ export interface PendingPlanting {
   retries: number;
 }
 
-interface PendingPhoto {
-  id?: number;
-  planting_id: number;
-  file_name: string;
-  data: Blob;
-  created_at: Date;
-  retries: number;
-}
-
 class OfflineDB extends Dexie {
   pendingPlantings!: Table<PendingPlanting, number>;
-  pendingPhotos!: Table<PendingPhoto, number>;
 
   constructor() {
     super('LloaReforestationDB');
+    const db = this;
     this.version(1).stores({
       pendingPlantings: '++id, created_at, retries',
-      pendingPhotos: '++id, planting_id, created_at, retries',
+    });
+    this.version(2).stores({
+      pendingPlantings: '++id, created_at, retries',
     });
   }
 }
@@ -44,7 +37,9 @@ export class OfflineService {
         if (e.usage && e.quota && (e.usage / e.quota) > 0.8) {
           console.warn('Almacenamiento local casi lleno:', Math.round(e.usage / e.quota * 100) + '%');
         }
-      }).catch(() => {});
+      }).catch(() => {
+        console.warn('No se pudo estimar el almacenamiento disponible');
+      });
     }
   }
 
@@ -83,13 +78,8 @@ export class OfflineService {
     }
   }
 
-  async getPendingPhotos(): Promise<PendingPhoto[]> {
-    return this.db.pendingPhotos.orderBy('created_at').toArray();
-  }
-
   async clearAll(): Promise<void> {
     await this.db.pendingPlantings.clear();
-    await this.db.pendingPhotos.clear();
     this.pendingCount.set(0);
   }
 }

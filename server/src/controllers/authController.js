@@ -1,19 +1,25 @@
 const authService = require('../services/authService');
 const asyncHandler = require('../utils/asyncHandler');
+const { respond } = require('../utils/response');
 
 const signup = asyncHandler(async (req, res) => {
   const user = await authService.signup(req.body);
-  res.status(201).json({ message: 'Usuario registrado correctamente', data: user });
+  respond(res, user, { status: 201, message: 'Usuario registrado correctamente' });
 });
 
 const login = asyncHandler(async (req, res) => {
   const result = await authService.login(req.body);
-  res.json({ message: 'Inicio de sesión exitoso', data: result });
+  respond(res, result, { message: 'Inicio de sesión exitoso' });
 });
 
 const getMe = asyncHandler(async (req, res) => {
   const { id, email, role, full_name, created_at } = req.user;
-  res.json({ data: { id, email, role, full_name, created_at } });
+  respond(res, { id, email, role, full_name, created_at });
 });
 
-module.exports = { signup, login, getMe };
+const refresh = asyncHandler(async (req, res) => {
+  const result = await authService.refresh(req.body);
+  respond(res, result, { message: 'Sesión renovada correctamente' });
+});
+
+module.exports = { signup, login, getMe, refresh };

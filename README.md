@@ -13,7 +13,7 @@ Sistema de Control para Proyectos de Reforestación Ambiental en la Parroquia Ru
 | Capa | Tecnología | Versión |
 |------|-----------|---------|
 | Frontend | Angular + Bootstrap 5 + TypeScript | 20 |
-| Backend | Node.js + Express | 5 |
+| Backend | Node.js + Express | 4 |
 | Base de datos | PostgreSQL + PostGIS | 16+ |
 | Infraestructura | Supabase | — |
 | Mapas | Leaflet | — |
@@ -28,7 +28,7 @@ Sistema de Control para Proyectos de Reforestación Ambiental en la Parroquia Ru
 
 ### Sprint 1 — Infraestructura ✅
 - [x] Estructura monorepo (client + server)
-- [x] Servidor Express 5 con capas: routes → controller → service → repository
+- [x] Servidor Express 4 con capas: routes → controller → service → repository
 - [x] Pool de conexiones PostgreSQL configurado
 - [x] Endpoint `POST /api/species` con validación de entrada
 - [x] Logger estructurado (pino)
@@ -71,9 +71,9 @@ Sistema de Control para Proyectos de Reforestación Ambiental en la Parroquia Ru
 - [x] Integrar Supabase Auth
 - [x] Roles: Admin, Técnico
 - [x] Login + refresh token con Supabase
-- [ ] Rate limiting en auth endpoints
+- [x] Rate limiting en auth endpoints
 - [x] Protección de rutas backend con middleware
-- [ ] Protección de rutas frontend (guards)
+- [x] Protección de rutas frontend (guards)
 - [ ] Registro de usuarios solo por Admin (endpoint existe sin restricción)
 
 **HU5 — Modelado geoespacial**
@@ -112,12 +112,12 @@ Sistema de Control para Proyectos de Reforestación Ambiental en la Parroquia Ru
 - [x] Vista de galería con thumbnails de todas las plantaciones
 
 **HU2 — Sincronización offline**
-- [ ] Service Worker con estrategia "Network First, fallback to Cache"
-- [ ] Almacenamiento local en IndexedDB (Dexie.js)
-- [ ] Cola de sincronización con reintentos (backoff exponencial)
-- [ ] Badge visual de registros pendientes
+- [x] Almacenamiento local en IndexedDB (Dexie.js)
+- [x] Cola de sincronización con reintentos (backoff exponencial)
+- [x] Badge visual de registros pendientes
 - [ ] Resolución de conflictos (último escritor gana + notificación)
-- [ ] Sincronización de fotos (background sync si es posible)
+- [x] Sincronización de fotos (background sync si es posible)
+- [ ] Service Worker con estrategia "Network First, fallback to Cache"
 
 **HU3 — Consulta de historial**
 - [ ] Vista de trazabilidad por plántula (línea de tiempo)
@@ -218,9 +218,10 @@ app-reforestation-project/
 │       ├── components/              # Componentes reutilizables
 │       ├── pages/                   # Páginas (rutas)
 │       ├── services/                # Servicios HTTP + offline
+│       ├── guards/                  # Route guards (auth, admin)
 │       └── models/                  # Interfaces TypeScript
 │
-├── server/                          # API Express 5
+├── server/                          # API Express 4
 │   └── src/
 │       ├── config/                  # DB, env
 │       ├── controllers/             # Capa de presentación (req/res)
@@ -253,10 +254,11 @@ npm --prefix client install
 
 # 2. Configurar variables de entorno
 cp server/.env.example server/.env
-# Editar DATABASE_URL, CORS_ORIGIN, JWT_SECRET, etc.
+# Editar DATABASE_URL, CORS_ORIGIN, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_ANON_KEY
 
 # 3. Crear tablas base
-psql "$DATABASE_URL" -f server/src/db/schema.sql
+psql "$DATABASE_URL" -f server/scripts/sql/01-is-point-in-zone.sql
+# Las migraciones se ejecutan automáticamente o mediante el schema SQL en Supabase
 
 # 4. Iniciar servidor (http://localhost:3000)
 pnpm --dir server start
@@ -275,12 +277,14 @@ npm --prefix client start
 | `POST` | `/api/species` | — | ✅ |
 | `POST` | `/api/auth/signup` | HU4 | ✅ |
 | `POST` | `/api/auth/login` | HU4 | ✅ |
+| `POST` | `/api/auth/refresh` | HU4 | ✅ |
 | `GET` | `/api/auth/me` | HU4 | ✅ |
 | `GET` | `/api/zones` | — | ✅ |
 | `GET` | `/api/zones/:id` | — | ✅ |
 | `POST` | `/api/zones` | — | ✅ |
 | `PUT` | `/api/zones/:id` | — | ✅ |
 | `DELETE` | `/api/zones/:id` | — | ✅ |
+| `GET` | `/api/config` | — | ✅ |
 | `GET` | `/api/species` | — | ✅ |
 | `GET` | `/api/species/:id` | — | ✅ |
 | `PUT` | `/api/species/:id` | — | ✅ |
@@ -289,9 +293,12 @@ npm --prefix client start
 | `POST` | `/api/plantings` | HU1 | ✅ |
 | `POST` | `/api/plantings/:id/photo` | HU1 | ✅ |
 | `GET` | `/api/plantings/:id` | HU3 | ✅ |
-| `POST` | `/api/plantings/sync` | HU2 | ❌ |
-| `GET` | `/api/reports/survival-rate` | HU6 | ❌ |
-| `GET` | `/api/analytics/heatmap` | HU7 | ❌ |
+| `POST` | `/api/plantings/sync` | HU2 | ✅ |
+| `GET` | `/api/reports/survival-rate` | HU6 | ✅ |
+| `GET` | `/api/reports/species-stats` | HU6 | ✅ |
+| `GET` | `/api/reports/zone-summary` | HU6 | ✅ |
+| `GET` | `/api/reports/evolution` | HU6 | ✅ |
+| `GET` | `/api/analytics/heatmap` | HU7 | ✅ |
 
 ---
 
