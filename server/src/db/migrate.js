@@ -1,6 +1,6 @@
 const { resolve } = require('path');
 const { Pool } = require('pg');
-const { migrate } = require('node-pg-migrate');
+const { runner } = require('node-pg-migrate');
 const logger = require('../utils/logger');
 
 const DIR = resolve(__dirname, 'migrations');
@@ -15,8 +15,8 @@ async function run() {
   const pool = new Pool({ connectionString: DATABASE_URL });
 
   try {
-    await migrate({
-      db: pool,
+    await runner({
+      dbClient: pool,
       dir: DIR,
       direction: 'up',
       migrationsTable: 'migrations',
