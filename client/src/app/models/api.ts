@@ -40,10 +40,4 @@ export interface User {
   created_at?: string;
 }
 
-export interface LoginResponse {
-  message: string;
-  data: {
-    session: Session;
-    user: User;
-  };
-}
+export type LoginResponse = ApiResponse<{ session: Session; user: User }>;
