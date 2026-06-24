@@ -18,4 +18,4 @@ COPY --from=server-build /app/server /app/server
 COPY --from=client-build /app/client/dist/client/browser /app/public
 EXPOSE 3000
 ENV NODE_ENV=production
-CMD ["node", "server/src/index.js"]
+CMD ["sh", "-c", "node server/src/db/migrate.js && node server/src/index.js"]
