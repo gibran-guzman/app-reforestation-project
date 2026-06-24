@@ -44,7 +44,7 @@ export class OfflineService {
         if (e.usage && e.quota && (e.usage / e.quota) > 0.8) {
           console.warn('Almacenamiento local casi lleno:', Math.round(e.usage / e.quota * 100) + '%');
         }
-      });
+      }).catch(() => {});
     }
   }
 

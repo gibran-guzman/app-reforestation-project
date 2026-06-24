@@ -1,5 +1,7 @@
-import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { environment } from '../../environments/environment';
+import { buildFilterParams, type Filters } from '../helpers/filters';
 
 export interface HeatmapPoint {
   lat: number;
@@ -19,17 +21,11 @@ export interface HeatmapResponse {
 
 @Injectable({ providedIn: 'root' })
 export class AnalyticsService {
-  private readonly api = '/api/analytics';
+  private readonly http = inject(HttpClient);
+  private readonly api = `${environment.apiUrl}/analytics`;
 
-  constructor(private http: HttpClient) {}
-
-  getHeatmap(filters?: { zone_id?: number; species_id?: number; from?: string; to?: string; interval?: string }) {
-    let params = new HttpParams();
-    if (filters?.zone_id) params = params.set('zone_id', String(filters.zone_id));
-    if (filters?.species_id) params = params.set('species_id', String(filters.species_id));
-    if (filters?.from) params = params.set('from', filters.from);
-    if (filters?.to) params = params.set('to', filters.to);
-    if (filters?.interval) params = params.set('interval', filters.interval);
+  getHeatmap(filters?: Filters) {
+    const params = buildFilterParams(filters || {});
     return this.http.get<HeatmapResponse>(`${this.api}/heatmap`, { params });
   }
 }

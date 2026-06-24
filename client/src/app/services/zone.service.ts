@@ -1,12 +1,12 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { environment } from '../../environments/environment';
 import type { ApiResponse, Zone, CreateZoneRequest, UpdateZoneRequest } from '../models';
 
 @Injectable({ providedIn: 'root' })
 export class ZoneService {
-  private readonly api = '/api/zones';
-
-  constructor(private http: HttpClient) {}
+  private readonly http = inject(HttpClient);
+  private readonly api = `${environment.apiUrl}/zones`;
 
   list() {
     return this.http.get<ApiResponse<Zone[]>>(this.api);
@@ -25,6 +25,6 @@ export class ZoneService {
   }
 
   remove(id: number) {
-    return this.http.delete<{ message: string }>(`${this.api}/${id}`);
+    return this.http.delete<ApiResponse<null>>(`${this.api}/${id}`);
   }
 }

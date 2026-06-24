@@ -1,12 +1,12 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { environment } from '../../environments/environment';
 import type { ApiResponse, Species, CreateSpeciesRequest, UpdateSpeciesRequest } from '../models';
 
 @Injectable({ providedIn: 'root' })
 export class SpeciesService {
-  private readonly api = '/api/species';
-
-  constructor(private http: HttpClient) {}
+  private readonly http = inject(HttpClient);
+  private readonly api = `${environment.apiUrl}/species`;
 
   list() {
     return this.http.get<ApiResponse<Species[]>>(this.api);
@@ -25,6 +25,6 @@ export class SpeciesService {
   }
 
   remove(id: number) {
-    return this.http.delete<{ message: string }>(`${this.api}/${id}`);
+    return this.http.delete<ApiResponse<null>>(`${this.api}/${id}`);
   }
 }

@@ -27,7 +27,8 @@ export class ImageService {
         }
         canvas.width = width;
         canvas.height = height;
-        const ctx = canvas.getContext('2d')!;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) { reject(new Error('Error al obtener contexto del canvas')); return; }
         ctx.drawImage(img, 0, 0, width, height);
         canvas.toBlob((blob) => {
           if (!blob) { reject(new Error('Error al comprimir la imagen')); return; }

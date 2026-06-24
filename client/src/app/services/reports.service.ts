@@ -1,41 +1,31 @@
-import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { environment } from '../../environments/environment';
+import { buildFilterParams, type Filters } from '../helpers/filters';
 import type { ApiResponse, SurvivalReport, SpeciesStat, ZoneSummary, EvolutionPoint } from '../models';
-
-type ReportFilters = { zone_id?: number; species_id?: number; from?: string; to?: string };
 
 @Injectable({ providedIn: 'root' })
 export class ReportsService {
-  private readonly api = '/api/reports';
+  private readonly http = inject(HttpClient);
+  private readonly api = `${environment.apiUrl}/reports`;
 
-  constructor(private http: HttpClient) {}
-
-  private buildParams(filters?: ReportFilters): HttpParams {
-    let params = new HttpParams();
-    if (filters?.zone_id) params = params.set('zone_id', String(filters.zone_id));
-    if (filters?.species_id) params = params.set('species_id', String(filters.species_id));
-    if (filters?.from) params = params.set('from', filters.from);
-    if (filters?.to) params = params.set('to', filters.to);
-    return params;
+  getSurvivalRate(filters?: Filters) {
+    return this.http.get<ApiResponse<SurvivalReport>>(`${this.api}/survival-rate`, { params: buildFilterParams(filters || {}) });
   }
 
-  getSurvivalRate(filters?: ReportFilters) {
-    return this.http.get<ApiResponse<SurvivalReport>>(`${this.api}/survival-rate`, { params: this.buildParams(filters) });
+  getSpeciesStats(filters?: Filters) {
+    return this.http.get<ApiResponse<SpeciesStat[]>>(`${this.api}/species-stats`, { params: buildFilterParams(filters || {}) });
   }
 
-  getSpeciesStats(filters?: ReportFilters) {
-    return this.http.get<ApiResponse<SpeciesStat[]>>(`${this.api}/species-stats`, { params: this.buildParams(filters) });
+  getZoneSummary(filters?: Filters) {
+    return this.http.get<ApiResponse<ZoneSummary[]>>(`${this.api}/zone-summary`, { params: buildFilterParams(filters || {}) });
   }
 
-  getZoneSummary(filters?: ReportFilters) {
-    return this.http.get<ApiResponse<ZoneSummary[]>>(`${this.api}/zone-summary`, { params: this.buildParams(filters) });
+  getEvolution(filters?: Filters) {
+    return this.http.get<ApiResponse<EvolutionPoint[]>>(`${this.api}/planting-evolution`, { params: buildFilterParams(filters || {}) });
   }
 
-  getEvolution(filters?: ReportFilters) {
-    return this.http.get<ApiResponse<EvolutionPoint[]>>(`${this.api}/planting-evolution`, { params: this.buildParams(filters) });
-  }
-
-  exportPdf(filters?: ReportFilters) {
-    return this.http.get(`${this.api}/export/pdf`, { params: this.buildParams(filters), responseType: 'blob' });
+  exportPdf(filters?: Filters) {
+    return this.http.get(`${this.api}/export/pdf`, { params: buildFilterParams(filters || {}), responseType: 'blob' });
   }
 }

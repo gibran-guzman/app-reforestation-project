@@ -1,12 +1,12 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { environment } from '../../environments/environment';
 import type { ApiResponse, MonitoringRecord, CreateMonitoringRequest } from '../models';
 
 @Injectable({ providedIn: 'root' })
 export class MonitoringService {
-  private readonly api = '/api/monitoring';
-
-  constructor(private http: HttpClient) {}
+  private readonly http = inject(HttpClient);
+  private readonly api = `${environment.apiUrl}/monitoring`;
 
   getByPlantingSiteId(plantingSiteId: number) {
     return this.http.get<ApiResponse<MonitoringRecord[]>>(`${this.api}/planting/${plantingSiteId}`);
