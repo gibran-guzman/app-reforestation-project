@@ -3,20 +3,26 @@ import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
+import { of, throwError } from 'rxjs';
 import { authInterceptor } from './auth.interceptor';
+import { AuthService } from '../services/auth.service';
 
 describe('authInterceptor', () => {
   let httpTesting: HttpTestingController;
   let httpClient: HttpClient;
   let routerSpy: jasmine.SpyObj<Router>;
+  let authMock: jasmine.SpyObj<AuthService>;
 
   beforeEach(() => {
     routerSpy = jasmine.createSpyObj('Router', ['navigate']);
-    localStorage.clear();
+    authMock = jasmine.createSpyObj('AuthService', ['getToken', 'refresh', 'clearSession', 'logout']);
+    authMock.getToken.and.returnValue(null);
+    authMock.refresh.and.returnValue(throwError(() => new Error('No refresh token')));
 
     TestBed.configureTestingModule({
       providers: [
         { provide: Router, useValue: routerSpy },
+        { provide: AuthService, useValue: authMock },
         provideHttpClient(withInterceptors([authInterceptor])),
         provideHttpClientTesting(),
       ],
@@ -27,11 +33,10 @@ describe('authInterceptor', () => {
 
   afterEach(() => {
     httpTesting.verify();
-    localStorage.clear();
   });
 
   it('adds Authorization header when token exists', () => {
-    localStorage.setItem('access_token', 'my-token');
+    authMock.getToken.and.returnValue('my-token');
 
     httpClient.get('/api/test').subscribe();
     const req = httpTesting.expectOne('/api/test');
@@ -48,18 +53,8 @@ describe('authInterceptor', () => {
     req.flush({});
   });
 
-  it('does not add Authorization header when token is empty string', () => {
-    localStorage.setItem('access_token', '');
-
-    httpClient.get('/api/test').subscribe();
-    const req = httpTesting.expectOne('/api/test');
-
-    expect(req.request.headers.has('Authorization')).toBeFalse();
-    req.flush({});
-  });
-
   it('redirects to /login on 401 error', () => {
-    localStorage.setItem('access_token', 'tok');
+    authMock.getToken.and.returnValue('tok');
 
     httpClient.get('/api/test').subscribe({
       error: () => {},
@@ -67,23 +62,24 @@ describe('authInterceptor', () => {
     const req = httpTesting.expectOne('/api/test');
     req.flush({ message: 'Unauthorized' }, { status: 401, statusText: 'Unauthorized' });
 
+    expect(authMock.refresh).toHaveBeenCalled();
+    expect(authMock.clearSession).toHaveBeenCalled();
     expect(routerSpy.navigate).toHaveBeenCalledWith(['/login']);
-    expect(localStorage.getItem('access_token')).toBeNull();
-    expect(localStorage.getItem('refresh_token')).toBeNull();
   });
 
-  it('clears tokens on 401 even without prior token', () => {
+  it('clears session on 401 even without prior token', () => {
     httpClient.get('/api/test').subscribe({
       error: () => {},
     });
     const req = httpTesting.expectOne('/api/test');
     req.flush({ message: 'Unauthorized' }, { status: 401, statusText: 'Unauthorized' });
 
+    expect(authMock.clearSession).toHaveBeenCalled();
     expect(routerSpy.navigate).toHaveBeenCalledWith(['/login']);
   });
 
   it('redirects to /dashboard on 403 error', () => {
-    localStorage.setItem('access_token', 'tok');
+    authMock.getToken.and.returnValue('tok');
 
     httpClient.get('/api/test').subscribe({
       error: () => {},
@@ -92,7 +88,6 @@ describe('authInterceptor', () => {
     req.flush({ message: 'Forbidden' }, { status: 403, statusText: 'Forbidden' });
 
     expect(routerSpy.navigate).toHaveBeenCalledWith(['/dashboard']);
-    expect(localStorage.getItem('access_token')).toBe('tok');
   });
 
   it('does not redirect on 500 error', () => {
@@ -106,6 +101,7 @@ describe('authInterceptor', () => {
   });
 
   it('re-throws the error after handling 401', () => {
+    authMock.getToken.and.returnValue('tok');
     let capturedError: HttpErrorResponse | undefined;
 
     httpClient.get('/api/test').subscribe({
@@ -116,5 +112,19 @@ describe('authInterceptor', () => {
 
     expect(capturedError).toBeDefined();
     expect(capturedError!.status).toBe(401);
+  });
+
+  it('retries original request after successful refresh', () => {
+    authMock.getToken.and.returnValues('expired-token', 'new-token');
+    authMock.refresh.and.returnValue(of({} as any));
+
+    httpClient.get('/api/test').subscribe();
+    const req = httpTesting.expectOne('/api/test');
+    req.flush({ message: 'Unauthorized' }, { status: 401, statusText: 'Unauthorized' });
+
+    expect(authMock.refresh).toHaveBeenCalled();
+    const retryReq = httpTesting.expectOne('/api/test');
+    expect(retryReq.request.headers.get('Authorization')).toBe('Bearer new-token');
+    retryReq.flush({});
   });
 });

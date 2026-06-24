@@ -8,6 +8,7 @@ const { validateSignup, validateLogin } = require('../validators/authValidator')
 router.post('/signup', authenticate, authorize('admin'), validate(validateSignup), authController.signup);
 router.post('/login', validate(validateLogin), authController.login);
 router.post('/refresh', authController.refresh);
+router.post('/logout', authController.logout);
 router.get('/me', authenticate, authController.getMe);
 
 module.exports = router;

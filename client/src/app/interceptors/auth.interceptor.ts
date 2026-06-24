@@ -12,19 +12,14 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const router = inject(Router);
   const auth = inject(AuthService);
 
+  req = req.clone({ withCredentials: true });
+
   const token = auth.getToken();
   const authedReq = token ? addAuthHeader(req, token) : req;
 
   return next(authedReq).pipe(
     catchError((err: HttpErrorResponse) => {
       if (err.status === 401 && !req.url.includes('/auth/refresh')) {
-        const refreshToken = localStorage.getItem('refresh_token');
-        if (!refreshToken) {
-          auth.logout();
-          router.navigate(['/login']);
-          return throwError(() => err);
-        }
-
         return auth.refresh().pipe(
           switchMap(() => {
             const newToken = auth.getToken();
@@ -32,7 +27,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
             return next(retryReq);
           }),
           catchError(() => {
-            auth.logout();
+            auth.clearSession();
             router.navigate(['/login']);
             return throwError(() => err);
           }),

@@ -3,7 +3,7 @@ import { createRequire } from 'module';
 const cjsRequire = createRequire(import.meta.url);
 const proxyquire = cjsRequire('proxyquire').noPreserveCache();
 
-const mockController = { signup: vi.fn(), login: vi.fn(), getMe: vi.fn() };
+const mockController = { signup: vi.fn(), login: vi.fn(), refresh: vi.fn(), logout: vi.fn(), getMe: vi.fn() };
 const mockAuth = { authenticate: vi.fn((_req, _res, next) => next()), authorize: vi.fn(() => (_req, _res, next) => next()) };
 const mockValidate = vi.fn(() => (_req, _res, next) => next());
 const mockAuthValidator = { validateSignup: vi.fn(x => x), validateLogin: vi.fn(x => x) };
@@ -22,6 +22,8 @@ describe('authRoutes', () => {
       expect.arrayContaining([
         expect.objectContaining({ path: '/signup', methods: { post: true } }),
         expect.objectContaining({ path: '/login', methods: { post: true } }),
+        expect.objectContaining({ path: '/refresh', methods: { post: true } }),
+        expect.objectContaining({ path: '/logout', methods: { post: true } }),
         expect.objectContaining({ path: '/me', methods: { get: true } }),
       ]),
     );

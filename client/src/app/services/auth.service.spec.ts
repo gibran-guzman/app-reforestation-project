@@ -23,7 +23,6 @@ describe('AuthService', () => {
   };
 
   beforeEach(() => {
-    localStorage.clear();
     TestBed.configureTestingModule({
       providers: [provideHttpClient(), provideHttpClientTesting()],
     });
@@ -32,7 +31,6 @@ describe('AuthService', () => {
 
   afterEach(() => {
     httpTesting.verify();
-    localStorage.clear();
   });
 
   it('should be created', () => {
@@ -41,26 +39,17 @@ describe('AuthService', () => {
   });
 
   describe('initialize', () => {
-    beforeEach(() => {
-      TestBed.resetTestingModule();
-      TestBed.configureTestingModule({
-        providers: [provideHttpClient(), provideHttpClientTesting()],
-      });
-      httpTesting = TestBed.inject(HttpTestingController);
-    });
-
-    it('calls me() and sets authenticated when token exists', () => {
-      localStorage.setItem('access_token', 'test-token');
+    it('calls me() and sets authenticated on success', () => {
       const service = TestBed.inject(AuthService);
-      expect(service.isAuthenticated()).toBeTrue();
       service.initialize();
       const req = httpTesting.expectOne('/api/auth/me');
-      req.flush({ data: mockUser });
+      req.flush({ data: { ...mockUser, access_token: 'access-123' } });
       expect(service.user()).toEqual(mockUser);
+      expect(service.isAuthenticated()).toBeTrue();
+      expect(service.getToken()).toBe('access-123');
     });
 
     it('handles me() error and resets state', () => {
-      localStorage.setItem('access_token', 'test-token');
       const service = TestBed.inject(AuthService);
       service.initialize();
       service.isAuthenticated.set(true);
@@ -68,21 +57,12 @@ describe('AuthService', () => {
       req.flush({ message: 'Unauthorized' }, { status: 401, statusText: 'Unauthorized' });
       expect(service.isAuthenticated()).toBeFalse();
       expect(service.user()).toBeNull();
-      expect(localStorage.getItem('access_token')).toBeNull();
-      expect(localStorage.getItem('refresh_token')).toBeNull();
-    });
-
-    it('does nothing when no token exists', () => {
-      const service = TestBed.inject(AuthService);
-      service.initialize();
-      httpTesting.expectNone('/api/auth/me');
-      expect(service.isAuthenticated()).toBeFalse();
-      expect(service.user()).toBeNull();
+      expect(service.getToken()).toBeNull();
     });
   });
 
   describe('login', () => {
-    it('sends POST request and stores tokens', () => {
+    it('sends POST request and stores tokens in memory', () => {
       const service = TestBed.inject(AuthService);
       const body = { email: 'test@test.com', password: 'pwd' };
 
@@ -95,8 +75,7 @@ describe('AuthService', () => {
       expect(req.request.body).toEqual(body);
       req.flush(mockLoginResponse);
 
-      expect(localStorage.getItem('access_token')).toBe('access-123');
-      expect(localStorage.getItem('refresh_token')).toBe('refresh-123');
+      expect(service.getToken()).toBe('access-123');
       expect(service.user()).toEqual(mockUser);
       expect(service.isAuthenticated()).toBeTrue();
     });
@@ -131,18 +110,19 @@ describe('AuthService', () => {
   });
 
   describe('me', () => {
-    it('sends GET request and sets user', () => {
+    it('sends GET request and sets user and token', () => {
       const service = TestBed.inject(AuthService);
       service.me().subscribe(res => {
-        expect(res.data).toEqual(mockUser);
+        expect(res.data).toEqual({ ...mockUser, access_token: 'access-123' } as any);
       });
 
       const req = httpTesting.expectOne('/api/auth/me');
       expect(req.request.method).toBe('GET');
-      req.flush({ data: mockUser });
+      req.flush({ data: { ...mockUser, access_token: 'access-123' } });
 
       expect(service.user()).toEqual(mockUser);
       expect(service.isAuthenticated()).toBeTrue();
+      expect(service.getToken()).toBe('access-123');
     });
 
     it('handles error', () => {
@@ -158,7 +138,7 @@ describe('AuthService', () => {
   });
 
   describe('logout', () => {
-    it('clears tokens and resets signals', () => {
+    it('clears session and sends POST to server', () => {
       const service = TestBed.inject(AuthService);
       service.user.set(mockUser);
       service.isAuthenticated.set(true);
@@ -167,19 +147,25 @@ describe('AuthService', () => {
 
       expect(service.user()).toBeNull();
       expect(service.isAuthenticated()).toBeFalse();
+
+      const req = httpTesting.expectOne('/api/auth/logout');
+      expect(req.request.method).toBe('POST');
+      req.flush({ data: null });
     });
   });
 
   describe('getToken', () => {
-    it('returns token from localStorage', () => {
-      localStorage.setItem('access_token', 'my-token');
-      const service = TestBed.inject(AuthService);
-      expect(service.getToken()).toBe('my-token');
-    });
-
-    it('returns null when no token', () => {
+    it('returns null when no token stored', () => {
       const service = TestBed.inject(AuthService);
       expect(service.getToken()).toBeNull();
+    });
+
+    it('returns token after me() call', () => {
+      const service = TestBed.inject(AuthService);
+      service.me().subscribe();
+      const req = httpTesting.expectOne('/api/auth/me');
+      req.flush({ data: { ...mockUser, access_token: 'my-token' } });
+      expect(service.getToken()).toBe('my-token');
     });
   });
 });

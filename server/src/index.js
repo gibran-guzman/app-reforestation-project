@@ -1,10 +1,21 @@
 require('dotenv').config();
 
+if (process.env.SENTRY_DSN) {
+  const Sentry = require('@sentry/node');
+  Sentry.init({
+    dsn: process.env.SENTRY_DSN,
+    environment: process.env.NODE_ENV || 'development',
+    tracesSampleRate: parseFloat(process.env.SENTRY_TRACES_SAMPLE_RATE || '0.1'),
+  });
+}
+
 const cluster = require('cluster');
 const os = require('os');
+const path = require('path');
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
+const cookieParser = require('cookie-parser');
 const db = require('./config/db');
 const speciesRoutes = require('./routes/speciesRoutes');
 const authRoutes = require('./routes/authRoutes');
@@ -24,6 +35,12 @@ const { REQUEST_BODY_LIMIT } = require('./config/constants');
 
 process.on('unhandledRejection', (reason) => {
   logger.fatal({ err: reason }, 'Unhandled Promise rejection — process exiting');
+  if (process.env.SENTRY_DSN) {
+    try {
+      const Sentry = require('@sentry/node');
+      Sentry.captureException(reason);
+    } catch { /* ignore */ }
+  }
   process.exit(1);
 });
 
@@ -60,7 +77,9 @@ function startWorker() {
     origin: isProduction ? process.env.CORS_ORIGIN : (process.env.CORS_ORIGIN || 'http://localhost:4200'),
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true,
   }));
+  app.use(cookieParser());
   app.use(express.json({ limit: REQUEST_BODY_LIMIT }));
   app.use('/api', writeLimiter);
 
@@ -74,7 +93,7 @@ function startWorker() {
     }
   };
 
-  app.get('/health', async (req, res, next) => {
+  app.get('/health', async (req, res, _next) => {
     try {
       const ac = new AbortController();
       const timer = setTimeout(() => ac.abort(), HEALTH_TIMEOUT_MS);
@@ -103,6 +122,22 @@ function startWorker() {
   app.use('/api/monitoring', monitoringRoutes);
   app.use('/api/reports', reportsRoutes);
   app.use('/api/analytics', analyticsRoutes);
+
+  if (isProduction) {
+    const publicPath = path.resolve(__dirname, '../../public');
+    app.use(express.static(publicPath));
+    app.get('*', (req, res, next) => {
+      if (req.path.startsWith('/api') || req.path === '/health') {
+        return next();
+      }
+      res.sendFile(path.join(publicPath, 'index.html'));
+    });
+  }
+
+  if (process.env.SENTRY_DSN) {
+    const Sentry = require('@sentry/node');
+    Sentry.setupExpressErrorHandler(app);
+  }
 
   app.use(errorHandler);
 

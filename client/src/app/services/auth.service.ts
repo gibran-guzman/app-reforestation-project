@@ -1,11 +1,8 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { tap, throwError } from 'rxjs';
+import { tap } from 'rxjs';
 import { environment } from '../../environments/environment';
 import type { ApiResponse, LoginRequest, LoginResponse, SignupRequest, User } from '../models';
-
-const ACCESS_TOKEN_KEY = 'access_token';
-const REFRESH_TOKEN_KEY = 'refresh_token';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -17,25 +14,20 @@ export class AuthService {
   private accessToken: string | null = null;
 
   constructor() {
-    const token = this.readAccessToken();
-    if (token) {
-      this.accessToken = token;
-      this.isAuthenticated.set(true);
-    }
+    // Session will be restored via initialize() → me() call
+    // which relies on HttpOnly cookies set by the server
   }
 
   initialize() {
-    if (this.accessToken) {
-      this.me().subscribe({
-        error: () => this.clearSession(),
-      });
-    }
+    this.me().subscribe({
+      error: () => this.clearSession(),
+    });
   }
 
   login(body: LoginRequest) {
     return this.http.post<LoginResponse>(`${this.api}/login`, body).pipe(
       tap((res) => {
-        this.saveTokens(res.data.session.access_token, res.data.session.refresh_token);
+        this.accessToken = res.data.session.access_token;
         this.user.set(res.data.user);
         this.isAuthenticated.set(true);
       }),
@@ -47,20 +39,19 @@ export class AuthService {
   }
 
   refresh() {
-    const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
-    if (!refreshToken) return throwError(() => new Error('No refresh token available'));
-
-    return this.http.post<LoginResponse>(`${this.api}/refresh`, { refresh_token: refreshToken }).pipe(
+    return this.http.post<LoginResponse>(`${this.api}/refresh`, {}).pipe(
       tap((res) => {
-        this.saveTokens(res.data.session.access_token, res.data.session.refresh_token);
+        this.accessToken = res.data.session.access_token;
       }),
     );
   }
 
   me() {
-    return this.http.get<ApiResponse<User>>(`${this.api}/me`).pipe(
+    return this.http.get<ApiResponse<User & { access_token: string }>>(`${this.api}/me`).pipe(
       tap((res) => {
-        this.user.set(res.data);
+        this.accessToken = res.data.access_token;
+        const { access_token, ...user } = res.data;
+        this.user.set(user as User);
         this.isAuthenticated.set(true);
       }),
     );
@@ -68,26 +59,17 @@ export class AuthService {
 
   logout() {
     this.clearSession();
+    this.http.post(`${this.api}/logout`, {}).subscribe({
+      error: () => { /* best-effort server-side cookie cleanup */ },
+    });
   }
 
   getToken(): string | null {
     return this.accessToken;
   }
 
-  private saveTokens(access: string, refresh: string) {
-    this.accessToken = access;
-    localStorage.setItem(ACCESS_TOKEN_KEY, access);
-    localStorage.setItem(REFRESH_TOKEN_KEY, refresh);
-  }
-
-  private readAccessToken(): string | null {
-    return localStorage.getItem(ACCESS_TOKEN_KEY);
-  }
-
-  private clearSession() {
+  clearSession() {
     this.accessToken = null;
-    localStorage.removeItem(ACCESS_TOKEN_KEY);
-    localStorage.removeItem(REFRESH_TOKEN_KEY);
     this.user.set(null);
     this.isAuthenticated.set(false);
   }
