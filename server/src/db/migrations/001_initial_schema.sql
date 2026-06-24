@@ -7,10 +7,22 @@
 -- 1. Enable PostGIS
 CREATE EXTENSION IF NOT EXISTS postgis;
 
--- 2. Species catalog (table already exists, add altitude recommendations)
-ALTER TABLE species
-  ADD COLUMN IF NOT EXISTS recommended_altitude_min INTEGER,
-  ADD COLUMN IF NOT EXISTS recommended_altitude_max INTEGER;
+-- 2. Species catalog
+CREATE TABLE IF NOT EXISTS species (
+  id SERIAL PRIMARY KEY,
+  common_name VARCHAR(255) NOT NULL,
+  scientific_name VARCHAR(255) NOT NULL,
+  description TEXT,
+  recommended_altitude_min INTEGER,
+  recommended_altitude_max INTEGER,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+ALTER TABLE species ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "All authenticated users can read species"
+  ON species FOR SELECT
+  USING (auth.role() = 'authenticated');
 
 -- 3. User profiles (extends Supabase Auth)
 CREATE TABLE IF NOT EXISTS profiles (
@@ -23,7 +35,7 @@ CREATE TABLE IF NOT EXISTS profiles (
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 
 -- Security definer function to check admin role without recursion
-CREATE OR REPLACE FUNCTION auth.is_admin()
+CREATE OR REPLACE FUNCTION public.check_admin()
 RETURNS BOOLEAN
 LANGUAGE SQL
 STABLE
@@ -38,7 +50,7 @@ CREATE POLICY "Users can view their own profile"
 
 CREATE POLICY "Admins can view all profiles"
   ON profiles FOR SELECT
-  USING (auth.is_admin());
+  USING (public.check_admin());
 
 -- 4. Intervention zones
 CREATE TABLE IF NOT EXISTS intervention_zones (

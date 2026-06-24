@@ -24,8 +24,10 @@ describe('validateCreateZone', () => {
     expect(result.geometry.type).toBe('Polygon');
   });
 
-  it('throws error if geometry is not provided', () => {
-    expect(() => validateCreateZone({ name: 'Zona Test' })).toThrow(ValidationError);
+  it('allows creation without geometry', () => {
+    const result = validateCreateZone({ name: 'Zona Test' });
+    expect(result.name).toBe('Zona Test');
+    expect(result.geometry).toBeUndefined();
   });
 
   it('throws error if name is empty', () => {

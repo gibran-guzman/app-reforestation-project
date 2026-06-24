@@ -19,23 +19,23 @@ const validateCreateZone = (data) => {
     }
   }
 
-  if (!geometry) {
-    errors.push({ field: 'geometry', message: 'La geometría de la zona es requerida' });
-  } else if (typeof geometry !== 'object') {
-    errors.push({ field: 'geometry', message: 'La geometría debe ser un GeoJSON Polygon válido' });
-  } else if (geometry.type !== 'Polygon') {
-    errors.push({ field: 'geometry.type', message: 'El tipo de geometría debe ser "Polygon"' });
-  } else if (!Array.isArray(geometry.coordinates) || geometry.coordinates.length === 0) {
-    errors.push({ field: 'geometry.coordinates', message: 'Las coordenadas de la geometría son requeridas' });
-  } else {
-    const ring = geometry.coordinates[0];
-    if (!Array.isArray(ring) || ring.length < 4) {
-      errors.push({ field: 'geometry.coordinates', message: 'El polígono debe tener al menos 4 pares de coordenadas (el primero y el último deben coincidir)' });
+  if (geometry) {
+    if (typeof geometry !== 'object') {
+      errors.push({ field: 'geometry', message: 'La geometría debe ser un GeoJSON Polygon válido' });
+    } else if (geometry.type !== 'Polygon') {
+      errors.push({ field: 'geometry.type', message: 'El tipo de geometría debe ser "Polygon"' });
+    } else if (!Array.isArray(geometry.coordinates) || geometry.coordinates.length === 0) {
+      errors.push({ field: 'geometry.coordinates', message: 'Las coordenadas de la geometría son requeridas' });
     } else {
-      const first = ring[0];
-      const last = ring[ring.length - 1];
-      if (first[0] !== last[0] || first[1] !== last[1]) {
-        errors.push({ field: 'geometry.coordinates', message: 'El anillo del polígono debe estar cerrado (la primera y última coordenada deben coincidir)' });
+      const ring = geometry.coordinates[0];
+      if (!Array.isArray(ring) || ring.length < 4) {
+        errors.push({ field: 'geometry.coordinates', message: 'El polígono debe tener al menos 4 pares de coordenadas (el primero y el último deben coincidir)' });
+      } else {
+        const first = ring[0];
+        const last = ring[ring.length - 1];
+        if (first[0] !== last[0] || first[1] !== last[1]) {
+          errors.push({ field: 'geometry.coordinates', message: 'El anillo del polígono debe estar cerrado (la primera y última coordenada deben coincidir)' });
+        }
       }
     }
   }

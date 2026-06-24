@@ -61,17 +61,21 @@ function startWorker() {
 
   app.use(helmet({
     contentSecurityPolicy: isProduction ? {
+      useDefaults: false,
       directives: {
         defaultSrc: ["'self'"],
-        imgSrc: ["'self'", "https://*.tile.openstreetmap.org"],
-        scriptSrc: ["'self'"],
+        imgSrc: ["'self'", "https://*.tile.openstreetmap.org", "https://cdnjs.cloudflare.com"],
+        scriptSrc: ["'self'", "'unsafe-inline'"],
         styleSrc: ["'self'", "'unsafe-inline'"],
         connectSrc: ["'self'"],
         fontSrc: ["'self'"],
         objectSrc: ["'none'"],
-        upgradeInsecureRequests: [],
       },
     } : false,
+    strictTransportSecurity: false,
+    crossOriginOpenerPolicy: false,
+    crossOriginResourcePolicy: false,
+    originAgentCluster: false,
   }));
   app.use(cors({
     origin: isProduction ? process.env.CORS_ORIGIN : (process.env.CORS_ORIGIN || 'http://localhost:4200'),

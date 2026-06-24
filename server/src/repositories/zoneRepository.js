@@ -51,9 +51,9 @@ const create = async (data) => {
   const geometry = data.geometry;
   const result = await db.query(`
     INSERT INTO intervention_zones (name, description, geometry)
-    VALUES ($1, $2, ST_GeomFromGeoJSON($3))
-    RETURNING id, name, description, ST_AsGeoJSON(geometry)::jsonb AS geometry, created_at, updated_at
-  `, [data.name, data.description, JSON.stringify(geometry)]);
+    VALUES ($1, $2, ${geometry ? 'ST_GeomFromGeoJSON($3)' : 'NULL'})
+    RETURNING id, name, description, ${geometry ? "ST_AsGeoJSON(geometry)::jsonb" : "NULL"} AS geometry, created_at, updated_at
+  `, geometry ? [data.name, data.description, JSON.stringify(geometry)] : [data.name, data.description]);
   listCache.invalidate('all');
   return result.rows[0];
 };
