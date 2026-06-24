@@ -67,7 +67,7 @@ describe('SpeciesList', () => {
   });
 
   it('deleteSpecies should call service.remove and filter on success', () => {
-    service.remove.and.returnValue(of({ message: 'ok' }));
+    service.remove.and.returnValue(of({ data: null, message: 'ok' }));
     spyOn(window, 'confirm').and.returnValue(true);
 
     const fixture = TestBed.createComponent(SpeciesList);

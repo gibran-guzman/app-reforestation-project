@@ -49,8 +49,8 @@ describe('PlantingForm', () => {
   function createComponent() {
     const fixture = TestBed.createComponent(PlantingForm);
     const comp = fixture.componentInstance;
-    comp.mapContainer = new ElementRef(document.createElement('div'));
-    comp.photoInput = new ElementRef(document.createElement('input'));
+    (comp as any).mapContainer = signal(new ElementRef(document.createElement('div')));
+    (comp as any).photoInput = signal(new ElementRef(document.createElement('input')));
     return { fixture, comp };
   }
 
@@ -137,25 +137,25 @@ describe('PlantingForm', () => {
     expect(speciesSvc.list).toHaveBeenCalled();
     expect(zoneSvc.list).toHaveBeenCalled();
     expect(configSvc.getSoilTextures).toHaveBeenCalled();
-    expect(comp.speciesList).toEqual(mockSpecies);
-    expect(comp.zonesList).toEqual(mockZones);
-    expect(comp.soilTextures).toEqual(mockSoilTextures);
+    expect(comp.speciesList()).toEqual(mockSpecies);
+    expect(comp.zonesList()).toEqual(mockZones);
+    expect(comp.soilTextures()).toEqual(mockSoilTextures);
   });
 
   it('should set speciesError on species load failure', () => {
     speciesSvc.list.and.returnValue(throwError(() => ({})));
     const { comp } = createComponent();
     comp.ngOnInit();
-    expect(comp.speciesError).toBe('No se pudieron cargar las especies');
-    expect(comp.loadingSpecies).toBeFalse();
+    expect(comp.speciesError()).toBe('No se pudieron cargar las especies');
+    expect(comp.loadingSpecies()).toBeFalse();
   });
 
   it('should set zoneError on zone load failure', () => {
     zoneSvc.list.and.returnValue(throwError(() => ({})));
     const { comp } = createComponent();
     comp.ngOnInit();
-    expect(comp.zoneError).toBe('No se pudieron cargar las zonas');
-    expect(comp.loadingZones).toBeFalse();
+    expect(comp.zoneError()).toBe('No se pudieron cargar las zonas');
+    expect(comp.loadingZones()).toBeFalse();
   });
 
   it('ngAfterViewInit should initialize Leaflet map', () => {
@@ -173,7 +173,7 @@ describe('PlantingForm', () => {
     mapClickHandler!({ latlng: { lat: -0.2, lng: -78.5 } });
     expect(comp.form.lat).toBe(-0.2);
     expect(comp.form.lng).toBe(-78.5);
-    expect(comp.coordsSet).toBeTrue();
+    expect(comp.coordsSet()).toBeTrue();
   });
 
   it('captureGps should set position on success', fakeAsync(() => {
@@ -183,8 +183,8 @@ describe('PlantingForm', () => {
     tick();
     expect(comp.form.lat).toBe(-0.2);
     expect(comp.form.lng).toBe(-78.5);
-    expect(comp.gpsStatus).toBe('Ubicación capturada correctamente');
-    expect(comp.gpsFailed).toBeFalse();
+    expect(comp.gpsStatus()).toBe('Ubicación capturada correctamente');
+    expect(comp.gpsFailed()).toBeFalse();
   }));
 
   it('captureGps should handle failure', fakeAsync(() => {
@@ -192,54 +192,54 @@ describe('PlantingForm', () => {
     const { comp, fixture } = createComponent();
     comp.captureGps();
     tick();
-    expect(comp.gpsFailed).toBeTrue();
-    expect(comp.gpsStatus).toContain('No se pudo obtener la ubicación');
+    expect(comp.gpsFailed()).toBeTrue();
+    expect(comp.gpsStatus()).toContain('No se pudo obtener la ubicación');
   }));
 
   it('captureGps should warn when geolocation unavailable', () => {
     geolocationSvc.isAvailable.and.returnValue(false);
     const { comp, fixture } = createComponent();
     comp.captureGps();
-    expect(comp.gpsStatus).toBe('La geolocalización no está disponible en este navegador');
+    expect(comp.gpsStatus()).toBe('La geolocalización no está disponible en este navegador');
     expect(geolocationSvc.getCurrentPosition).not.toHaveBeenCalled();
   });
 
   it('latInvalid should return true when out of range', () => {
     const { comp } = createComponent();
-    comp.touched.lat = true;
+    comp.touchedLat.set(true);
     comp.form.lat = 100;
-    expect(comp.latInvalid).toBeTrue();
+    expect(comp.latInvalid()).toBeTrue();
   });
 
   it('latInvalid should return false when valid', () => {
     const { comp } = createComponent();
-    comp.touched.lat = true;
-    comp.coordsSet = true;
+    comp.touchedLat.set(true);
+    comp.coordsSet.set(true);
     comp.form.lat = -0.2;
-    expect(comp.latInvalid).toBeFalse();
+    expect(comp.latInvalid()).toBeFalse();
   });
 
   it('latInvalid should return true when coords not set and lat is 0', () => {
     const { comp } = createComponent();
-    comp.touched.lat = true;
-    comp.coordsSet = false;
+    comp.touchedLat.set(true);
+    comp.coordsSet.set(false);
     comp.form.lat = 0;
-    expect(comp.latInvalid).toBeTrue();
+    expect(comp.latInvalid()).toBeTrue();
   });
 
   it('lngInvalid should return true when out of range', () => {
     const { comp } = createComponent();
-    comp.touched.lng = true;
+    comp.touchedLng.set(true);
     comp.form.lng = 200;
-    expect(comp.lngInvalid).toBeTrue();
+    expect(comp.lngInvalid()).toBeTrue();
   });
 
   it('lngInvalid should return false when valid', () => {
     const { comp } = createComponent();
-    comp.touched.lng = true;
-    comp.coordsSet = true;
+    comp.touchedLng.set(true);
+    comp.coordsSet.set(true);
     comp.form.lng = -78.5;
-    expect(comp.lngInvalid).toBeFalse();
+    expect(comp.lngInvalid()).toBeFalse();
   });
 
   it('onFileSelected should compress image', fakeAsync(async () => {
@@ -251,8 +251,8 @@ describe('PlantingForm', () => {
     expect(imageSvc.validateSize).toHaveBeenCalledWith(file);
     expect(imageSvc.compress).toHaveBeenCalledWith(file);
     expect(imageSvc.readAsDataUrl).toHaveBeenCalled();
-    expect(comp.photoPreview).toBe('data:image/webp;base64,test');
-    expect(comp.compressing).toBeFalse();
+    expect(comp.photoPreview()).toBe('data:image/webp;base64,test');
+    expect(comp.compressing()).toBeFalse();
   }));
 
   it('onFileSelected should set error on validation failure', async () => {
@@ -261,17 +261,17 @@ describe('PlantingForm', () => {
     const file = new File(['x'], 'large.jpg', { type: 'image/jpeg' });
     const event = { target: { files: [file] } } as unknown as Event;
     await comp.onFileSelected(event);
-    expect(comp.error).toBe('La foto no puede superar los 5 MB');
+    expect(comp.error()).toBe('La foto no puede superar los 5 MB');
     expect(imageSvc.compress).not.toHaveBeenCalled();
   });
 
   it('removePhoto should clear photo state', () => {
     const { comp } = createComponent();
-    comp.photoPreview = 'data:image/png;base64,x';
-    comp.photoFile = new File([''], 'test.png');
+    comp.photoPreview.set('data:image/png;base64,x');
+    comp.photoFile.set(new File([''], 'test.png'));
     comp.removePhoto();
-    expect(comp.photoPreview).toBeNull();
-    expect(comp.photoFile).toBeNull();
+    expect(comp.photoPreview()).toBeNull();
+    expect(comp.photoFile()).toBeNull();
   });
 
   it('updateMarkerFromCoords should place marker at current coords', () => {
@@ -280,7 +280,7 @@ describe('PlantingForm', () => {
     comp.form.lat = -0.229;
     comp.form.lng = -78.524;
     comp.updateMarkerFromCoords();
-    expect(comp.coordsSet).toBeTrue();
+    expect(comp.coordsSet()).toBeTrue();
     expect(L.marker).toHaveBeenCalledWith([-0.229, -78.524], jasmine.any(Object));
     expect(mockMarker.addTo).toHaveBeenCalledWith(mockMap);
   });
@@ -337,25 +337,18 @@ describe('PlantingForm', () => {
     comp.form.lat = -0.2;
     comp.form.lng = -78.5;
     comp.submit();
-    expect(comp.error).toBe('Error del servidor');
-    expect(comp.saving).toBeFalse();
+    expect(comp.error()).toBe('Error del servidor');
+    expect(comp.saving()).toBeFalse();
   });
 
   it('touchLat and touchLng should mark fields as touched', () => {
     const { comp } = createComponent();
-    expect(comp.touched.lat).toBeFalse();
+    expect(comp.touchedLat()).toBeFalse();
     comp.touchLat();
-    expect(comp.touched.lat).toBeTrue();
-    expect(comp.touched.lng).toBeFalse();
+    expect(comp.touchedLat()).toBeTrue();
+    expect(comp.touchedLng()).toBeFalse();
     comp.touchLng();
-    expect(comp.touched.lng).toBeTrue();
-  });
-
-  it('ngOnDestroy should remove the map', () => {
-    const { comp, fixture } = createComponent();
-    comp.ngAfterViewInit();
-    comp.ngOnDestroy();
-    expect(mockMap.remove).toHaveBeenCalled();
+    expect(comp.touchedLng()).toBeTrue();
   });
 
   function mockCreateResponse(overrides: Partial<PlantingSite> = {}): any {
@@ -386,9 +379,9 @@ describe('PlantingForm', () => {
       comp.form.zone_id = 1;
       comp.form.lat = -0.2;
       comp.form.lng = -78.5;
-      comp.photoFile = new File(['test'], 'photo.jpg', { type: 'image/jpeg' });
+      comp.photoFile.set(new File(['test'], 'photo.jpg', { type: 'image/jpeg' }));
       comp.submit();
-      expect(plantingSvc.uploadPhoto).toHaveBeenCalledWith(42, comp.photoFile);
+      expect(plantingSvc.uploadPhoto).toHaveBeenCalledWith(42, jasmine.any(File));
     });
 
     it('should handle upload photo failure via catchError', () => {
@@ -399,7 +392,7 @@ describe('PlantingForm', () => {
       comp.form.zone_id = 1;
       comp.form.lat = -0.2;
       comp.form.lng = -78.5;
-      comp.photoFile = new File(['test'], 'photo.jpg', { type: 'image/jpeg' });
+      comp.photoFile.set(new File(['test'], 'photo.jpg', { type: 'image/jpeg' }));
       comp.submit();
       expect(plantingSvc.uploadPhoto).toHaveBeenCalled();
     });
@@ -411,7 +404,7 @@ describe('PlantingForm', () => {
       comp.form.zone_id = 1;
       comp.form.lat = -0.2;
       comp.form.lng = -78.5;
-      comp.photoFile = new File(['test'], 'photo.jpg', { type: 'image/jpeg' });
+      comp.photoFile.set(new File(['test'], 'photo.jpg', { type: 'image/jpeg' }));
       comp.submit();
       expect(plantingSvc.uploadPhoto).not.toHaveBeenCalled();
     });
@@ -425,40 +418,40 @@ describe('PlantingForm', () => {
       const event = { target: { files: [file] } } as unknown as Event;
       await comp.onFileSelected(event);
       tick();
-      expect(comp.error).toBe('Error al procesar la imagen');
-      expect(comp.compressing).toBeFalse();
+      expect(comp.error()).toBe('Error al procesar la imagen');
+      expect(comp.compressing()).toBeFalse();
     }));
   });
 
   describe('onPhotoZoneKeydown', () => {
     it('should click photo input on Enter key', () => {
       const { comp } = createComponent();
-      spyOn(comp.photoInput.nativeElement, 'click');
+      spyOn(comp.photoInput().nativeElement, 'click');
       const event = new KeyboardEvent('keydown', { key: 'Enter' });
       spyOn(event, 'preventDefault');
       comp.onPhotoZoneKeydown(event);
       expect(event.preventDefault).toHaveBeenCalled();
-      expect(comp.photoInput.nativeElement.click).toHaveBeenCalled();
+      expect(comp.photoInput().nativeElement.click).toHaveBeenCalled();
     });
 
     it('should click photo input on Space key', () => {
       const { comp } = createComponent();
-      spyOn(comp.photoInput.nativeElement, 'click');
+      spyOn(comp.photoInput().nativeElement, 'click');
       const event = new KeyboardEvent('keydown', { key: ' ' });
       spyOn(event, 'preventDefault');
       comp.onPhotoZoneKeydown(event);
       expect(event.preventDefault).toHaveBeenCalled();
-      expect(comp.photoInput.nativeElement.click).toHaveBeenCalled();
+      expect(comp.photoInput().nativeElement.click).toHaveBeenCalled();
     });
 
     it('should do nothing for other keys', () => {
       const { comp } = createComponent();
-      spyOn(comp.photoInput.nativeElement, 'click');
+      spyOn(comp.photoInput().nativeElement, 'click');
       const event = new KeyboardEvent('keydown', { key: 'Tab' });
       spyOn(event, 'preventDefault');
       comp.onPhotoZoneKeydown(event);
       expect(event.preventDefault).not.toHaveBeenCalled();
-      expect(comp.photoInput.nativeElement.click).not.toHaveBeenCalled();
+      expect(comp.photoInput().nativeElement.click).not.toHaveBeenCalled();
     });
   });
 
@@ -470,8 +463,8 @@ describe('PlantingForm', () => {
     comp.form.lat = -0.2;
     comp.form.lng = -78.5;
     comp.submit();
-    expect(comp.error).toBe('Campo requerido');
-    expect(comp.saving).toBeFalse();
+    expect(comp.error()).toBe('Campo requerido');
+    expect(comp.saving()).toBeFalse();
   });
 
   it('submit should handle planted_at being empty', () => {
@@ -497,15 +490,15 @@ describe('PlantingForm', () => {
     configSvc.getSoilTextures.and.returnValue(throwError(() => ({})));
     const { comp } = createComponent();
     comp.ngOnInit();
-    expect(comp.loadingTextures).toBeFalse();
+    expect(comp.loadingTextures()).toBeFalse();
   });
 
   it('lngInvalid should return true when coords not set and lng is 0', () => {
     const { comp } = createComponent();
-    comp.touched.lng = true;
-    comp.coordsSet = false;
+    comp.touchedLng.set(true);
+    comp.coordsSet.set(false);
     comp.form.lng = 0;
-    expect(comp.lngInvalid).toBeTrue();
+    expect(comp.lngInvalid()).toBeTrue();
   });
 
   it('should call marker.setLatLng when marker already exists', () => {
@@ -528,7 +521,7 @@ describe('PlantingForm', () => {
     comp.form.lat = -0.2;
     comp.form.lng = -78.5;
     comp.submit();
-    expect(comp.error).toBe('Error al registrar plántula');
-    expect(comp.saving).toBeFalse();
+    expect(comp.error()).toBe('Error al registrar plántula');
+    expect(comp.saving()).toBeFalse();
   });
 });

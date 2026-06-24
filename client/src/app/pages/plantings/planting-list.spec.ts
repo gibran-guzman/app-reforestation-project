@@ -102,8 +102,8 @@ describe('PlantingList', () => {
   it('pageArray should return correct array', () => {
     const fixture = TestBed.createComponent(PlantingList);
     const comp = fixture.componentInstance;
-    expect(comp.pageArray(3)).toEqual([0, 1, 2]);
-    expect(comp.pageArray(0)).toEqual([]);
-    expect(comp.pageArray(1)).toEqual([0]);
+    expect(comp.zeroBasedPageRange(3)).toEqual([0, 1, 2]);
+    expect(comp.zeroBasedPageRange(0)).toEqual([]);
+    expect(comp.zeroBasedPageRange(1)).toEqual([0]);
   });
 });

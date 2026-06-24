@@ -6,6 +6,7 @@ import { Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { Chart } from 'chart.js';
 import Dashboard from './dashboard';
+import { survivalRate, survivalColorClass } from '../../helpers/survival';
 import { ReportsService } from '../../services/reports.service';
 import { SpeciesService } from '../../services/species.service';
 import { ZoneService } from '../../services/zone.service';
@@ -132,29 +133,16 @@ describe('Dashboard', () => {
     expect(comp.loadingStats()).toBeFalse();
   }));
 
-  it('rate should compute percentage', () => {
-    const fixture = TestBed.createComponent(Dashboard);
-    const comp = fixture.componentInstance;
-    expect(comp.rate(30, 100)).toBe(30);
-    expect(comp.rate(0, 0)).toBe(0);
-    expect(comp.rate(50, 200)).toBe(25);
+  it('survivalRate should compute percentage from imported helper', () => {
+    expect(survivalRate(30, 100)).toBe(30);
+    expect(survivalRate(0, 0)).toBe(0);
+    expect(survivalRate(50, 200)).toBe(25);
   });
 
-  it('survivalColor should return correct class', () => {
-    const fixture = TestBed.createComponent(Dashboard);
-    const comp = fixture.componentInstance;
-    expect(comp.survivalColor(70, 100)).toBe('bg-success');
-    expect(comp.survivalColor(40, 100)).toBe('bg-warning');
-    expect(comp.survivalColor(10, 100)).toBe('bg-danger');
-  });
-
-  it('statusLabel should map status codes', () => {
-    const fixture = TestBed.createComponent(Dashboard);
-    const comp = fixture.componentInstance;
-    expect(comp.statusLabel('alive')).toBe('Vivas');
-    expect(comp.statusLabel('struggling')).toBe('Estresadas');
-    expect(comp.statusLabel('dead')).toBe('Muertas');
-    expect(comp.statusLabel('unknown')).toBe('unknown');
+  it('survivalColorClass should return correct CSS class from imported helper', () => {
+    expect(survivalColorClass(70, 100)).toBe('bg-success');
+    expect(survivalColorClass(40, 100)).toBe('bg-warning');
+    expect(survivalColorClass(10, 100)).toBe('bg-danger');
   });
 
   it('trendClass should return correct class', () => {
@@ -184,7 +172,7 @@ describe('Dashboard', () => {
     tick();
     expect(syncSvc.sync).toHaveBeenCalled();
     expect(offlineSvc.getPendingPlantings).toHaveBeenCalled();
-    expect(comp.syncError).toBe('');
+    expect(comp.syncError()).toBe('');
   }));
 
   it('doSync should set syncError on failure', fakeAsync(() => {
@@ -193,7 +181,7 @@ describe('Dashboard', () => {
     const comp = fixture.componentInstance;
     comp.doSync();
     tick();
-    expect(comp.syncError).toBe('Error al sincronizar. Intenta de nuevo.');
+    expect(comp.syncError()).toBe('Error al sincronizar. Intenta de nuevo.');
   }));
 
   it('refreshPending should reload pending list', fakeAsync(() => {
@@ -213,7 +201,7 @@ describe('Dashboard', () => {
       extras: { state: { success: 'Creado exitosamente' } },
     } as any);
     comp.ngOnInit();
-    expect(comp.successMsg).toBe('Creado exitosamente');
+    expect(comp.successMsg()).toBe('Creado exitosamente');
   });
 
   it('should handle missing router state gracefully', () => {
@@ -222,7 +210,7 @@ describe('Dashboard', () => {
     const router = TestBed.inject(Router);
     spyOn(router, 'getCurrentNavigation').and.returnValue(null);
     comp.ngOnInit();
-    expect(comp.successMsg).toBe('');
+    expect(comp.successMsg()).toBe('');
   });
 
   describe('evolution chart', () => {

@@ -95,13 +95,13 @@ describe('MapPage', () => {
 
   it('initMap should call L.map with correct params', () => {
     const fixture = TestBed.createComponent(MapPage);
-    fixture.componentInstance.ngOnInit();
+    fixture.componentInstance['initMap']();
     expect(L.map).toHaveBeenCalledWith('map-container', { center: [-0.229, -78.524], zoom: 12 });
   });
 
   it('initMap should add tile layer and layer group to map', () => {
     const fixture = TestBed.createComponent(MapPage);
-    fixture.componentInstance.ngOnInit();
+    fixture.componentInstance['initMap']();
     expect(L.tileLayer).toHaveBeenCalled();
     expect(L.layerGroup).toHaveBeenCalled();
     expect(mockTileLayer.addTo).toHaveBeenCalledWith(mockMap);
@@ -111,7 +111,8 @@ describe('MapPage', () => {
   it('loadGeoJson should render circle markers', () => {
     const fixture = TestBed.createComponent(MapPage);
     const comp = fixture.componentInstance;
-    comp.ngOnInit();
+    comp['initMap']();
+    comp.loadGeoJson();
     expect(L.circleMarker).toHaveBeenCalledWith([-0.22, -78.5], jasmine.any(Object));
     expect(mockCircleMarker.bindPopup).toHaveBeenCalled();
     expect(mockLayerGroup.addLayer).toHaveBeenCalledWith(mockCircleMarker);
@@ -154,11 +155,11 @@ describe('MapPage', () => {
     expect(filters).toEqual({});
   });
 
-  it('ngOnDestroy should remove the map', () => {
+  it('should remove the map on destroy', () => {
     const fixture = TestBed.createComponent(MapPage);
     const comp = fixture.componentInstance;
-    comp.ngOnInit();
-    comp.ngOnDestroy();
+    comp['initMap']();
+    fixture.destroy();
     expect(mockMap.remove).toHaveBeenCalled();
   });
 
@@ -166,7 +167,6 @@ describe('MapPage', () => {
     speciesSvc.list.and.returnValue(throwError(() => ({})));
     const fixture = TestBed.createComponent(MapPage);
     const comp = fixture.componentInstance;
-    comp.ngOnInit();
     expect(comp.species()).toEqual([]);
   });
 
@@ -174,14 +174,14 @@ describe('MapPage', () => {
     zoneSvc.list.and.returnValue(throwError(() => ({})));
     const fixture = TestBed.createComponent(MapPage);
     const comp = fixture.componentInstance;
-    comp.ngOnInit();
     expect(comp.zones()).toEqual([]);
   });
 
   it('renderMarkers handles null last_monitoring_date, photo_url, and empty planted_at', () => {
     const fixture = TestBed.createComponent(MapPage);
     const comp = fixture.componentInstance;
-    comp.ngOnInit();
+    comp['initMap']();
+    comp.loadGeoJson();
     mockLayerGroup.clearLayers.calls.reset();
     mockLayerGroup.addLayer.calls.reset();
     mockCircleMarker.bindPopup.calls.reset();
@@ -215,7 +215,8 @@ describe('MapPage', () => {
   it('renderMarkers falls back to unmonitored color when survival_status is missing', () => {
     const fixture = TestBed.createComponent(MapPage);
     const comp = fixture.componentInstance;
-    comp.ngOnInit();
+    comp['initMap']();
+    comp.loadGeoJson();
     mockLayerGroup.clearLayers.calls.reset();
     mockLayerGroup.addLayer.calls.reset();
     mockCircleMarker.bindPopup.calls.reset();
@@ -251,7 +252,8 @@ describe('MapPage', () => {
   it('renderMarkers omits img tag when photo_url is null', () => {
     const fixture = TestBed.createComponent(MapPage);
     const comp = fixture.componentInstance;
-    comp.ngOnInit();
+    comp['initMap']();
+    comp.loadGeoJson();
     mockLayerGroup.clearLayers.calls.reset();
     mockLayerGroup.addLayer.calls.reset();
     mockCircleMarker.bindPopup.calls.reset();

@@ -75,7 +75,7 @@ describe('SyncService', () => {
       ],
     });
     service = TestBed.inject(SyncService);
-    service.syncing = false;
+    service.syncing.set(false);
     service.errorItems.set([]);
     service.progress.set(null);
   });
@@ -86,7 +86,7 @@ describe('SyncService', () => {
 
   describe('sync', () => {
     it('returns early if syncing is already true', async () => {
-      service.syncing = true;
+      service.syncing.set(true);
       offlineMock.getPendingPlantings.and.resolveTo([mockPending]);
 
       await service.sync();
@@ -296,7 +296,7 @@ describe('SyncService', () => {
         ],
       });
       const svc = TestBed.inject(SyncService);
-      svc.syncing = false;
+      svc.syncing.set(false);
 
       onlineSig.set(true);
       tick(100);

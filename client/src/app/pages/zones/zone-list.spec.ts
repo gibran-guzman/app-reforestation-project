@@ -49,8 +49,8 @@ describe('ZoneList', () => {
     comp.ngOnInit();
 
     expect(service.list).toHaveBeenCalled();
-    expect(comp.zones).toEqual([mockZone] as any);
-    expect(comp.loading).toBeFalse();
+    expect(comp.zones()).toEqual([mockZone] as any);
+    expect(comp.loading()).toBeFalse();
   });
 
   it('should set error on load failure', () => {
@@ -60,26 +60,26 @@ describe('ZoneList', () => {
     const comp = fixture.componentInstance;
     comp.ngOnInit();
 
-    expect(comp.error).toBe('Error de red');
-    expect(comp.loading).toBeFalse();
+    expect(comp.error()).toBe('Error de red');
+    expect(comp.loading()).toBeFalse();
   });
 
   it('deleteZone should call service.remove and filter on success', () => {
-    service.remove.and.returnValue(of({ message: 'ok' }));
+    service.remove.and.returnValue(of({ data: null, message: 'ok' }));
     spyOn(window, 'confirm').and.returnValue(true);
 
     const fixture = TestBed.createComponent(ZoneList);
     const comp = fixture.componentInstance;
-    comp.zones = [
+    comp.zones.set([
       { ...mockZone, id: 1 },
       { ...mockZone, id: 2, name: 'Zona Sur' },
-    ];
+    ]);
 
     comp.deleteZone(1);
 
     expect(service.remove).toHaveBeenCalledWith(1);
-    expect(comp.zones.length).toBe(1);
-    expect(comp.zones[0].id).toBe(2);
+    expect(comp.zones().length).toBe(1);
+    expect(comp.zones()[0].id).toBe(2);
   });
 
   it('deleteZone should not call remove when confirm is false', () => {
@@ -123,7 +123,7 @@ describe('ZoneList', () => {
     const comp = fixture.componentInstance;
     comp.ngOnInit();
 
-    expect(comp.error).toBe('Error al cargar zonas');
-    expect(comp.loading).toBeFalse();
+    expect(comp.error()).toBe('Error al cargar zonas');
+    expect(comp.loading()).toBeFalse();
   });
 });

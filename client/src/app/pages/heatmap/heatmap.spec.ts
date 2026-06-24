@@ -75,7 +75,7 @@ describe('HeatmapPage', () => {
 
   it('initMap should call L.map and L.heatLayer', () => {
     const fixture = TestBed.createComponent(HeatmapPage);
-    fixture.componentInstance.ngOnInit();
+    fixture.componentInstance['initMap']();
     expect(L.map).toHaveBeenCalledWith('heatmap-container', { center: [-0.229, -78.524], zoom: 12 });
     expect(L.tileLayer).toHaveBeenCalled();
     expect(L.heatLayer).toHaveBeenCalledWith([], jasmine.objectContaining({ radius: 30, blur: 20, maxZoom: 17 }));
@@ -85,7 +85,7 @@ describe('HeatmapPage', () => {
   it('loadData should call analytics service and render first period', () => {
     const fixture = TestBed.createComponent(HeatmapPage);
     const comp = fixture.componentInstance;
-    comp.ngOnInit();
+    comp.loadData();
     expect(analyticsSvc.getHeatmap).toHaveBeenCalled();
     expect(comp.data()).toEqual(mockHeatmapResponse);
     expect(comp.total()).toBe(3);
@@ -113,7 +113,8 @@ describe('HeatmapPage', () => {
   it('renderPeriod should update heatLayer with points from given index', () => {
     const fixture = TestBed.createComponent(HeatmapPage);
     const comp = fixture.componentInstance;
-    comp.ngOnInit();
+    comp['initMap']();
+    comp.data.set(mockHeatmapResponse);
     comp['renderPeriod'](1);
     expect(comp.currentPeriod()).toBe(1);
     expect(mockHeatLayer.setLatLngs).toHaveBeenCalledWith([[-0.22, -78.52, 0.9]]);
@@ -122,7 +123,7 @@ describe('HeatmapPage', () => {
   it('goToPeriod should update to valid index', () => {
     const fixture = TestBed.createComponent(HeatmapPage);
     const comp = fixture.componentInstance;
-    comp.ngOnInit();
+    comp.data.set(mockHeatmapResponse);
     comp.goToPeriod(0);
     expect(comp.currentPeriod()).toBe(0);
   });
@@ -130,7 +131,7 @@ describe('HeatmapPage', () => {
   it('goToPeriod should ignore invalid index', () => {
     const fixture = TestBed.createComponent(HeatmapPage);
     const comp = fixture.componentInstance;
-    comp.ngOnInit();
+    comp.data.set(mockHeatmapResponse);
     comp.goToPeriod(-1);
     expect(comp.currentPeriod()).toBe(0);
     comp.goToPeriod(99);
@@ -140,7 +141,7 @@ describe('HeatmapPage', () => {
   it('togglePlay should animate through periods and stop at end', fakeAsync(() => {
     const fixture = TestBed.createComponent(HeatmapPage);
     const comp = fixture.componentInstance;
-    comp.ngOnInit();
+    comp.data.set(mockHeatmapResponse);
     comp.togglePlay();
     expect(comp.playing()).toBeTrue();
     tick(1200);
@@ -153,7 +154,7 @@ describe('HeatmapPage', () => {
   it('togglePlay should stop animation when already playing', () => {
     const fixture = TestBed.createComponent(HeatmapPage);
     const comp = fixture.componentInstance;
-    comp.ngOnInit();
+    comp.data.set(mockHeatmapResponse);
     comp.togglePlay();
     expect(comp.playing()).toBeTrue();
     comp.togglePlay();
@@ -171,7 +172,7 @@ describe('HeatmapPage', () => {
   it('periods getter should return periods from data', () => {
     const fixture = TestBed.createComponent(HeatmapPage);
     const comp = fixture.componentInstance;
-    comp.ngOnInit();
+    comp.data.set(mockHeatmapResponse);
     expect(comp.periods.length).toBe(2);
     expect(comp.periods[0].label).toBe('Ene 2024');
   });
@@ -179,7 +180,7 @@ describe('HeatmapPage', () => {
   it('currentLabel getter should return label of current period', () => {
     const fixture = TestBed.createComponent(HeatmapPage);
     const comp = fixture.componentInstance;
-    comp.ngOnInit();
+    comp.data.set(mockHeatmapResponse);
     expect(comp.currentLabel).toBe('Ene 2024');
     comp.goToPeriod(1);
     expect(comp.currentLabel).toBe('Feb 2024');
@@ -195,7 +196,7 @@ describe('HeatmapPage', () => {
   it('currentPoints getter should return points of current period', () => {
     const fixture = TestBed.createComponent(HeatmapPage);
     const comp = fixture.componentInstance;
-    comp.ngOnInit();
+    comp.data.set(mockHeatmapResponse);
     expect(comp.currentPoints.length).toBe(2);
     comp.goToPeriod(1);
     expect(comp.currentPoints.length).toBe(1);
@@ -211,7 +212,7 @@ describe('HeatmapPage', () => {
   it('maxIndex getter should return max index', () => {
     const fixture = TestBed.createComponent(HeatmapPage);
     const comp = fixture.componentInstance;
-    comp.ngOnInit();
+    comp.data.set(mockHeatmapResponse);
     expect(comp.maxIndex).toBe(1);
   });
 
@@ -225,12 +226,12 @@ describe('HeatmapPage', () => {
   it('renderPeriod with empty data should set period index and clear heatLayer', () => {
     const fixture = TestBed.createComponent(HeatmapPage);
     const comp = fixture.componentInstance;
-    comp.ngOnInit();
-    const emptyResponse: HeatmapResponse = {
+    comp['initMap']();
+    const localEmpty: HeatmapResponse = {
       periods: [{ label: 'Empty', data: [] }],
       total: 0,
     };
-    comp.data.set(emptyResponse);
+    comp.data.set(localEmpty);
     comp['renderPeriod'](0);
     expect(comp.currentPeriod()).toBe(0);
     expect(mockHeatLayer.setLatLngs).toHaveBeenCalledWith([]);
@@ -254,28 +255,29 @@ describe('HeatmapPage', () => {
     expect(filters).toEqual({ species_id: 1, zone_id: 2, interval: 'month' });
   });
 
-  it('ngOnDestroy should stop animation and remove map', () => {
+  it('should stop animation and remove map on destroy', () => {
     const fixture = TestBed.createComponent(HeatmapPage);
     const comp = fixture.componentInstance;
-    comp.ngOnInit();
-    comp.ngOnDestroy();
+    comp['initMap']();
+    comp.data.set(mockHeatmapResponse);
+    comp.togglePlay();
+    expect(comp.playing()).toBeTrue();
+    fixture.destroy();
     expect(mockMap.remove).toHaveBeenCalled();
     expect(comp.playing()).toBeFalse();
   });
 
-  it('ngOnInit should set empty species array on species load error', () => {
+  it('should set empty species array on species load error', () => {
     speciesSvc.list.and.returnValue(throwError(() => ({})));
     const fixture = TestBed.createComponent(HeatmapPage);
     const comp = fixture.componentInstance;
-    comp.ngOnInit();
     expect(comp.species()).toEqual([]);
   });
 
-  it('ngOnInit should set empty zones array on zone load error', () => {
+  it('should set empty zones array on zone load error', () => {
     zoneSvc.list.and.returnValue(throwError(() => ({})));
     const fixture = TestBed.createComponent(HeatmapPage);
     const comp = fixture.componentInstance;
-    comp.ngOnInit();
     expect(comp.zones()).toEqual([]);
   });
 
@@ -317,7 +319,7 @@ describe('HeatmapPage', () => {
   it('renderPeriod should handle period with null data', () => {
     const fixture = TestBed.createComponent(HeatmapPage);
     const comp = fixture.componentInstance;
-    comp.ngOnInit();
+    comp['initMap']();
     comp.data.set({
       periods: [{ label: 'Test', data: null as any }],
       total: 0,
@@ -330,7 +332,8 @@ describe('HeatmapPage', () => {
   it('renderPeriod should handle out-of-bounds index', () => {
     const fixture = TestBed.createComponent(HeatmapPage);
     const comp = fixture.componentInstance;
-    comp.ngOnInit();
+    comp['initMap']();
+    comp.data.set(mockHeatmapResponse);
     comp['renderPeriod'](99);
     expect(comp.currentPeriod()).toBe(99);
     expect(mockHeatLayer.setLatLngs).toHaveBeenCalledWith([]);

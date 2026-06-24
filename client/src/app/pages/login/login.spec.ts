@@ -36,10 +36,10 @@ describe('Login', () => {
   it('should have form fields', () => {
     const fixture = TestBed.createComponent(Login);
     const comp = fixture.componentInstance;
-    expect(comp.email).toBe('');
-    expect(comp.password).toBe('');
-    expect(comp.error).toBe('');
-    expect(comp.loading).toBeFalse();
+    expect(comp.email()).toBe('');
+    expect(comp.password()).toBe('');
+    expect(comp.error()).toBe('');
+    expect(comp.loading()).toBeFalse();
   });
 
   it('should call auth.login and navigate on success', () => {
@@ -54,8 +54,8 @@ describe('Login', () => {
     }));
     spyOn(router, 'navigate');
 
-    comp.email = 'admin@test.com';
-    comp.password = '123456';
+    comp.email.set('admin@test.com');
+    comp.password.set('123456');
     comp.submit();
 
     expect(auth.login).toHaveBeenCalledWith({ email: 'admin@test.com', password: '123456' });
@@ -69,8 +69,8 @@ describe('Login', () => {
 
     comp.submit();
 
-    expect(comp.error).toBe('Credenciales inválidas');
-    expect(comp.loading).toBeFalse();
+    expect(comp.error()).toBe('Credenciales inválidas');
+    expect(comp.loading()).toBeFalse();
   });
 
   it('should show default error message when no server error', () => {
@@ -80,6 +80,6 @@ describe('Login', () => {
 
     comp.submit();
 
-    expect(comp.error).toBe('Error al iniciar sesión');
+    expect(comp.error()).toBe('Error al iniciar sesión');
   });
 });

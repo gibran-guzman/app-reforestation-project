@@ -33,13 +33,13 @@ describe('Register', () => {
   it('should have form fields', () => {
     const fixture = TestBed.createComponent(Register);
     const comp = fixture.componentInstance;
-    expect(comp.email).toBe('');
-    expect(comp.password).toBe('');
-    expect(comp.full_name).toBe('');
-    expect(comp.role).toBe('technician');
-    expect(comp.error).toBe('');
-    expect(comp.success).toBe('');
-    expect(comp.loading).toBeFalse();
+    expect(comp.email()).toBe('');
+    expect(comp.password()).toBe('');
+    expect(comp.full_name()).toBe('');
+    expect(comp.role()).toBe('technician');
+    expect(comp.error()).toBe('');
+    expect(comp.success()).toBe('');
+    expect(comp.loading()).toBeFalse();
   });
 
   it('should call auth.signup and show success on success', () => {
@@ -47,19 +47,19 @@ describe('Register', () => {
     const comp = fixture.componentInstance;
     auth.signup.and.returnValue(of({ message: 'ok', data: { id: '1', email: 'u@u.com', full_name: 'U', role: 'technician' as const } }));
 
-    comp.email = 'user@test.com';
-    comp.password = '123456';
-    comp.full_name = 'Test User';
-    comp.role = 'admin';
+    comp.email.set('user@test.com');
+    comp.password.set('123456');
+    comp.full_name.set('Test User');
+    comp.role.set('admin');
     comp.submit();
 
     expect(auth.signup).toHaveBeenCalledWith({ email: 'user@test.com', password: '123456', full_name: 'Test User', role: 'admin' });
-    expect(comp.success).toBe('Usuario creado correctamente.');
-    expect(comp.email).toBe('');
-    expect(comp.password).toBe('');
-    expect(comp.full_name).toBe('');
-    expect(comp.role).toBe('technician');
-    expect(comp.loading).toBeFalse();
+    expect(comp.success()).toBe('Usuario creado correctamente.');
+    expect(comp.email()).toBe('');
+    expect(comp.password()).toBe('');
+    expect(comp.full_name()).toBe('');
+    expect(comp.role()).toBe('technician');
+    expect(comp.loading()).toBeFalse();
   });
 
   it('should show error on failure', () => {
@@ -69,8 +69,8 @@ describe('Register', () => {
 
     comp.submit();
 
-    expect(comp.error).toBe('El usuario ya existe');
-    expect(comp.loading).toBeFalse();
+    expect(comp.error()).toBe('El usuario ya existe');
+    expect(comp.loading()).toBeFalse();
   });
 
   it('should show default error message when no server error', () => {
@@ -80,6 +80,6 @@ describe('Register', () => {
 
     comp.submit();
 
-    expect(comp.error).toBe('Error al crear usuario');
+    expect(comp.error()).toBe('Error al crear usuario');
   });
 });

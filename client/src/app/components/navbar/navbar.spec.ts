@@ -40,11 +40,11 @@ describe('Navbar', () => {
   it('should toggle collapse', () => {
     const fixture = TestBed.createComponent(Navbar);
     const comp = fixture.componentInstance;
-    expect(comp.collapsed).toBeTrue();
+    expect(comp.collapsed()).toBeTrue();
     comp.toggleCollapse();
-    expect(comp.collapsed).toBeFalse();
+    expect(comp.collapsed()).toBeFalse();
     comp.toggleCollapse();
-    expect(comp.collapsed).toBeTrue();
+    expect(comp.collapsed()).toBeTrue();
   });
 
   it('should toggle dropdown and stop propagation', () => {
@@ -53,19 +53,19 @@ describe('Navbar', () => {
     const event = new MouseEvent('click');
     spyOn(event, 'stopPropagation');
 
-    expect(comp.dropdownOpen).toBeFalse();
+    expect(comp.dropdownOpen()).toBeFalse();
     comp.toggleDropdown(event);
-    expect(comp.dropdownOpen).toBeTrue();
+    expect(comp.dropdownOpen()).toBeTrue();
     expect(event.stopPropagation).toHaveBeenCalled();
     comp.toggleDropdown(event);
-    expect(comp.dropdownOpen).toBeFalse();
+    expect(comp.dropdownOpen()).toBeFalse();
   });
 
   it('should close dropdown on document click', () => {
     const fixture = TestBed.createComponent(Navbar);
     const comp = fixture.componentInstance;
-    comp.dropdownOpen = true;
+    comp.dropdownOpen.set(true);
     comp.closeDropdown();
-    expect(comp.dropdownOpen).toBeFalse();
+    expect(comp.dropdownOpen()).toBeFalse();
   });
 });
