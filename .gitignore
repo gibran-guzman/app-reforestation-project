@@ -48,7 +48,7 @@ Desktop.ini
 # Agent and IDE-specific folders
 .agents/
 .windsurf/
-.github/
+
 
 # Agent/IDE artifacts (if any)
 *.agent.md
