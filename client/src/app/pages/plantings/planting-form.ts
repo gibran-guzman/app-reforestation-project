@@ -214,7 +214,7 @@ export default class PlantingForm implements OnInit, AfterViewInit {
   submit() {
     this.error.set('');
 
-    if (!this.form.species_id || !this.form.zone_id) {
+    if (!Number(this.form.species_id) || !Number(this.form.zone_id)) {
       this.error.set('Selecciona una especie y una zona antes de registrar');
       return;
     }
@@ -225,8 +225,8 @@ export default class PlantingForm implements OnInit, AfterViewInit {
     this.updateMarkerFromCoords();
 
     const payload = {
-      zone_id: this.form.zone_id,
-      species_id: this.form.species_id,
+      zone_id: Number(this.form.zone_id),
+      species_id: Number(this.form.species_id),
       location: { lat: this.form.lat, lng: this.form.lng },
       planted_at: this.form.planted_at || undefined,
       initial_ph: this.form.initial_ph ?? undefined,
