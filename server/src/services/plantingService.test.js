@@ -31,7 +31,7 @@ describe('plantingService', () => {
     };
 
     it('creates a planting successfully', async () => {
-      mockZoneRepository.findById.mockResolvedValue({ id: 1, name: 'Zona Norte' });
+      mockZoneRepository.findById.mockResolvedValue({ id: 1, name: 'Zona Norte', geometry: { type: 'Polygon', coordinates: [[[-78.6, -0.3], [-78.5, -0.3], [-78.5, -0.2], [-78.6, -0.2], [-78.6, -0.3]]] } });
       mockSpeciesRepository.findById.mockResolvedValue({ id: 1, common_name: 'Cedro' });
       mockPlantingRepository.isPointInZone.mockResolvedValue(true);
       mockPlantingRepository.create.mockResolvedValue({ id: 10, zone_id: 1, species_id: 1 });
@@ -60,7 +60,7 @@ describe('plantingService', () => {
     });
 
     it('throws validation error if point is outside zone', async () => {
-      mockZoneRepository.findById.mockResolvedValue({ id: 1, name: 'Zona Norte' });
+      mockZoneRepository.findById.mockResolvedValue({ id: 1, name: 'Zona Norte', geometry: { type: 'Polygon', coordinates: [[[-78.6, -0.3], [-78.5, -0.3], [-78.5, -0.2], [-78.6, -0.2], [-78.6, -0.3]]] } });
       mockSpeciesRepository.findById.mockResolvedValue({ id: 1, common_name: 'Cedro' });
       mockPlantingRepository.isPointInZone.mockResolvedValue(false);
 
@@ -144,7 +144,7 @@ describe('plantingService', () => {
     };
 
     it('syncs a complete batch successfully', async () => {
-      mockZoneRepository.findByIds.mockResolvedValue([{ id: 1, name: 'Zona Norte' }]);
+      mockZoneRepository.findByIds.mockResolvedValue([{ id: 1, name: 'Zona Norte', geometry: { type: 'Polygon', coordinates: [[[-78.6, -0.3], [-78.5, -0.3], [-78.5, -0.2], [-78.6, -0.2], [-78.6, -0.3]]] } }]);
       mockSpeciesRepository.findByIds.mockResolvedValue([{ id: 1, common_name: 'Cedro' }]);
       mockPlantingRepository.isPointInZone.mockResolvedValue(true);
       mockPlantingRepository.create.mockResolvedValue({ id: 10, ...validItem });
@@ -155,7 +155,7 @@ describe('plantingService', () => {
     });
 
     it('resolves conflicts with last writer wins (atomic upsert)', async () => {
-      mockZoneRepository.findByIds.mockResolvedValue([{ id: 1, name: 'Zona Norte' }]);
+      mockZoneRepository.findByIds.mockResolvedValue([{ id: 1, name: 'Zona Norte', geometry: { type: 'Polygon', coordinates: [[[-78.6, -0.3], [-78.5, -0.3], [-78.5, -0.2], [-78.6, -0.2], [-78.6, -0.3]]] } }]);
       mockSpeciesRepository.findByIds.mockResolvedValue([{ id: 1, common_name: 'Cedro' }]);
       mockPlantingRepository.isPointInZone.mockResolvedValue(true);
       mockPlantingRepository.create.mockRejectedValue({ code: '23505' });
@@ -169,7 +169,7 @@ describe('plantingService', () => {
     });
 
     it('reports error if conflicting record belongs to another user', async () => {
-      mockZoneRepository.findByIds.mockResolvedValue([{ id: 1, name: 'Zona Norte' }]);
+      mockZoneRepository.findByIds.mockResolvedValue([{ id: 1, name: 'Zona Norte', geometry: { type: 'Polygon', coordinates: [[[-78.6, -0.3], [-78.5, -0.3], [-78.5, -0.2], [-78.6, -0.2], [-78.6, -0.3]]] } }]);
       mockSpeciesRepository.findByIds.mockResolvedValue([{ id: 1, common_name: 'Cedro' }]);
       mockPlantingRepository.isPointInZone.mockResolvedValue(true);
       mockPlantingRepository.create.mockRejectedValue({ code: '23505' });
@@ -189,7 +189,7 @@ describe('plantingService', () => {
     });
 
     it('reports error if species does not exist in batch', async () => {
-      mockZoneRepository.findByIds.mockResolvedValue([{ id: 1, name: 'Zona Norte' }]);
+      mockZoneRepository.findByIds.mockResolvedValue([{ id: 1, name: 'Zona Norte', geometry: { type: 'Polygon', coordinates: [[[-78.6, -0.3], [-78.5, -0.3], [-78.5, -0.2], [-78.6, -0.2], [-78.6, -0.3]]] } }]);
       mockSpeciesRepository.findByIds.mockResolvedValue([]);
 
       const results = await plantingService.syncBatch([validItem], 'user-123');
@@ -198,7 +198,7 @@ describe('plantingService', () => {
     });
 
     it('reports error if point is outside zone in batch', async () => {
-      mockZoneRepository.findByIds.mockResolvedValue([{ id: 1, name: 'Zona Norte' }]);
+      mockZoneRepository.findByIds.mockResolvedValue([{ id: 1, name: 'Zona Norte', geometry: { type: 'Polygon', coordinates: [[[-78.6, -0.3], [-78.5, -0.3], [-78.5, -0.2], [-78.6, -0.2], [-78.6, -0.3]]] } }]);
       mockSpeciesRepository.findByIds.mockResolvedValue([{ id: 1, common_name: 'Cedro' }]);
       mockPlantingRepository.isPointInZone.mockResolvedValue(false);
 
@@ -208,7 +208,7 @@ describe('plantingService', () => {
     });
 
     it('processes a batch with valid and invalid items', async () => {
-      mockZoneRepository.findByIds.mockResolvedValue([{ id: 1, name: 'Zona Norte' }]);
+      mockZoneRepository.findByIds.mockResolvedValue([{ id: 1, name: 'Zona Norte', geometry: { type: 'Polygon', coordinates: [[[-78.6, -0.3], [-78.5, -0.3], [-78.5, -0.2], [-78.6, -0.2], [-78.6, -0.3]]] } }]);
       mockSpeciesRepository.findByIds.mockResolvedValue([{ id: 1, common_name: 'Cedro' }]);
       mockPlantingRepository.isPointInZone.mockResolvedValue(true);
       mockPlantingRepository.create.mockResolvedValue({ id: 10 });
@@ -222,7 +222,7 @@ describe('plantingService', () => {
     });
 
     it('handles non-unique-violation error during create', async () => {
-      mockZoneRepository.findByIds.mockResolvedValue([{ id: 1, name: 'Zona Norte' }]);
+      mockZoneRepository.findByIds.mockResolvedValue([{ id: 1, name: 'Zona Norte', geometry: { type: 'Polygon', coordinates: [[[-78.6, -0.3], [-78.5, -0.3], [-78.5, -0.2], [-78.6, -0.2], [-78.6, -0.3]]] } }]);
       mockSpeciesRepository.findByIds.mockResolvedValue([{ id: 1, common_name: 'Cedro' }]);
       mockPlantingRepository.isPointInZone.mockResolvedValue(true);
       mockPlantingRepository.create.mockRejectedValue(new Error('DB constraint error'));
@@ -239,7 +239,7 @@ describe('plantingService', () => {
     });
 
     it('catches unexpected errors thrown during item processing', async () => {
-      mockZoneRepository.findByIds.mockResolvedValue([{ id: 1, name: 'Zona Norte' }]);
+      mockZoneRepository.findByIds.mockResolvedValue([{ id: 1, name: 'Zona Norte', geometry: { type: 'Polygon', coordinates: [[[-78.6, -0.3], [-78.5, -0.3], [-78.5, -0.2], [-78.6, -0.2], [-78.6, -0.3]]] } }]);
       mockSpeciesRepository.findByIds.mockResolvedValue([{ id: 1, common_name: 'Cedro' }]);
       mockPlantingRepository.isPointInZone.mockRejectedValue(new Error('DB connection lost'));
 
@@ -249,7 +249,7 @@ describe('plantingService', () => {
     });
 
     it('uses fallback message when error has no message property', async () => {
-      mockZoneRepository.findByIds.mockResolvedValue([{ id: 1, name: 'Zona Norte' }]);
+      mockZoneRepository.findByIds.mockResolvedValue([{ id: 1, name: 'Zona Norte', geometry: { type: 'Polygon', coordinates: [[[-78.6, -0.3], [-78.5, -0.3], [-78.5, -0.2], [-78.6, -0.2], [-78.6, -0.3]]] } }]);
       mockSpeciesRepository.findByIds.mockResolvedValue([{ id: 1, common_name: 'Cedro' }]);
       mockPlantingRepository.isPointInZone.mockRejectedValue({ code: 500 });
 
@@ -259,7 +259,7 @@ describe('plantingService', () => {
     });
 
     it('handles rejected promise via allSettled fallback', async () => {
-      mockZoneRepository.findByIds.mockResolvedValue([{ id: 1, name: 'Zona Norte' }]);
+      mockZoneRepository.findByIds.mockResolvedValue([{ id: 1, name: 'Zona Norte', geometry: { type: 'Polygon', coordinates: [[[-78.6, -0.3], [-78.5, -0.3], [-78.5, -0.2], [-78.6, -0.2], [-78.6, -0.3]]] } }]);
       mockSpeciesRepository.findByIds.mockResolvedValue([{ id: 1, common_name: 'Cedro' }]);
 
       const allSettledSpy = vi.spyOn(Promise, 'allSettled');
