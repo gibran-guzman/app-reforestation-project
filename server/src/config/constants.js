@@ -9,7 +9,25 @@ const SOIL_TEXTURES = [
 
 const SOIL_TEXTURE_VALUES = SOIL_TEXTURES.map(t => t.value);
 
+const SURVIVAL_STATUS_VALUES = ['alive', 'struggling', 'dead'];
+const SURVIVAL_STATUS_LABELS = [
+  { value: 'alive', label: 'Viva' },
+  { value: 'struggling', label: 'Estresada' },
+  { value: 'dead', label: 'Muerta' },
+];
+
+const VIGOR_VALUES = ['high', 'medium', 'low'];
+const VIGOR_LABELS = [
+  { value: 'high', label: 'Alto' },
+  { value: 'medium', label: 'Medio' },
+  { value: 'low', label: 'Bajo' },
+];
+
 const ALLOWED_ROLES = ['admin', 'technician'];
+const ROLE_LABELS = [
+  { value: 'admin', label: 'Administrador' },
+  { value: 'technician', label: 'Técnico' },
+];
 
 const MAX_LIST_LIMIT = 1000;
 
@@ -56,7 +74,12 @@ const MAX_PASSWORD_LENGTH = 128;
 module.exports = {
   SOIL_TEXTURES,
   SOIL_TEXTURE_VALUES,
+  SURVIVAL_STATUS_VALUES,
+  SURVIVAL_STATUS_LABELS,
+  VIGOR_VALUES,
+  VIGOR_LABELS,
   ALLOWED_ROLES,
+  ROLE_LABELS,
   MAX_LIST_LIMIT,
   MAX_HEATMAP_POINTS,
   MAX_GEOJSON_FEATURES,

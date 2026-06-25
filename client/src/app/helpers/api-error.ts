@@ -14,8 +14,6 @@ export function extractErrorMessage(err: unknown, fallback = 'Error inesperado')
 
     if (typeof err['error'] === 'object' && err['error'] !== null) {
       const errObj = err['error'] as Record<string, unknown>;
-      const msg = getString(errObj, 'error');
-      if (msg) return msg;
 
       if (Array.isArray(errObj['details']) && errObj['details'].length > 0) {
         const first = errObj['details'][0];
@@ -24,6 +22,9 @@ export function extractErrorMessage(err: unknown, fallback = 'Error inesperado')
           if (detailMsg) return detailMsg;
         }
       }
+
+      const msg = getString(errObj, 'error');
+      if (msg) return msg;
     }
 
     const msg = getString(err, 'message');

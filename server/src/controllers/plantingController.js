@@ -13,7 +13,7 @@ const create = asyncHandler(async (req, res) => {
 const syncBatch = asyncHandler(async (req, res) => {
   const { items } = req.body;
   if (!Array.isArray(items) || items.length === 0) {
-    return res.status(400).json({ error: 'Se requiere un arreglo items con al menos un elemento' });
+    return res.status(400).json({ error: 'Se requiere un arreglo de elementos con al menos un ítem' });
   }
   if (items.length > MAX_BATCH_ITEMS) {
     return res.status(400).json({ error: `Máximo ${MAX_BATCH_ITEMS} registros por lote` });

@@ -1,5 +1,7 @@
 const { ValidationError } = require('../errors/AppError');
-const { ALLOWED_ROLES, MAX_FULL_NAME_LENGTH, MAX_PASSWORD_LENGTH } = require('../config/constants');
+const { ALLOWED_ROLES, ROLE_LABELS, MAX_FULL_NAME_LENGTH, MAX_PASSWORD_LENGTH } = require('../config/constants');
+
+const ROLE_NAMES = ROLE_LABELS.map(l => l.label).join(', ');
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -29,7 +31,7 @@ const validateSignup = (data) => {
 
   if (role !== undefined && role !== null) {
     if (!ALLOWED_ROLES.includes(role)) {
-      errors.push({ field: 'role', message: `El rol debe ser uno de: ${ALLOWED_ROLES.join(', ')}` });
+      errors.push({ field: 'role', message: `El rol debe ser uno de: ${ROLE_NAMES}` });
     }
   }
 

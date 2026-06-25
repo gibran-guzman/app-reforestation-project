@@ -13,6 +13,7 @@ describe('validateCreatePlanting', () => {
     initial_ph: 6.5,
     initial_humidity: 45,
     initial_soil_texture: 'loamy',
+    initial_survival_status: 'alive',
   };
 
   it('passes valid data', () => {
@@ -108,5 +109,27 @@ describe('validateCreatePlanting', () => {
 
   it('throws on null data', () => {
     expect(() => validateCreatePlanting(null)).toThrow(ValidationError);
+  });
+
+  it('passes with struggling survival status', () => {
+    expect(() => validateCreatePlanting({ ...validData, initial_survival_status: 'struggling' })).not.toThrow();
+  });
+
+  it('passes with dead survival status', () => {
+    expect(() => validateCreatePlanting({ ...validData, initial_survival_status: 'dead' })).not.toThrow();
+  });
+
+  it('throws on missing initial_survival_status', () => {
+    const { initial_survival_status, ...rest } = validData;
+    expect(() => validateCreatePlanting(rest)).toThrow(ValidationError);
+  });
+
+  it('throws on invalid initial_survival_status', () => {
+    expect(() => validateCreatePlanting({ ...validData, initial_survival_status: 'unknown' })).toThrow(ValidationError);
+  });
+
+  it('returns initial_survival_status in result', () => {
+    const result = validateCreatePlanting(validData);
+    expect(result.initial_survival_status).toBe('alive');
   });
 });

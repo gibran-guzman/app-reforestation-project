@@ -1,9 +1,10 @@
 const { ValidationError } = require('../errors/AppError');
-const { SOIL_TEXTURE_VALUES, MAX_NOTE_LENGTH } = require('../config/constants');
+const { SOIL_TEXTURES, SOIL_TEXTURE_VALUES, SURVIVAL_STATUS_LABELS, SURVIVAL_STATUS_VALUES, VIGOR_LABELS, VIGOR_VALUES, MAX_NOTE_LENGTH } = require('../config/constants');
 const { validateRange } = require('../utils/validators');
 
-const SURVIVAL_STATUSES = ['alive', 'struggling', 'dead'];
-const VIGOR_VALUES = ['high', 'medium', 'low'];
+const SOIL_TEXTURE_NAMES = SOIL_TEXTURES.map(t => t.label).join(', ');
+const SURVIVAL_STATUS_NAMES = SURVIVAL_STATUS_LABELS.map(l => l.label).join(', ');
+const VIGOR_NAMES = VIGOR_LABELS.map(l => l.label).join(', ');
 
 const validateCreateMonitoring = (data) => {
   const errors = [];
@@ -27,17 +28,17 @@ const validateCreateMonitoring = (data) => {
 
   if (data.soil_texture !== undefined && data.soil_texture !== null) {
     if (!SOIL_TEXTURE_VALUES.includes(data.soil_texture)) {
-      errors.push({ field: 'soil_texture', message: `La textura del suelo debe ser uno de: ${SOIL_TEXTURE_VALUES.join(', ')}` });
+      errors.push({ field: 'soil_texture', message: `La textura del suelo debe ser uno de: ${SOIL_TEXTURE_NAMES}` });
     }
   }
 
-  if (!data.survival_status || !SURVIVAL_STATUSES.includes(data.survival_status)) {
-    errors.push({ field: 'survival_status', message: `El estado de supervivencia es requerido y debe ser uno de: ${SURVIVAL_STATUSES.join(', ')}` });
+  if (!data.survival_status || !SURVIVAL_STATUS_VALUES.includes(data.survival_status)) {
+    errors.push({ field: 'survival_status', message: `El estado de supervivencia es requerido y debe ser uno de: ${SURVIVAL_STATUS_NAMES}` });
   }
 
   if (data.vigor !== undefined && data.vigor !== null) {
     if (!VIGOR_VALUES.includes(data.vigor)) {
-      errors.push({ field: 'vigor', message: `El vigor debe ser uno de: ${VIGOR_VALUES.join(', ')}` });
+      errors.push({ field: 'vigor', message: `El vigor debe ser uno de: ${VIGOR_NAMES}` });
     }
   }
 
