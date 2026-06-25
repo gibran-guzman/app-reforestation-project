@@ -71,6 +71,7 @@ export default class PlantingForm implements OnInit, AfterViewInit {
     initial_ph: null as number | null,
     initial_humidity: null as number | null,
     initial_soil_texture: '',
+    initial_survival_status: '',
   };
 
   private map: L.Map | null = null;
@@ -214,8 +215,8 @@ export default class PlantingForm implements OnInit, AfterViewInit {
   submit() {
     this.error.set('');
 
-    if (!Number(this.form.species_id) || !Number(this.form.zone_id)) {
-      this.error.set('Selecciona una especie y una zona antes de registrar');
+    if (!Number(this.form.species_id) || !Number(this.form.zone_id) || !this.form.initial_survival_status) {
+      this.error.set('Completa todos los campos obligatorios: especie, zona y estado inicial');
       return;
     }
 
@@ -232,6 +233,7 @@ export default class PlantingForm implements OnInit, AfterViewInit {
       initial_ph: this.form.initial_ph ?? undefined,
       initial_humidity: this.form.initial_humidity ?? undefined,
       initial_soil_texture: this.form.initial_soil_texture || undefined,
+      initial_survival_status: (this.form.initial_survival_status || undefined) as 'alive' | 'struggling' | 'dead' | undefined,
     };
 
     if (!this.connectivity.online()) {

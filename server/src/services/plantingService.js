@@ -1,6 +1,7 @@
 const plantingRepository = require('../repositories/plantingRepository');
 const speciesRepository = require('../repositories/speciesRepository');
 const zoneRepository = require('../repositories/zoneRepository');
+const monitoringRepository = require('../repositories/monitoringRepository');
 const { AppError, NotFoundError, ValidationError } = require('../errors/AppError');
 const pgCodes = require('../errors/pgCodes');
 const logger = require('../utils/logger');
@@ -39,11 +40,24 @@ const create = async (body, userId) => {
   }
 
   const planting = await plantingRepository.create({
-    ...body,
+    zone_id: body.zone_id,
+    species_id: body.species_id,
+    location: body.location,
+    planted_at: body.planted_at,
+    initial_ph: body.initial_ph,
+    initial_humidity: body.initial_humidity,
+    initial_soil_texture: body.initial_soil_texture,
     planted_by: userId,
   });
 
-  logger.info({ planting_id: planting.id, zone_id: planting.zone_id, species_id: planting.species_id }, 'Planting site registered');
+  await monitoringRepository.create({
+    planting_site_id: planting.id,
+    survival_status: body.initial_survival_status,
+    visit_date: body.planted_at || planting.planted_at,
+    monitored_by: userId,
+  });
+
+  logger.info({ planting_id: planting.id, zone_id: planting.zone_id, species_id: planting.species_id, initial_status: body.initial_survival_status }, 'Planting site registered');
   return planting;
 };
 

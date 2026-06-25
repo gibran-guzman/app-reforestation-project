@@ -10,11 +10,13 @@ const mockPlantingRepository = {
 };
 const mockSpeciesRepository = { findById: vi.fn(), findByIds: vi.fn() };
 const mockZoneRepository = { findById: vi.fn(), findByIds: vi.fn() };
+const mockMonitoringRepository = { create: vi.fn() };
 
 const plantingService = proxyquire('./plantingService', {
   '../repositories/plantingRepository': mockPlantingRepository,
   '../repositories/speciesRepository': mockSpeciesRepository,
   '../repositories/zoneRepository': mockZoneRepository,
+  '../repositories/monitoringRepository': mockMonitoringRepository,
 });
 
 describe('plantingService', () => {
@@ -28,6 +30,7 @@ describe('plantingService', () => {
       species_id: 1,
       location: { lat: -0.229, lng: -78.524 },
       planted_at: '2026-06-01',
+      initial_survival_status: 'alive',
     };
 
     it('creates a planting successfully', async () => {
@@ -40,6 +43,9 @@ describe('plantingService', () => {
       expect(result.id).toBe(10);
       expect(mockPlantingRepository.create).toHaveBeenCalledWith(
         expect.objectContaining({ planted_by: 'user-123' }),
+      );
+      expect(mockMonitoringRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({ planting_site_id: 10, survival_status: 'alive' }),
       );
     });
 

@@ -9,6 +9,8 @@ const SOIL_TEXTURES = [
 
 const SOIL_TEXTURE_VALUES = SOIL_TEXTURES.map(t => t.value);
 
+const SURVIVAL_STATUS_VALUES = ['alive', 'struggling', 'dead'];
+
 const ALLOWED_ROLES = ['admin', 'technician'];
 
 const MAX_LIST_LIMIT = 1000;
@@ -56,6 +58,7 @@ const MAX_PASSWORD_LENGTH = 128;
 module.exports = {
   SOIL_TEXTURES,
   SOIL_TEXTURE_VALUES,
+  SURVIVAL_STATUS_VALUES,
   ALLOWED_ROLES,
   MAX_LIST_LIMIT,
   MAX_HEATMAP_POINTS,
