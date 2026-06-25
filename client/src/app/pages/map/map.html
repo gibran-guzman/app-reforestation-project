@@ -1,36 +1,37 @@
 <div class="map-page d-flex flex-column flex-md-row">
   <div class="map-filters card shadow-sm p-3">
+    <h1 class="fs-5 mb-3">Mapa de plantaciones</h1>
     <div class="d-flex justify-content-between align-items-center mb-3">
-      <h5 class="mb-0">Filtros</h5>
+      <h2 class="fs-6 mb-0 fw-semibold">Filtros</h2>
       <button class="btn btn-sm btn-outline-success" (click)="loadGeoJson()" [disabled]="loading()" title="Refrescar">
-        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-arrow-clockwise" viewBox="0 0 16 16">
+        <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-arrow-clockwise" viewBox="0 0 16 16">
           <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
           <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
         </svg>
       </button>
     </div>
 
-    <label class="form-label small fw-semibold mb-1">Especie</label>
-    <select class="form-select form-select-sm mb-2" [disabled]="loadingSpecies()" [value]="filterSpecies()" (change)="filterSpecies.set($any($event.target).value); loadGeoJson()">
+    <label for="map-species" class="form-label small fw-semibold mb-1">Especie</label>
+    <select id="map-species" class="form-select form-select-sm mb-2" [disabled]="loadingSpecies()" [value]="filterSpecies()" (change)="filterSpecies.set($any($event.target).value); loadGeoJson()">
       <option value="">Todas las especies</option>
       @for (s of species(); track s.id) {
         <option [value]="s.id">{{ s.common_name }}</option>
       }
     </select>
 
-    <label class="form-label small fw-semibold mb-1">Zona</label>
-    <select class="form-select form-select-sm mb-2" [disabled]="loadingZones()" [value]="filterZone()" (change)="filterZone.set($any($event.target).value); loadGeoJson()">
+    <label for="map-zone" class="form-label small fw-semibold mb-1">Zona</label>
+    <select id="map-zone" class="form-select form-select-sm mb-2" [disabled]="loadingZones()" [value]="filterZone()" (change)="filterZone.set($any($event.target).value); loadGeoJson()">
       <option value="">Todas las zonas</option>
       @for (z of zones(); track z.id) {
         <option [value]="z.id">{{ z.name }}</option>
       }
     </select>
 
-    <label class="form-label small fw-semibold mb-1">Desde</label>
-    <input type="date" class="form-control form-control-sm mb-2" [disabled]="loading()" [value]="filterFrom()" (change)="filterFrom.set($any($event.target).value); loadGeoJson()">
+    <label for="map-from" class="form-label small fw-semibold mb-1">Desde</label>
+    <input id="map-from" type="date" class="form-control form-control-sm mb-2" [disabled]="loading()" [value]="filterFrom()" (change)="filterFrom.set($any($event.target).value); loadGeoJson()">
 
-    <label class="form-label small fw-semibold mb-1">Hasta</label>
-    <input type="date" class="form-control form-control-sm mb-3" [disabled]="loading()" [value]="filterTo()" (change)="filterTo.set($any($event.target).value); loadGeoJson()">
+    <label for="map-to" class="form-label small fw-semibold mb-1">Hasta</label>
+    <input id="map-to" type="date" class="form-control form-control-sm mb-3" [disabled]="loading()" [value]="filterTo()" (change)="filterTo.set($any($event.target).value); loadGeoJson()">
 
     <hr class="my-2">
 
@@ -60,7 +61,7 @@
     @if (error()) {
       <div class="map-overlay">
         <div class="text-center px-4">
-          <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="%23dc3545" viewBox="0 0 16 16" class="mb-2">
+          <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="%23dc3545" viewBox="0 0 16 16" class="mb-2">
             <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
           </svg>
           <p class="text-danger fw-semibold mb-1">Error al cargar</p>
@@ -73,7 +74,7 @@
     @if (!loading() && !error() && total() === 0) {
       <div class="map-overlay">
         <div class="text-center px-4">
-          <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="%23adb5bd" viewBox="0 0 16 16" class="mb-2">
+          <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="%23adb5bd" viewBox="0 0 16 16" class="mb-2">
             <path d="M6.5 14.5v-3.482c0-.697-.488-1.303-1.166-1.459l-.405-.096a3.515 3.515 0 0 1-.835-.272c-.606-.285-.942-1.01-.942-1.833 0-.776.314-1.5.825-2.02.424-.43.991-.692 1.623-.784A1.5 1.5 0 0 1 8 3.5c.43 0 .83.157 1.136.438.591.54 1.13 1.298 1.13 2.31 0 .823-.336 1.548-.942 1.833a3.515 3.515 0 0 1-.835.272l-.405.096c-.678.156-1.166.762-1.166 1.459v3.482m4 0v-1.518c.575.196 1.108.618 1.622 1.064.256.224.522.424.755.566.15.092.31.17.48.215.255.067.518.123.643.123V14.5z"/>
           </svg>
           <p class="fw-semibold text-muted mb-1">Sin resultados</p>

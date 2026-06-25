@@ -1,6 +1,6 @@
 <div class="p-3 p-md-4">
   <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2 mb-4">
-    <h2 class="mb-0">Plantaciones</h2>
+    <h1 class="mb-0 fs-2">Plantaciones</h1>
     <a routerLink="/plantings/new" class="btn btn-success">+ Nueva plantación</a>
   </div>
 
@@ -23,7 +23,7 @@
                 <img [src]="p.photo_url" alt="Foto de {{ p.species_name || 'plantación' }}" class="planting-thumb" loading="lazy">
               } @else {
                 <div class="planting-thumb-placeholder">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="%23adb5bd" viewBox="0 0 16 16">
+                  <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="%23adb5bd" viewBox="0 0 16 16">
                     <path d="M6.5 14.5v-3.482c0-.697-.488-1.303-1.166-1.459l-.405-.096a3.515 3.515 0 0 1-.835-.272c-.606-.285-.942-1.01-.942-1.833 0-.776.314-1.5.825-2.02.424-.43.991-.692 1.623-.784A1.5 1.5 0 0 1 8 3.5c.43 0 .83.157 1.136.438.591.54 1.13 1.298 1.13 2.31 0 .823-.336 1.548-.942 1.833a3.515 3.515 0 0 1-.835.272l-.405.096c-.678.156-1.166.762-1.166 1.459v3.482m4 0v-1.518c.575.196 1.108.618 1.622 1.064.256.224.522.424.755.566.15.092.31.17.48.215.255.067.518.123.643.123V14.5z"/>
                     <path d="M6.5 14.5v-3.482c0-.697-.488-1.303-1.166-1.459l-.405-.096a3.515 3.515 0 0 1-.835-.272c-.606-.285-.942-1.01-.942-1.833 0-.776.314-1.5.825-2.02.424-.43.991-.692 1.623-.784A1.5 1.5 0 0 1 8 3.5c.43 0 .83.157 1.136.438.591.54 1.13 1.298 1.13 2.31 0 .823-.336 1.548-.942 1.833a3.515 3.515 0 0 1-.835.272l-.405.096c-.678.156-1.166.762-1.166 1.459v3.482m4 0v-1.518c.575.196 1.108.618 1.622 1.064.256.224.522.424.755.566.15.092.31.17.48.215.255.067.518.123.643.123V14.5z"/>
                   </svg>

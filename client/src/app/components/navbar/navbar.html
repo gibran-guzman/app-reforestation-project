@@ -48,7 +48,7 @@
         </li>
       }
       <li class="nav-item dropdown" [class.show]="dropdownOpen()">
-        <a class="nav-link dropdown-toggle" (click)="toggleDropdown($event)" role="button" aria-haspopup="true" [attr.aria-expanded]="dropdownOpen()">
+        <a class="nav-link dropdown-toggle" href="#" (click)="toggleDropdown($event)" role="button" aria-haspopup="true" [attr.aria-expanded]="dropdownOpen()">
           {{ auth.user()?.full_name || auth.user()?.email }}
         </a>
         <ul class="dropdown-menu dropdown-menu-end" [class.show]="dropdownOpen()">

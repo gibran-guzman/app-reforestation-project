@@ -28,7 +28,7 @@ const STATUS_LABELS: Record<string, string> = {
   selector: 'app-map',
   imports: [FormsModule],
   templateUrl: './map.html',
-  styleUrl: './map.scss',
+  styleUrls: ['./map.scss', '../../../../node_modules/leaflet/dist/leaflet.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export default class MapPage {

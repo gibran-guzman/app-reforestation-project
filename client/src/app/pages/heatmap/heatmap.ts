@@ -15,7 +15,7 @@ import 'leaflet.heat';
   selector: 'app-heatmap',
   imports: [FormsModule],
   templateUrl: './heatmap.html',
-  styleUrl: './heatmap.scss',
+  styleUrls: ['./heatmap.scss', '../../../../node_modules/leaflet/dist/leaflet.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export default class HeatmapPage {
