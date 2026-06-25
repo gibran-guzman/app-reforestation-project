@@ -25,7 +25,7 @@ describe('errorHandler middleware', () => {
 
     expect(res.status).toHaveBeenCalledWith(400);
     expect(res.json).toHaveBeenCalledWith({
-      error: 'Validation failed',
+      error: 'Error de validación',
       details: [{ field: 'email', message: 'Required' }],
     });
   });

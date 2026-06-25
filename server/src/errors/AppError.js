@@ -10,7 +10,7 @@ class AppError extends Error {
 
 class ValidationError extends AppError {
   constructor(details) {
-    super('Validation failed', 400, details);
+    super('Error de validación', 400, details);
   }
 }
 
@@ -21,7 +21,7 @@ class ConflictError extends AppError {
 }
 
 class NotFoundError extends AppError {
-  constructor(message = 'Resource not found') {
+  constructor(message = 'Recurso no encontrado') {
     super(message, 404);
   }
 }

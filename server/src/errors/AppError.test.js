@@ -24,7 +24,7 @@ describe('ValidationError', () => {
   it('creates with 400 status and passed details', () => {
     const details = [{ field: 'email', message: 'Required' }];
     const err = new ValidationError(details);
-    expect(err.message).toBe('Validation failed');
+    expect(err.message).toBe('Error de validación');
     expect(err.status).toBe(400);
     expect(err.details).toEqual(details);
     expect(err.name).toBe('ValidationError');
@@ -43,7 +43,7 @@ describe('ConflictError', () => {
 describe('NotFoundError', () => {
   it('creates with 404 status and default message', () => {
     const err = new NotFoundError();
-    expect(err.message).toBe('Resource not found');
+    expect(err.message).toBe('Recurso no encontrado');
     expect(err.status).toBe(404);
     expect(err.name).toBe('NotFoundError');
   });
