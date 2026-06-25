@@ -10,17 +10,17 @@ export class AuthService {
   private readonly api = `${environment.apiUrl}/auth`;
   readonly user = signal<User | null>(null);
   readonly isAuthenticated = signal(false);
+  readonly ready = signal(false);
 
   private accessToken: string | null = null;
 
-  constructor() {
-    // Session will be restored via initialize() → me() call
-    // which relies on HttpOnly cookies set by the server
-  }
-
   initialize() {
     this.me().subscribe({
-      error: () => this.clearSession(),
+      next: () => this.ready.set(true),
+      error: () => {
+        this.clearSession();
+        this.ready.set(true);
+      },
     });
   }
 
