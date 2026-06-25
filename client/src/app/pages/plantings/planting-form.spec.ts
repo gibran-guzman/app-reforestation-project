@@ -311,6 +311,7 @@ describe('PlantingForm', () => {
     comp.form.zone_id = 1;
     comp.form.lat = -0.2;
     comp.form.lng = -78.5;
+    comp.form.initial_survival_status = 'alive';
     comp.submit();
     expect(plantingSvc.create).toHaveBeenCalledWith(jasmine.objectContaining({
       species_id: 1, zone_id: 1, location: { lat: -0.2, lng: -78.5 },
@@ -325,6 +326,7 @@ describe('PlantingForm', () => {
     comp.form.zone_id = 1;
     comp.form.lat = -0.2;
     comp.form.lng = -78.5;
+    comp.form.initial_survival_status = 'alive';
     comp.submit();
     expect(offlineSvc.savePlanting).toHaveBeenCalled();
   });
@@ -336,6 +338,7 @@ describe('PlantingForm', () => {
     comp.form.zone_id = 1;
     comp.form.lat = -0.2;
     comp.form.lng = -78.5;
+    comp.form.initial_survival_status = 'alive';
     comp.submit();
     expect(comp.error()).toBe('Error del servidor');
     expect(comp.saving()).toBeFalse();
@@ -379,6 +382,7 @@ describe('PlantingForm', () => {
       comp.form.zone_id = 1;
       comp.form.lat = -0.2;
       comp.form.lng = -78.5;
+      comp.form.initial_survival_status = 'alive';
       comp.photoFile.set(new File(['test'], 'photo.jpg', { type: 'image/jpeg' }));
       comp.submit();
       expect(plantingSvc.uploadPhoto).toHaveBeenCalledWith(42, jasmine.any(File));
@@ -392,6 +396,7 @@ describe('PlantingForm', () => {
       comp.form.zone_id = 1;
       comp.form.lat = -0.2;
       comp.form.lng = -78.5;
+      comp.form.initial_survival_status = 'alive';
       comp.photoFile.set(new File(['test'], 'photo.jpg', { type: 'image/jpeg' }));
       comp.submit();
       expect(plantingSvc.uploadPhoto).toHaveBeenCalled();
@@ -404,6 +409,7 @@ describe('PlantingForm', () => {
       comp.form.zone_id = 1;
       comp.form.lat = -0.2;
       comp.form.lng = -78.5;
+      comp.form.initial_survival_status = 'alive';
       comp.photoFile.set(new File(['test'], 'photo.jpg', { type: 'image/jpeg' }));
       comp.submit();
       expect(plantingSvc.uploadPhoto).not.toHaveBeenCalled();
@@ -462,6 +468,7 @@ describe('PlantingForm', () => {
     comp.form.zone_id = 1;
     comp.form.lat = -0.2;
     comp.form.lng = -78.5;
+    comp.form.initial_survival_status = 'alive';
     comp.submit();
     expect(comp.error()).toBe('Campo requerido');
     expect(comp.saving()).toBeFalse();
@@ -474,6 +481,7 @@ describe('PlantingForm', () => {
     comp.form.zone_id = 1;
     comp.form.lat = -0.2;
     comp.form.lng = -78.5;
+    comp.form.initial_survival_status = 'alive';
     comp.form.planted_at = '';
     comp.submit();
     expect(plantingSvc.create).toHaveBeenCalled();
@@ -520,6 +528,7 @@ describe('PlantingForm', () => {
     comp.form.zone_id = 1;
     comp.form.lat = -0.2;
     comp.form.lng = -78.5;
+    comp.form.initial_survival_status = 'alive';
     comp.submit();
     expect(comp.error()).toBe('Error al registrar plántula');
     expect(comp.saving()).toBeFalse();
