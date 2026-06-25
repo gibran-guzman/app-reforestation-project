@@ -1,6 +1,7 @@
 .detail-photo {
-  max-height: 320px;
-  object-fit: cover;
+  max-width: 100%;
+  width: auto;
+  height: auto;
 }
 
 .timeline {
