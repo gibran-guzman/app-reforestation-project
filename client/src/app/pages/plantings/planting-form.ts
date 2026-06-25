@@ -213,6 +213,12 @@ export default class PlantingForm implements OnInit, AfterViewInit {
 
   submit() {
     this.error.set('');
+
+    if (!this.form.species_id || !this.form.zone_id) {
+      this.error.set('Selecciona una especie y una zona antes de registrar');
+      return;
+    }
+
     this.saving.set(true);
     this.offlineSave.set(false);
 
