@@ -50,7 +50,7 @@ const validateCreatePlanting = (data) => {
   }
 
   if (!initial_survival_status || !SURVIVAL_STATUS_VALUES.includes(initial_survival_status)) {
-    errors.push({ field: 'initial_survival_status', message: 'El estado inicial es requerido y debe ser: alive, struggling o dead' });
+    errors.push({ field: 'initial_survival_status', message: 'El estado inicial es requerido y debe ser: viva, estresada o muerta' });
   }
 
   if (errors.length > 0) {
