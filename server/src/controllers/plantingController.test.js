@@ -139,7 +139,7 @@ describe('plantingController', () => {
       await controller.syncBatch(req, res, next);
 
       expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.json).toHaveBeenCalledWith({ error: expect.stringContaining('items') });
+      expect(res.json).toHaveBeenCalledWith({ error: expect.stringContaining('ítem') });
     });
 
     it('returns 400 if items is empty', async () => {

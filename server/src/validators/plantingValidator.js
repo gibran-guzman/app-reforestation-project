@@ -1,6 +1,8 @@
 const { ValidationError } = require('../errors/AppError');
-const { SOIL_TEXTURE_VALUES, SURVIVAL_STATUS_VALUES } = require('../config/constants');
+const { SOIL_TEXTURES, SOIL_TEXTURE_VALUES, SURVIVAL_STATUS_VALUES } = require('../config/constants');
 const { validateRange } = require('../utils/validators');
+
+const SOIL_TEXTURE_NAMES = SOIL_TEXTURES.map(t => t.label).join(', ');
 
 const validateCreatePlanting = (data) => {
   const errors = [];
@@ -45,7 +47,7 @@ const validateCreatePlanting = (data) => {
 
   if (initial_soil_texture !== undefined && initial_soil_texture !== null && initial_soil_texture !== '') {
     if (!SOIL_TEXTURE_VALUES.includes(initial_soil_texture)) {
-      errors.push({ field: 'initial_soil_texture', message: `La textura del suelo debe ser uno de: ${SOIL_TEXTURE_VALUES.join(', ')}` });
+      errors.push({ field: 'initial_soil_texture', message: `La textura del suelo debe ser uno de: ${SOIL_TEXTURE_NAMES}` });
     }
   }
 
