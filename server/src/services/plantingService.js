@@ -20,20 +20,22 @@ const create = async (body, userId) => {
     throw new NotFoundError('Especie no encontrada');
   }
 
-  let inside;
-  try {
-    inside = await plantingRepository.isPointInZone(
-      body.location.lat,
-      body.location.lng,
-      body.zone_id,
-    );
-  } catch {
-    throw new AppError('Error al validar la ubicación contra la zona de intervención', 500);
-  }
-  if (!inside) {
-    throw new ValidationError([
-      { field: 'location', message: 'Las coordenadas no están dentro de la zona de intervención seleccionada' },
-    ]);
+  if (zone.geometry) {
+    let inside;
+    try {
+      inside = await plantingRepository.isPointInZone(
+        body.location.lat,
+        body.location.lng,
+        body.zone_id,
+      );
+    } catch {
+      throw new AppError('Error al validar la ubicación contra la zona de intervención', 500);
+    }
+    if (!inside) {
+      throw new ValidationError([
+        { field: 'location', message: 'Las coordenadas no están dentro de la zona de intervención seleccionada' },
+      ]);
+    }
   }
 
   const planting = await plantingRepository.create({
@@ -57,18 +59,20 @@ const processItem = async (item, i, zoneMap, speciesMap, userId) => {
       return { index: i, status: 'error', error: 'Especie no encontrada' };
     }
 
-    let inside;
-    try {
-      inside = await plantingRepository.isPointInZone(
-        item.location.lat,
-        item.location.lng,
-        item.zone_id,
-      );
-    } catch {
-      return { index: i, status: 'error', error: 'Error al validar la ubicación contra la zona de intervención' };
-    }
-    if (!inside) {
-      return { index: i, status: 'error', error: 'Las coordenadas no están dentro de la zona de intervención' };
+    if (zone.geometry) {
+      let inside;
+      try {
+        inside = await plantingRepository.isPointInZone(
+          item.location.lat,
+          item.location.lng,
+          item.zone_id,
+        );
+      } catch {
+        return { index: i, status: 'error', error: 'Error al validar la ubicación contra la zona de intervención' };
+      }
+      if (!inside) {
+        return { index: i, status: 'error', error: 'Las coordenadas no están dentro de la zona de intervención' };
+      }
     }
 
     try {
