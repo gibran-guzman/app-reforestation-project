@@ -1,6 +1,6 @@
 const COOKIE_OPTIONS = {
   httpOnly: true,
-  secure: false,
+  secure: true,
   sameSite: 'lax',
   path: '/',
 };
