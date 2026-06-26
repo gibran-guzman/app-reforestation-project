@@ -66,7 +66,7 @@ function startWorker() {
         defaultSrc: ["'self'"],
         baseUri: ["'self'"],
         imgSrc: ["'self'", "blob:", "data:", "https://*.tile.openstreetmap.org", "https://cdnjs.cloudflare.com", "https://*.supabase.co"],
-        scriptSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'"],
         styleSrc: ["'self'", "'unsafe-inline'", "https://cdn.ngrok.com"],
         connectSrc: ["'self'", "https://*.tile.openstreetmap.org"],
         fontSrc: ["'self'", "https://assets.ngrok.com"],
