@@ -13,7 +13,7 @@
     <form (ngSubmit)="submit()">
       <div class="mb-3">
         <label for="name" class="form-label">Nombre de la zona *</label>
-        <input id="name" type="text" class="form-control" [(ngModel)]="form.name" name="name" required maxlength="255">
+        <input id="name" type="text" class="form-control" [(ngModel)]="form.name" name="name" required maxlength="255" aria-required="true">
       </div>
 
       <div class="mb-3">

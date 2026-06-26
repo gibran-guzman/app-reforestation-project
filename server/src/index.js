@@ -79,7 +79,15 @@ function startWorker() {
     strictTransportSecurity: isProduction ? { maxAge: 31536000, includeSubDomains: true, preload: true } : false,
     crossOriginOpenerPolicy: 'same-origin',
     crossOriginResourcePolicy: 'same-origin',
-    originAgentCluster: false,
+    originAgentCluster: true,
+    permissionsPolicy: {
+      directives: {
+        camera: ["'self'"],
+        displayCapture: ["'self'"],
+        geolocation: ["'self'"],
+        microphone: ["'self'"],
+      },
+    },
   }));
   app.use(cors({
     origin: isProduction ? process.env.CORS_ORIGIN : (process.env.CORS_ORIGIN || 'http://localhost:4200'),

@@ -24,8 +24,8 @@
 
         <div class="mb-3">
           <label for="password" class="form-label">Contraseña</label>
-          <input id="password" type="password" class="form-control" [(ngModel)]="password" name="password" required minlength="8" autocomplete="new-password">
-          <div class="form-text">Mínimo 8 caracteres</div>
+          <input id="password" type="password" class="form-control" [(ngModel)]="password" name="password" required minlength="8" autocomplete="new-password" aria-describedby="password-help">
+          <div class="form-text" id="password-help">Mínimo 8 caracteres</div>
         </div>
 
         <div class="mb-3">

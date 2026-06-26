@@ -39,7 +39,7 @@
       <div class="col-6 col-md-3">
         <div class="card shadow-sm text-center border-success">
           <div class="card-body">
-            <h3 class="text-success mb-1">{{ r.overall.total }}</h3>
+            <div class="text-success h3 mb-1">{{ r.overall.total }}</div>
             <small class="text-muted">Total plantaciones</small>
           </div>
         </div>
@@ -47,7 +47,7 @@
       <div class="col-6 col-md-3">
         <div class="card shadow-sm text-center border-success">
           <div class="card-body">
-            <h3 class="text-success mb-1">{{ r.overall.monitored }}</h3>
+            <div class="text-success h3 mb-1">{{ r.overall.monitored }}</div>
             <small class="text-muted">Monitoreadas</small>
           </div>
         </div>
@@ -55,7 +55,7 @@
       <div class="col-6 col-md-3">
         <div class="card shadow-sm text-center border-success">
           <div class="card-body">
-            <h3 class="text-success mb-1">{{ survivalRate(r.overall.alive, r.overall.monitored) }}%</h3>
+            <div class="text-success h3 mb-1">{{ survivalRate(r.overall.alive, r.overall.monitored) }}%</div>
             <small class="text-muted">Tasa de supervivencia</small>
           </div>
         </div>
@@ -63,7 +63,7 @@
       <div class="col-6 col-md-3">
         <div class="card shadow-sm text-center border-success">
           <div class="card-body">
-            <h3 class="text-success mb-1">{{ r.overall.unmonitored }}</h3>
+            <div class="text-success h3 mb-1">{{ r.overall.unmonitored }}</div>
             <small class="text-muted">Sin monitoreo</small>
           </div>
         </div>
@@ -74,7 +74,7 @@
       <div class="col-md-6">
         <div class="card shadow-sm h-100">
           <div class="card-body">
-            <h5 class="card-title text-center">Distribución por estado</h5>
+            <h2 class="card-title text-center h5">Distribución por estado</h2>
             <div class="chart-container">
               <canvas #survivalChart aria-label="Gráfico de distribución por estado de supervivencia"></canvas>
             </div>
@@ -84,7 +84,7 @@
       <div class="col-md-6">
         <div class="card shadow-sm h-100">
           <div class="card-body">
-            <h5 class="card-title text-center">Supervivencia por especie</h5>
+            <h2 class="card-title text-center h5">Supervivencia por especie</h2>
             <div class="chart-container">
               <canvas #speciesChart aria-label="Gráfico de supervivencia por especie"></canvas>
             </div>
@@ -100,21 +100,22 @@
       <div class="col-md-6">
         <div class="card shadow-sm">
           <div class="card-body">
-            <h5 class="card-title">Por especie (detalle)</h5>
+            <h2 class="card-title h5">Por especie (detalle)</h2>
             @if (speciesStats().length === 0) {
               <p class="text-muted mb-0 small">Sin datos.</p>
             } @else {
               <div class="table-responsive">
-                <table class="table table-sm table-hover mb-0">
-                  <thead>
-                    <tr>
-                      <th>Especie</th>
-                      <th class="text-end">Total</th>
-                      <th class="text-end">Vivas</th>
-                      <th class="text-end">Estresadas</th>
-                      <th class="text-end">Muertas</th>
-                    </tr>
-                  </thead>
+                  <table class="table table-sm table-hover mb-0">
+                    <caption class="visually-hidden">Detalle por especie</caption>
+                    <thead>
+                      <tr>
+                        <th scope="col">Especie</th>
+                        <th scope="col" class="text-end">Total</th>
+                        <th scope="col" class="text-end">Vivas</th>
+                        <th scope="col" class="text-end">Estresadas</th>
+                        <th scope="col" class="text-end">Muertas</th>
+                      </tr>
+                    </thead>
                   <tbody>
                     @for (s of speciesStats(); track s.id) {
                       <tr>
@@ -135,21 +136,22 @@
       <div class="col-md-6">
         <div class="card shadow-sm">
           <div class="card-body">
-            <h5 class="card-title">Por zona (detalle)</h5>
+            <h2 class="card-title h5">Por zona (detalle)</h2>
             @if (zoneSummary().length === 0) {
               <p class="text-muted mb-0 small">Sin datos.</p>
             } @else {
               <div class="table-responsive">
-                <table class="table table-sm table-hover mb-0">
-                  <thead>
-                    <tr>
-                      <th>Zona</th>
-                      <th class="text-end">Total</th>
-                      <th class="text-end">Vivas</th>
-                      <th class="text-end">Estresadas</th>
-                      <th class="text-end">Muertas</th>
-                    </tr>
-                  </thead>
+                  <table class="table table-sm table-hover mb-0">
+                    <caption class="visually-hidden">Detalle por zona</caption>
+                    <thead>
+                      <tr>
+                        <th scope="col">Zona</th>
+                        <th scope="col" class="text-end">Total</th>
+                        <th scope="col" class="text-end">Vivas</th>
+                        <th scope="col" class="text-end">Estresadas</th>
+                        <th scope="col" class="text-end">Muertas</th>
+                      </tr>
+                    </thead>
                   <tbody>
                     @for (z of zoneSummary(); track z.id) {
                       <tr>

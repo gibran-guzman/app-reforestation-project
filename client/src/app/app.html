@@ -1,9 +1,11 @@
+<a href="#main-content" class="skip-link btn btn-success position-absolute top-0 start-0 z-3">Ir al contenido principal</a>
+
 @if (auth.isAuthenticated()) {
   <header>
     <app-navbar />
   </header>
 }
 
-<main class="container-fluid p-0">
+<main class="container-fluid p-0" id="main-content">
   <router-outlet />
 </main>

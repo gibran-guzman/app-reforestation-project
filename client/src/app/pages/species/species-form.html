@@ -13,12 +13,12 @@
     <form (ngSubmit)="submit()">
       <div class="mb-3">
         <label for="scientific_name" class="form-label">Nombre científico *</label>
-        <input id="scientific_name" type="text" class="form-control" [(ngModel)]="form.scientific_name" name="scientific_name" required maxlength="500">
+        <input id="scientific_name" type="text" class="form-control" [(ngModel)]="form.scientific_name" name="scientific_name" required maxlength="500" aria-required="true">
       </div>
 
       <div class="mb-3">
         <label for="common_name" class="form-label">Nombre común *</label>
-        <input id="common_name" type="text" class="form-control" [(ngModel)]="form.common_name" name="common_name" required maxlength="300">
+        <input id="common_name" type="text" class="form-control" [(ngModel)]="form.common_name" name="common_name" required maxlength="300" aria-required="true">
       </div>
 
       <div class="mb-3">
