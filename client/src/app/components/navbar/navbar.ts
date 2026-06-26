@@ -30,6 +30,14 @@ export class Navbar {
     this.dropdownOpen.update(v => !v);
   }
 
+  onDropdownKeydown(event: KeyboardEvent) {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      event.stopPropagation();
+      this.dropdownOpen.update(v => !v);
+    }
+  }
+
   closeNav() {
     this.collapsed.set(true);
   }

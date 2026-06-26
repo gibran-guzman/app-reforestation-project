@@ -4,18 +4,18 @@
       <h1 class="card-title text-center mb-4 fs-3">Lloa Reforestación</h1>
 
       @if (error()) {
-        <div class="alert alert-danger py-2">{{ error() }}</div>
+        <div class="alert alert-danger py-2" id="login-error" role="alert">{{ error() }}</div>
       }
 
       <form (ngSubmit)="submit()">
         <div class="mb-3">
           <label for="email" class="form-label">Correo electrónico</label>
-          <input id="email" type="email" class="form-control" [(ngModel)]="email" name="email" required autocomplete="email">
+          <input id="email" type="email" class="form-control" [(ngModel)]="email" name="email" required autocomplete="email" [attr.aria-describedby]="error() ? 'login-error' : null">
         </div>
 
         <div class="mb-3">
           <label for="password" class="form-label">Contraseña</label>
-          <input id="password" type="password" class="form-control" [(ngModel)]="password" name="password" required autocomplete="current-password">
+          <input id="password" type="password" class="form-control" [(ngModel)]="password" name="password" required autocomplete="current-password" [attr.aria-describedby]="error() ? 'login-error' : null">
         </div>
 
         <button type="submit" class="btn btn-primary w-100" [disabled]="loading()">

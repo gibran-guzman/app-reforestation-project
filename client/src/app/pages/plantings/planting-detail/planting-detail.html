@@ -20,12 +20,13 @@
             <p class="text-muted mb-3">{{ p.zone_name || 'Sin zona' }}</p>
 
             <table class="table table-sm mb-0">
+              <caption class="visually-hidden">Detalles de la plantación</caption>
               <tbody>
-                <tr><th class="ps-0 th-label">Fecha</th><td>{{ p.planted_at | date:'mediumDate' }}</td></tr>
-                <tr><th class="ps-0">Coordenadas</th><td>{{ formatCoords(p) }}</td></tr>
-                <tr><th class="ps-0">pH inicial</th><td>{{ p.initial_ph ?? '—' }}</td></tr>
-                <tr><th class="ps-0">Humedad inicial</th><td>{{ p.initial_humidity != null ? p.initial_humidity + '%' : '—' }}</td></tr>
-                <tr><th class="ps-0">Textura del suelo</th><td>{{ p.initial_soil_texture || '—' }}</td></tr>
+                <tr><th scope="row" class="ps-0 th-label">Fecha</th><td>{{ p.planted_at | date:'mediumDate' }}</td></tr>
+                <tr><th scope="row" class="ps-0">Coordenadas</th><td>{{ formatCoords(p) }}</td></tr>
+                <tr><th scope="row" class="ps-0">pH inicial</th><td>{{ p.initial_ph ?? '—' }}</td></tr>
+                <tr><th scope="row" class="ps-0">Humedad inicial</th><td>{{ p.initial_humidity != null ? p.initial_humidity + '%' : '—' }}</td></tr>
+                <tr><th scope="row" class="ps-0">Textura del suelo</th><td>{{ p.initial_soil_texture || '—' }}</td></tr>
               </tbody>
             </table>
           </div>

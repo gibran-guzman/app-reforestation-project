@@ -1,5 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { Router } from '@angular/router';
 import { tap } from 'rxjs';
 import { environment } from '../../environments/environment';
 import type { ApiResponse, LoginRequest, LoginResponse, SignupRequest, User } from '../models';
@@ -7,20 +8,26 @@ import type { ApiResponse, LoginRequest, LoginResponse, SignupRequest, User } fr
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly http = inject(HttpClient);
+  private readonly router = inject(Router);
   private readonly api = `${environment.apiUrl}/auth`;
   readonly user = signal<User | null>(null);
   readonly isAuthenticated = signal(false);
+  readonly ready = signal(false);
 
   private accessToken: string | null = null;
 
-  constructor() {
-    // Session will be restored via initialize() → me() call
-    // which relies on HttpOnly cookies set by the server
-  }
-
   initialize() {
     this.me().subscribe({
-      error: () => this.clearSession(),
+      next: () => {
+        this.ready.set(true);
+        if (this.router.url === '/login') {
+          this.router.navigateByUrl('/dashboard');
+        }
+      },
+      error: () => {
+        this.clearSession();
+        this.ready.set(true);
+      },
     });
   }
 

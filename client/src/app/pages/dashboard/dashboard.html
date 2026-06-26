@@ -171,17 +171,18 @@
               <div class="p-3 text-muted small">Sin datos</div>
             } @else {
               <div class="table-responsive">
-                <table class="table table-sm table-hover mb-0">
-                  <thead class="table-light">
-                    <tr>
-                      <th>Especie</th>
-                      <th class="text-center">Total</th>
-                      <th class="text-center">Vivas</th>
-                      <th class="text-center">Estresadas</th>
-                      <th class="text-center">Muertas</th>
-                      <th class="text-center">Supervivencia</th>
-                    </tr>
-                  </thead>
+                  <table class="table table-sm table-hover mb-0">
+                    <caption class="visually-hidden">Supervivencia por especie</caption>
+                    <thead class="table-light">
+                      <tr>
+                        <th scope="col">Especie</th>
+                        <th scope="col" class="text-center">Total</th>
+                        <th scope="col" class="text-center">Vivas</th>
+                        <th scope="col" class="text-center">Estresadas</th>
+                        <th scope="col" class="text-center">Muertas</th>
+                        <th scope="col" class="text-center">Supervivencia</th>
+                      </tr>
+                    </thead>
                   <tbody>
                     @for (s of speciesStats(); track s.id; let i = $index) {
                       <tr>
@@ -215,17 +216,18 @@
               <div class="p-3 text-muted small">Sin datos</div>
             } @else {
               <div class="table-responsive">
-                <table class="table table-sm table-hover mb-0">
-                  <thead class="table-light">
-                    <tr>
-                      <th>Zona</th>
-                      <th class="text-center">Total</th>
-                      <th class="text-center">Vivas</th>
-                      <th class="text-center">Estresadas</th>
-                      <th class="text-center">Muertas</th>
-                      <th class="text-center">Supervivencia</th>
-                    </tr>
-                  </thead>
+                  <table class="table table-sm table-hover mb-0">
+                    <caption class="visually-hidden">Supervivencia por zona</caption>
+                    <thead class="table-light">
+                      <tr>
+                        <th scope="col">Zona</th>
+                        <th scope="col" class="text-center">Total</th>
+                        <th scope="col" class="text-center">Vivas</th>
+                        <th scope="col" class="text-center">Estresadas</th>
+                        <th scope="col" class="text-center">Muertas</th>
+                        <th scope="col" class="text-center">Supervivencia</th>
+                      </tr>
+                    </thead>
                   <tbody>
                     @for (z of zoneSummary(); track z.id; let i = $index) {
                       <tr>
@@ -336,7 +338,7 @@
     <div class="col-md-4">
       <div class="card shadow-sm h-100">
         <div class="card-body d-flex flex-column">
-          <h5 class="card-title">Especies</h5>
+          <h2 class="card-title h5">Especies</h2>
           <p class="card-text text-muted">Gestionar catálogo de especies</p>
           <a routerLink="/species" class="btn btn-outline-success mt-auto">Ver catálogo</a>
         </div>
@@ -345,7 +347,7 @@
     <div class="col-md-4">
       <div class="card shadow-sm h-100">
         <div class="card-body d-flex flex-column">
-          <h5 class="card-title">Zonas</h5>
+          <h2 class="card-title h5">Zonas</h2>
           <p class="card-text text-muted">Gestionar zonas de intervención</p>
           <a routerLink="/zones" class="btn btn-outline-success mt-auto">Ver zonas</a>
         </div>
@@ -354,7 +356,7 @@
     <div class="col-md-4">
       <div class="card shadow-sm h-100">
         <div class="card-body d-flex flex-column">
-          <h5 class="card-title">Plantaciones</h5>
+          <h2 class="card-title h5">Plantaciones</h2>
           <p class="card-text text-muted">Ver y registrar plántulas</p>
           <div class="d-flex gap-2 mt-auto">
             <a routerLink="/plantings" class="btn btn-outline-success flex-fill">Ver</a>
