@@ -4,6 +4,13 @@ h3 {
 
 .chart-container {
   position: relative;
+  height: 240px;
   max-height: 260px;
   margin: 0 auto;
+}
+
+@media (max-width: 767.98px) {
+  .chart-container {
+    height: 180px;
+  }
 }

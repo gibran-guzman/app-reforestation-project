@@ -2,28 +2,36 @@
   <div class="heatmap-filters card shadow-sm p-3">
     <h1 class="fs-5 mb-3">Mapa de Calor</h1>
 
-    <label for="heatmap-species" class="form-label small fw-semibold mb-1">Especie</label>
-    <select id="heatmap-species" class="form-select form-select-sm mb-2" [disabled]="loading()" [value]="filterSpecies()" (change)="filterSpecies.set($any($event.target).value); loadData()">
-      <option value="">Todas las especies</option>
-      @for (s of species(); track s.id) {
-        <option [value]="s.id">{{ s.common_name }}</option>
-      }
-    </select>
+    <div class="row g-2 mb-3">
+      <div class="col-6 col-md-12">
+        <label for="heatmap-species" class="form-label small fw-semibold mb-1">Especie</label>
+        <select id="heatmap-species" class="form-select form-select-sm" [disabled]="loading()" [value]="filterSpecies()" (change)="filterSpecies.set($any($event.target).value); loadData()">
+          <option value="">Todas las especies</option>
+          @for (s of species(); track s.id) {
+            <option [value]="s.id">{{ s.common_name }}</option>
+          }
+        </select>
+      </div>
 
-    <label for="heatmap-zone" class="form-label small fw-semibold mb-1">Zona</label>
-    <select id="heatmap-zone" class="form-select form-select-sm mb-2" [disabled]="loading()" [value]="filterZone()" (change)="filterZone.set($any($event.target).value); loadData()">
-      <option value="">Todas las zonas</option>
-      @for (z of zones(); track z.id) {
-        <option [value]="z.id">{{ z.name }}</option>
-      }
-    </select>
+      <div class="col-6 col-md-12">
+        <label for="heatmap-zone" class="form-label small fw-semibold mb-1">Zona</label>
+        <select id="heatmap-zone" class="form-select form-select-sm" [disabled]="loading()" [value]="filterZone()" (change)="filterZone.set($any($event.target).value); loadData()">
+          <option value="">Todas las zonas</option>
+          @for (z of zones(); track z.id) {
+            <option [value]="z.id">{{ z.name }}</option>
+          }
+        </select>
+      </div>
 
-    <label for="heatmap-interval" class="form-label small fw-semibold mb-1">Agrupar por</label>
-    <select id="heatmap-interval" class="form-select form-select-sm mb-3" [disabled]="loading()" [value]="interval()" (change)="interval.set($any($event.target).value); onIntervalChange()">
-      <option value="month">Mes</option>
-      <option value="quarter">Trimestre</option>
-      <option value="year">Año</option>
-    </select>
+      <div class="col-12 col-md-12">
+        <label for="heatmap-interval" class="form-label small fw-semibold mb-1">Agrupar por</label>
+        <select id="heatmap-interval" class="form-select form-select-sm" [disabled]="loading()" [value]="interval()" (change)="interval.set($any($event.target).value); onIntervalChange()">
+          <option value="month">Mes</option>
+          <option value="quarter">Trimestre</option>
+          <option value="year">Año</option>
+        </select>
+      </div>
+    </div>
 
     <hr class="my-2">
 

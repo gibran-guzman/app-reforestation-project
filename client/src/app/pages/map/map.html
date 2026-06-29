@@ -11,27 +11,37 @@
       </button>
     </div>
 
-    <label for="map-species" class="form-label small fw-semibold mb-1">Especie</label>
-    <select id="map-species" class="form-select form-select-sm mb-2" [disabled]="loadingSpecies()" [value]="filterSpecies()" (change)="filterSpecies.set($any($event.target).value); loadGeoJson()">
-      <option value="">Todas las especies</option>
-      @for (s of species(); track s.id) {
-        <option [value]="s.id">{{ s.common_name }}</option>
-      }
-    </select>
+    <div class="row g-2 mb-3">
+      <div class="col-6 col-md-12">
+        <label for="map-species" class="form-label small fw-semibold mb-1">Especie</label>
+        <select id="map-species" class="form-select form-select-sm" [disabled]="loadingSpecies()" [value]="filterSpecies()" (change)="filterSpecies.set($any($event.target).value); loadGeoJson()">
+          <option value="">Todas las especies</option>
+          @for (s of species(); track s.id) {
+            <option [value]="s.id">{{ s.common_name }}</option>
+          }
+        </select>
+      </div>
 
-    <label for="map-zone" class="form-label small fw-semibold mb-1">Zona</label>
-    <select id="map-zone" class="form-select form-select-sm mb-2" [disabled]="loadingZones()" [value]="filterZone()" (change)="filterZone.set($any($event.target).value); loadGeoJson()">
-      <option value="">Todas las zonas</option>
-      @for (z of zones(); track z.id) {
-        <option [value]="z.id">{{ z.name }}</option>
-      }
-    </select>
+      <div class="col-6 col-md-12">
+        <label for="map-zone" class="form-label small fw-semibold mb-1">Zona</label>
+        <select id="map-zone" class="form-select form-select-sm" [disabled]="loadingZones()" [value]="filterZone()" (change)="filterZone.set($any($event.target).value); loadGeoJson()">
+          <option value="">Todas las zonas</option>
+          @for (z of zones(); track z.id) {
+            <option [value]="z.id">{{ z.name }}</option>
+          }
+        </select>
+      </div>
 
-    <label for="map-from" class="form-label small fw-semibold mb-1">Desde</label>
-    <input id="map-from" type="date" class="form-control form-control-sm mb-2" [disabled]="loading()" [value]="filterFrom()" (change)="filterFrom.set($any($event.target).value); loadGeoJson()">
+      <div class="col-6 col-md-12">
+        <label for="map-from" class="form-label small fw-semibold mb-1">Desde</label>
+        <input id="map-from" type="date" class="form-control form-control-sm" [disabled]="loading()" [value]="filterFrom()" (change)="filterFrom.set($any($event.target).value); loadGeoJson()">
+      </div>
 
-    <label for="map-to" class="form-label small fw-semibold mb-1">Hasta</label>
-    <input id="map-to" type="date" class="form-control form-control-sm mb-3" [disabled]="loading()" [value]="filterTo()" (change)="filterTo.set($any($event.target).value); loadGeoJson()">
+      <div class="col-6 col-md-12">
+        <label for="map-to" class="form-label small fw-semibold mb-1">Hasta</label>
+        <input id="map-to" type="date" class="form-control form-control-sm" [disabled]="loading()" [value]="filterTo()" (change)="filterTo.set($any($event.target).value); loadGeoJson()">
+      </div>
+    </div>
 
     <hr class="my-2">
 
