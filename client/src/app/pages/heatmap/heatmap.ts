@@ -1,5 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, afterNextRender, signal, DestroyRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { fromEvent } from 'rxjs';
+import { debounceTime } from 'rxjs/operators';
 import { FormsModule } from '@angular/forms';
 import { AnalyticsService, type HeatmapResponse, type HeatmapPoint } from '../../services/analytics.service';
 import { SpeciesService } from '../../services/species.service';
@@ -77,6 +79,10 @@ export default class HeatmapPage {
     afterNextRender(() => {
       this.initMap();
       this.loadData();
+
+      fromEvent(window, 'resize').pipe(debounceTime(200), takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+        this.map?.invalidateSize();
+      });
     });
   }
 
