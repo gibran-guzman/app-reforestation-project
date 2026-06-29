@@ -13,7 +13,7 @@
       <div class="col-lg-6">
         <div class="card shadow-sm">
           @if (p.photo_url) {
-            <img [src]="p.photo_url" alt="Foto de {{ p.species_name || 'plantación' }}" class="card-img-top detail-photo" loading="lazy">
+            <img [src]="p.photo_url" alt="Foto de {{ p.species_name || 'plantación' }}" class="card-img-top detail-photo">
           }
           <div class="card-body">
             <h4 class="card-title mb-1">{{ p.species_name || 'Sin especie' }}</h4>
