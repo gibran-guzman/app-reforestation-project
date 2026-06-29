@@ -43,9 +43,9 @@
   height: 200px;
 }
 
-@media (max-width: 767.98px) {
 .progress-bar-sm {
-  max-width: 80px;
+  width: 100%;
+  max-width: 120px;
   height: 8px;
 }
 
@@ -53,17 +53,22 @@
   height: 6px;
 }
 
-.badge-status-dot {
-  width: 10px;
-  height: 10px;
-  background: #fff;
-}
+@media (max-width: 767.98px) {
+  .progress-bar-sm {
+    max-width: 80px;
+  }
 
-.badge-status-dot-dark {
-  background: #000;
-}
+  .badge-status-dot {
+    width: 10px;
+    height: 10px;
+    background: #fff;
+  }
 
-.chart-container {
+  .badge-status-dot-dark {
+    background: #000;
+  }
+
+  .chart-container {
     height: 160px;
   }
 }

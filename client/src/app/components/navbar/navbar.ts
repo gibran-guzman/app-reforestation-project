@@ -26,6 +26,7 @@ export class Navbar {
   }
 
   toggleDropdown(event: MouseEvent) {
+    event.preventDefault();
     event.stopPropagation();
     this.dropdownOpen.update(v => !v);
   }

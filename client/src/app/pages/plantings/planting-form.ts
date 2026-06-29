@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, AfterViewInit, viewChild, ElementRef, DestroyRef, ChangeDetectionStrategy, signal, computed } from '@angular/core';
+import { Component, inject, OnInit, AfterViewInit, viewChild, ElementRef, DestroyRef, ChangeDetectionStrategy, signal, computed, NgZone } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -35,6 +35,7 @@ export default class PlantingForm implements OnInit, AfterViewInit {
   private geolocationService = inject(GeolocationService);
   private router = inject(Router);
   private destroyRef = inject(DestroyRef);
+  private zone = inject(NgZone);
 
   readonly mapContainer = viewChild.required<ElementRef>('mapContainer');
   readonly photoInput = viewChild.required<ElementRef<HTMLInputElement>>('photoInput');
@@ -113,7 +114,9 @@ export default class PlantingForm implements OnInit, AfterViewInit {
     }).addTo(this.map);
 
     this.map.on('click', (e: L.LeafletMouseEvent) => {
-      this.setPosition(e.latlng.lat, e.latlng.lng);
+      this.zone.run(() => {
+        this.setPosition(e.latlng.lat, e.latlng.lng);
+      });
     });
 
     setTimeout(() => this.map?.invalidateSize(), 200);
@@ -152,9 +155,12 @@ export default class PlantingForm implements OnInit, AfterViewInit {
     } else if (this.map) {
       this.marker = L.marker([this.form.lat, this.form.lng], { draggable: true }).addTo(this.map);
       this.marker.on('dragend', () => {
-        const pos = this.marker!.getLatLng();
-        this.form.lat = Math.round(pos.lat * 1000000) / 1000000;
-        this.form.lng = Math.round(pos.lng * 1000000) / 1000000;
+        this.zone.run(() => {
+          const pos = this.marker!.getLatLng();
+          this.form.lat = Math.round(pos.lat * 1000000) / 1000000;
+          this.form.lng = Math.round(pos.lng * 1000000) / 1000000;
+          this.coordsSet.set(true);
+        });
       });
     }
 

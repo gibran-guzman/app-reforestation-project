@@ -1,4 +1,5 @@
 const { resolve } = require('path');
+require('dotenv').config({ path: resolve(__dirname, '../../.env') });
 const { Pool } = require('pg');
 const { runner } = require('node-pg-migrate');
 const logger = require('../utils/logger');
