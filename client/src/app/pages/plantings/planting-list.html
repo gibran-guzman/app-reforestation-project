@@ -20,7 +20,7 @@
           <div class="card shadow-sm h-100 planting-card">
             <div class="planting-thumb-wrapper">
               @if (p.photo_url) {
-                <img [src]="p.photo_url" alt="Foto de {{ p.species_name || 'plantación' }}" class="planting-thumb" loading="lazy">
+                <img [src]="p.photo_url" alt="Foto de {{ p.species_name || 'plantación' }}" class="planting-thumb">
               } @else {
                 <div class="planting-thumb-placeholder">
                   <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="%23adb5bd" viewBox="0 0 16 16">
