@@ -12,14 +12,14 @@
   <div class="card shadow-sm mb-4">
     <div class="card-body d-flex flex-wrap gap-3 align-items-center">
       <label for="report-species" class="fw-semibold small mb-0">Especie:</label>
-      <select id="report-species" class="form-select form-select-sm" style="width:auto" [value]="filterSpecies()" (change)="filterSpecies.set($any($event.target).value); loadData()">
+      <select id="report-species" class="form-select form-select-sm w-auto" [value]="filterSpecies()" (change)="filterSpecies.set($any($event.target).value); loadData()">
         <option value="">Todas las especies</option>
         @for (s of species(); track s.id) {
           <option [value]="s.id">{{ s.common_name }}</option>
         }
       </select>
       <label for="report-zone" class="fw-semibold small mb-0 ms-2">Zona:</label>
-      <select id="report-zone" class="form-select form-select-sm" style="width:auto" [value]="filterZone()" (change)="filterZone.set($any($event.target).value); loadData()">
+      <select id="report-zone" class="form-select form-select-sm w-auto" [value]="filterZone()" (change)="filterZone.set($any($event.target).value); loadData()">
         <option value="">Todas las zonas</option>
         @for (z of zones(); track z.id) {
           <option [value]="z.id">{{ z.name }}</option>

@@ -48,3 +48,9 @@
 .th-label {
   width: 120px;
 }
+
+@media (max-width: 767.98px) {
+  .th-label {
+    width: 90px;
+  }
+}
