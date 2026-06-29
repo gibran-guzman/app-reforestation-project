@@ -30,11 +30,13 @@
 .heatmap-wrapper {
   position: relative;
   min-height: 300px;
+  overflow: hidden;
 }
 
 .heatmap-container {
   width: 100%;
   height: 100%;
+  touch-action: none;
 }
 
 .heatmap-overlay {
@@ -56,13 +58,21 @@
 @media (max-width: 767.98px) {
   .heatmap-page {
     height: auto;
+    flex-direction: column;
   }
   .heatmap-filters {
     width: 100%;
     min-width: 100%;
     border-bottom: 1px solid #dee2e6;
   }
+  .heatmap-content {
+    display: flex;
+    flex-direction: column;
+  }
+  .heatmap-wrapper {
+    min-height: 50vh;
+  }
   .heatmap-container {
-    height: calc(100vh - 56px - 380px);
+    height: 50vh;
   }
 }

@@ -32,10 +32,11 @@
                 "input": "public"
               }
             ],
-            "styles": ["src/styles.scss", "node_modules/leaflet/dist/leaflet.css"]
+            "styles": ["src/styles.scss"]
           },
           "configurations": {
             "production": {
+              "sourceMap": false,
               "budgets": [
                 {
                   "type": "initial",
@@ -44,8 +45,8 @@
                 },
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "4kB",
-                  "maximumError": "8kB"
+                  "maximumWarning": "12kB",
+                  "maximumError": "16kB"
                 }
               ],
               "outputHashing": "all",
@@ -89,7 +90,7 @@
                 "input": "public"
               }
             ],
-            "styles": ["src/styles.scss", "node_modules/leaflet/dist/leaflet.css"]
+            "styles": ["src/styles.scss"]
           }
         }
       }

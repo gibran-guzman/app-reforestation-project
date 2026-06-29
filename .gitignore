@@ -97,6 +97,9 @@ skills-lock.json
 # Optional: ignore proxy config if sensitive
 proxy.conf.json
 
+# opencode local config
+opencode.jsonc
+
 # Server specific
 server/logs/
 server/*.log

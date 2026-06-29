@@ -1,5 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, afterNextRender, signal, DestroyRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { fromEvent } from 'rxjs';
+import { debounceTime } from 'rxjs/operators';
 import { FormsModule } from '@angular/forms';
 import { PlantingService } from '../../services/planting.service';
 import { SpeciesService } from '../../services/species.service';
@@ -28,7 +30,7 @@ const STATUS_LABELS: Record<string, string> = {
   selector: 'app-map',
   imports: [FormsModule],
   templateUrl: './map.html',
-  styleUrl: './map.scss',
+  styleUrls: ['./map.scss', '../../../../node_modules/leaflet/dist/leaflet.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export default class MapPage {
@@ -79,6 +81,10 @@ export default class MapPage {
     afterNextRender(() => {
       this.initMap();
       this.loadGeoJson();
+
+      fromEvent(window, 'resize').pipe(debounceTime(200), takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+        this.map?.invalidateSize();
+      });
     });
   }
 

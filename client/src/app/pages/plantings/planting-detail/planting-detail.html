@@ -1,5 +1,6 @@
 <div class="p-3 p-md-4">
   <a routerLink="/plantings" class="btn btn-outline-secondary btn-sm mb-3">&larr; Volver a plantaciones</a>
+  <h1 class="visually-hidden">Detalle de plantación</h1>
 
   @if (loading()) {
     <div class="text-center py-5">
@@ -19,12 +20,13 @@
             <p class="text-muted mb-3">{{ p.zone_name || 'Sin zona' }}</p>
 
             <table class="table table-sm mb-0">
+              <caption class="visually-hidden">Detalles de la plantación</caption>
               <tbody>
-                <tr><th class="ps-0 th-label">Fecha</th><td>{{ p.planted_at | date:'mediumDate' }}</td></tr>
-                <tr><th class="ps-0">Coordenadas</th><td>{{ formatCoords(p) }}</td></tr>
-                <tr><th class="ps-0">pH inicial</th><td>{{ p.initial_ph ?? '—' }}</td></tr>
-                <tr><th class="ps-0">Humedad inicial</th><td>{{ p.initial_humidity != null ? p.initial_humidity + '%' : '—' }}</td></tr>
-                <tr><th class="ps-0">Textura del suelo</th><td>{{ p.initial_soil_texture || '—' }}</td></tr>
+                <tr><th scope="row" class="ps-0 th-label">Fecha</th><td>{{ p.planted_at | date:'mediumDate' }}</td></tr>
+                <tr><th scope="row" class="ps-0">Coordenadas</th><td>{{ formatCoords(p) }}</td></tr>
+                <tr><th scope="row" class="ps-0">pH inicial</th><td>{{ p.initial_ph ?? '—' }}</td></tr>
+                <tr><th scope="row" class="ps-0">Humedad inicial</th><td>{{ p.initial_humidity != null ? p.initial_humidity + '%' : '—' }}</td></tr>
+                <tr><th scope="row" class="ps-0">Textura del suelo</th><td>{{ p.initial_soil_texture || '—' }}</td></tr>
               </tbody>
             </table>
           </div>
@@ -34,10 +36,91 @@
       <div class="col-lg-6">
         <div class="card shadow-sm">
           <div class="card-body">
-            <h5 class="card-title d-flex align-items-center gap-2 mb-3">
-              Historial de monitoreo
-              <span class="badge bg-secondary rounded-pill">{{ monitoring().length }}</span>
-            </h5>
+            <div class="d-flex align-items-center justify-content-between gap-2 mb-3">
+              <h5 class="card-title d-flex align-items-center gap-2 mb-0">
+                Historial de monitoreo
+                <span class="badge bg-secondary rounded-pill">{{ monitoring().length }}</span>
+              </h5>
+              <button type="button" class="btn btn-sm btn-success" (click)="openForm()" [disabled]="showForm()">+ Nuevo monitoreo</button>
+            </div>
+
+            @if (showForm()) {
+              <div class="card border mb-3">
+                <div class="card-body">
+                  <h6 class="card-title mb-3">Registrar monitoreo</h6>
+
+                  @if (saveError()) {
+                    <div class="alert alert-danger py-2">{{ saveError() }}</div>
+                  }
+
+                  <form (ngSubmit)="createMonitoring()">
+                    <div class="mb-2">
+                      <label for="mon-visit-date" class="form-label">Fecha de visita</label>
+                      <input id="mon-visit-date" type="date" class="form-control form-control-sm" [(ngModel)]="monForm.visit_date" name="mon_visit_date">
+                    </div>
+
+                    <div class="mb-2">
+                      <label class="form-label">Estado de supervivencia *</label>
+                      <div class="d-flex flex-wrap gap-3">
+                        @for (s of survivalStatuses; track s.value) {
+                          <div class="form-check">
+                            <input class="form-check-input" type="radio" [id]="'mon-status-' + s.value" name="mon_survival_status" [value]="s.value" [(ngModel)]="monForm.survival_status" required aria-required="true">
+                            <label class="form-check-label" [for]="'mon-status-' + s.value">{{ s.label }}</label>
+                          </div>
+                        }
+                      </div>
+                    </div>
+
+                    <div class="row g-2 mb-2">
+                      <div class="col-6">
+                        <label for="mon-ph" class="form-label">pH</label>
+                        <input id="mon-ph" type="text" class="form-control form-control-sm" placeholder="0–14" [(ngModel)]="monForm.ph" name="mon_ph">
+                      </div>
+                      <div class="col-6">
+                        <label for="mon-humidity" class="form-label">Humedad (%)</label>
+                        <input id="mon-humidity" type="text" class="form-control form-control-sm" placeholder="0–100" [(ngModel)]="monForm.humidity" name="mon_humidity">
+                      </div>
+                    </div>
+
+                    <div class="row g-2 mb-2">
+                      <div class="col-6">
+                        <label for="mon-soil-texture" class="form-label">Textura del suelo</label>
+                        <select id="mon-soil-texture" class="form-select form-select-sm" [(ngModel)]="monForm.soil_texture" name="mon_soil_texture">
+                          <option value="">Sin especificar</option>
+                          @for (t of soilTextures; track t.value) {
+                            <option [value]="t.value">{{ t.label }}</option>
+                          }
+                        </select>
+                      </div>
+                      <div class="col-6">
+                        <label for="mon-vigor" class="form-label">Vigor</label>
+                        <select id="mon-vigor" class="form-select form-select-sm" [(ngModel)]="monForm.vigor" name="mon_vigor">
+                          <option value="">Sin especificar</option>
+                          @for (v of vigorLevels; track v.value) {
+                            <option [value]="v.value">{{ v.label }}</option>
+                          }
+                        </select>
+                      </div>
+                    </div>
+
+                    <div class="mb-3">
+                      <label for="mon-notes" class="form-label">Notas</label>
+                      <textarea id="mon-notes" class="form-control form-control-sm" rows="2" maxlength="2000" [(ngModel)]="monForm.notes" name="mon_notes"></textarea>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                      <button type="submit" class="btn btn-sm btn-success" [disabled]="saving()">
+                        @if (saving()) {
+                          <span class="spinner-border spinner-border-sm me-1"></span>
+                        }
+                        Guardar
+                      </button>
+                      <button type="button" class="btn btn-sm btn-outline-secondary" (click)="cancelForm()" [disabled]="saving()">Cancelar</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            }
 
             @if (monitoring().length === 0) {
               <p class="text-muted mb-0">Aún no hay registros de monitoreo para esta plantación.</p>

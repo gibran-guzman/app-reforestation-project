@@ -1,5 +1,5 @@
 <div class="p-3 p-md-4" style="max-width: 600px;">
-  <h2 class="mb-4">{{ isEdit ? 'Editar zona' : 'Nueva zona de intervención' }}</h2>
+  <h1 class="mb-4 fs-2">{{ isEdit ? 'Editar zona' : 'Nueva zona de intervención' }}</h1>
 
   @if (loading()) {
     <div class="text-center py-5">
@@ -13,7 +13,7 @@
     <form (ngSubmit)="submit()">
       <div class="mb-3">
         <label for="name" class="form-label">Nombre de la zona *</label>
-        <input id="name" type="text" class="form-control" [(ngModel)]="form.name" name="name" required maxlength="255">
+        <input id="name" type="text" class="form-control" [(ngModel)]="form.name" name="name" required maxlength="255" aria-required="true">
       </div>
 
       <div class="mb-3">

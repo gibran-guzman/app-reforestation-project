@@ -8,25 +8,25 @@
   <div class="collapse navbar-collapse" [class.show]="!collapsed()" id="navbarNav">
     <ul class="navbar-nav me-auto">
       <li class="nav-item">
-        <a class="nav-link" routerLink="/species" routerLinkActive="active" (click)="closeNav()">Especies</a>
+        <a class="nav-link" routerLink="/species" routerLinkActive="active" #rlaSpecies="routerLinkActive" [attr.aria-current]="rlaSpecies.isActive ? 'page' : null" (click)="closeNav()">Especies</a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" routerLink="/zones" routerLinkActive="active" (click)="closeNav()">Zonas</a>
+        <a class="nav-link" routerLink="/zones" routerLinkActive="active" #rlaZones="routerLinkActive" [attr.aria-current]="rlaZones.isActive ? 'page' : null" (click)="closeNav()">Zonas</a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" routerLink="/plantings" routerLinkActive="active" (click)="closeNav()">Plantaciones</a>
+        <a class="nav-link" routerLink="/plantings" routerLinkActive="active" #rlaPlantings="routerLinkActive" [attr.aria-current]="rlaPlantings.isActive ? 'page' : null" (click)="closeNav()">Plantaciones</a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" routerLink="/plantings/new" routerLinkActive="active" (click)="closeNav()">Plantar</a>
+        <a class="nav-link" routerLink="/plantings/new" routerLinkActive="active" #rlaNew="routerLinkActive" [attr.aria-current]="rlaNew.isActive ? 'page' : null" (click)="closeNav()">Plantar</a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" routerLink="/map" routerLinkActive="active" (click)="closeNav()">Mapa</a>
+        <a class="nav-link" routerLink="/map" routerLinkActive="active" #rlaMap="routerLinkActive" [attr.aria-current]="rlaMap.isActive ? 'page' : null" (click)="closeNav()">Mapa</a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" routerLink="/heatmap" routerLinkActive="active" (click)="closeNav()">Calor</a>
+        <a class="nav-link" routerLink="/heatmap" routerLinkActive="active" #rlaHeat="routerLinkActive" [attr.aria-current]="rlaHeat.isActive ? 'page' : null" (click)="closeNav()">Calor</a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" routerLink="/reports" routerLinkActive="active" (click)="closeNav()">Reportes</a>
+        <a class="nav-link" routerLink="/reports" routerLinkActive="active" #rlaReports="routerLinkActive" [attr.aria-current]="rlaReports.isActive ? 'page' : null" (click)="closeNav()">Reportes</a>
       </li>
     </ul>
 
@@ -48,7 +48,7 @@
         </li>
       }
       <li class="nav-item dropdown" [class.show]="dropdownOpen()">
-        <a class="nav-link dropdown-toggle" (click)="toggleDropdown($event)" role="button" aria-haspopup="true" [attr.aria-expanded]="dropdownOpen()">
+        <a class="nav-link dropdown-toggle" href="#" (click)="toggleDropdown($event)" (keydown)="onDropdownKeydown($event)" role="button" aria-haspopup="true" [attr.aria-expanded]="dropdownOpen()">
           {{ auth.user()?.full_name || auth.user()?.email }}
         </a>
         <ul class="dropdown-menu dropdown-menu-end" [class.show]="dropdownOpen()">
