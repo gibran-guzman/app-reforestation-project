@@ -1,8 +1,46 @@
 @use "bootstrap/scss/bootstrap" as *;
 @import "leaflet/dist/leaflet.css";
 
-:focus {
-  outline: 2px solid #198754;
+:root {
+  --color-paramo-night: #1A2E1A;
+  --color-new-leaf: #3A7D44;
+  --color-paramo-gold: #D4A84B;
+  --color-tierra-seca: #A63D3D;
+  --color-ash-sage: #6B7F6B;
+  --color-cloud-mist: #F5F6F2;
+  --color-surface: #FFFFFF;
+  --color-border: #E2E4DE;
+
+  --bs-success: #3A7D44;
+  --bs-primary: #3A7D44;
+  --bs-warning: #D4A84B;
+  --bs-danger: #A63D3D;
+  --bs-secondary: #6B7F6B;
+  --bs-body-bg: #F5F6F2;
+  --bs-body-color: #1A2E1A;
+  --bs-body-font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  --bs-heading-color: #1A2E1A;
+  --bs-border-color: #E2E4DE;
+  --bs-link-color: #3A7D44;
+  --bs-link-hover-color: #2E6B38;
+}
+
+body {
+  background-color: var(--bs-body-bg);
+  color: var(--bs-body-color);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6,
+.h1, .h2, .h3, .h4, .h5, .h6 {
+  font-family: 'Sora', sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-new-leaf);
   outline-offset: 2px;
   border-radius: 2px;
 }
@@ -11,15 +49,68 @@
   outline: none;
 }
 
-:focus-visible {
-  outline: 2px solid #198754;
-  outline-offset: 2px;
-  border-radius: 2px;
-}
-
 .form-control:focus-visible,
 .form-select:focus-visible,
 .form-check-input:focus-visible {
-  outline: 2px solid #198754;
+  outline: 2px solid var(--color-new-leaf);
   outline-offset: 1px;
+}
+
+.card {
+  --bs-card-border-color: var(--color-border);
+  --bs-card-box-shadow: 0 1px 3px rgba(26, 46, 26, 0.06);
+  border-radius: 10px;
+}
+
+.card-header {
+  background-color: transparent;
+  border-bottom-color: var(--color-border);
+  padding: 1rem 1.25rem;
+  font-family: 'Sora', sans-serif;
+  font-weight: 500;
+}
+
+.btn {
+  --bs-btn-font-family: 'Sora', sans-serif;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  border-radius: 8px;
+  padding: 0.5rem 1.25rem;
+  transition: all 0.15s ease;
+}
+
+.btn-success {
+  --bs-btn-bg: #3A7D44;
+  --bs-btn-border-color: #3A7D44;
+  --bs-btn-hover-bg: #2E6B38;
+  --bs-btn-hover-border-color: #2E6B38;
+  --bs-btn-active-bg: #235A2D;
+}
+
+.btn-outline-success {
+  --bs-btn-color: #3A7D44;
+  --bs-btn-border-color: #3A7D44;
+  --bs-btn-hover-bg: #3A7D44;
+  --bs-btn-hover-border-color: #3A7D44;
+  --bs-btn-active-bg: #2E6B38;
+}
+
+.table {
+  --bs-table-hover-bg: rgba(58, 125, 68, 0.04);
+}
+
+.table > thead {
+  font-family: 'Sora', sans-serif;
+  font-weight: 500;
+  font-size: 0.8125rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--color-ash-sage);
+}
+
+.badge {
+  font-family: 'Sora', sans-serif;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  border-radius: 6px;
 }
