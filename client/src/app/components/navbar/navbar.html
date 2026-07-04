@@ -1,12 +1,20 @@
-<nav class="navbar navbar-expand-lg navbar-dark bg-success px-3">
-  <a class="navbar-brand" routerLink="/dashboard">Lloa Reforestación</a>
+<nav class="navbar navbar-expand-lg px-3" style="background-color: #1A2E1A;">
+  <a class="navbar-brand d-flex align-items-center gap-2" routerLink="/dashboard">
+    <svg aria-hidden="true" width="28" height="28" viewBox="0 0 28 28" fill="none">
+      <circle cx="14" cy="14" r="13" stroke="#D4A84B" stroke-width="1.5"/>
+      <path d="M14 6v10M9 12l5-4 5 4" stroke="#D4A84B" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M8 20c2-3 4-4 6-4s4 1 6 4" stroke="#D4A84B" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+      <path d="M14 6c-2 2-5 2-7 1" stroke="#3A7D44" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+    </svg>
+    <span class="fw-semibold" style="font-family: 'Sora', sans-serif; letter-spacing: -0.02em;">Lloa Reforestación</span>
+  </a>
 
   <button class="navbar-toggler border-0" type="button" (click)="toggleCollapse()" aria-controls="navbarNav" [attr.aria-expanded]="!collapsed()" aria-label="Menú de navegación">
     <span class="navbar-toggler-icon"></span>
   </button>
 
   <div class="collapse navbar-collapse" [class.show]="!collapsed()" id="navbarNav">
-    <ul class="navbar-nav me-auto">
+    <ul class="navbar-nav me-auto gap-1">
       <li class="nav-item">
         <a class="nav-link" routerLink="/species" routerLinkActive="active" #rlaSpecies="routerLinkActive" [attr.aria-current]="rlaSpecies.isActive ? 'page' : null" (click)="closeNav()">Especies</a>
       </li>
@@ -30,29 +38,32 @@
       </li>
     </ul>
 
-    <ul class="navbar-nav align-items-start align-items-lg-center gap-1">
+    <ul class="navbar-nav align-items-start align-items-lg-center gap-2">
       @if (connectivity.online()) {
-        <li class="nav-item small text-success-emphasis d-flex align-items-center gap-1">
+        <li class="nav-item small d-flex align-items-center gap-1" style="color: #85B88A;">
           <span class="rounded-circle d-inline-block status-dot status-dot-online"></span>
           Online
         </li>
       } @else {
-        <li class="nav-item small text-warning d-flex align-items-center gap-1">
+        <li class="nav-item small d-flex align-items-center gap-1" style="color: #D4A84B;">
           <span class="rounded-circle d-inline-block status-dot status-dot-offline"></span>
           Offline
         </li>
       }
       @if (offline.pendingCount() > 0) {
         <li class="nav-item">
-          <span class="badge bg-warning text-dark">{{ offline.pendingCount() }} pendientes</span>
+          <span class="badge" style="background-color: #D4A84B; color: #1A2E1A;">{{ offline.pendingCount() }} pendientes</span>
         </li>
       }
       <li class="nav-item dropdown" [class.show]="dropdownOpen()">
-        <a class="nav-link dropdown-toggle" href="#" (click)="toggleDropdown($event)" (keydown)="onDropdownKeydown($event)" role="button" aria-haspopup="true" [attr.aria-expanded]="dropdownOpen()">
-          {{ auth.user()?.full_name || auth.user()?.email }}
+        <a class="nav-link dropdown-toggle d-flex align-items-center gap-1" href="#" (click)="toggleDropdown($event)" (keydown)="onDropdownKeydown($event)" role="button" aria-haspopup="true" [attr.aria-expanded]="dropdownOpen()">
+          <span class="rounded-circle d-inline-flex align-items-center justify-content-center user-avatar">
+            {{ (auth.user()?.full_name || auth.user()?.email)?.charAt(0)?.toUpperCase() }}
+          </span>
+          <span class="d-none d-lg-inline">{{ auth.user()?.full_name || auth.user()?.email }}</span>
         </a>
         <ul class="dropdown-menu dropdown-menu-end" [class.show]="dropdownOpen()">
-          <li><span class="dropdown-item-text small text-muted">{{ auth.user()?.role }}</span></li>
+          <li><span class="dropdown-item-text small" style="color: #6B7F6B;">{{ auth.user()?.role }}</span></li>
           @if (auth.user()?.role === 'admin') {
             <li><a class="dropdown-item" routerLink="/register" (click)="closeNav()">Crear usuario</a></li>
           }
