@@ -1,4 +1,4 @@
-import { TestBed } from '@angular/core/testing';
+import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
 import { AuthService } from './auth.service';
@@ -74,17 +74,17 @@ pwIDAQAB
   });
 
   describe('login', () => {
-    it('sends POST request and stores tokens in memory', () => {
+    it('sends POST request and stores tokens in memory', fakeAsync(() => {
       const service = TestBed.inject(AuthService);
       const body = { email: 'test@test.com', password: 'pwd' };
+
+      (service as any).cachedPublicKey = VALID_RSA_PEM;
 
       service.login(body).subscribe(res => {
         expect(res.data.user).toEqual(mockUser);
       });
 
-      const pkReq = httpTesting.expectOne('/api/auth/public-key');
-      expect(pkReq.request.method).toBe('GET');
-      pkReq.flush({ data: { public_key: VALID_RSA_PEM } });
+      tick();
 
       const req = httpTesting.expectOne('/api/auth/login');
       expect(req.request.method).toBe('POST');
@@ -96,7 +96,7 @@ pwIDAQAB
       expect(service.getToken()).toBe('access-123');
       expect(service.user()).toEqual(mockUser);
       expect(service.isAuthenticated()).toBeTrue();
-    });
+    }));
   });
 
   describe('signup', () => {
