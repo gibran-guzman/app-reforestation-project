@@ -42,6 +42,7 @@ describe('AuthService', () => {
     it('calls me() and sets authenticated on success', () => {
       const service = TestBed.inject(AuthService);
       service.initialize();
+      httpTesting.expectOne('/api/auth/public-key');
       const req = httpTesting.expectOne('/api/auth/me');
       req.flush({ data: { ...mockUser, access_token: 'access-123' } });
       expect(service.user()).toEqual(mockUser);
@@ -53,6 +54,7 @@ describe('AuthService', () => {
       const service = TestBed.inject(AuthService);
       service.initialize();
       service.isAuthenticated.set(true);
+      httpTesting.expectOne('/api/auth/public-key');
       const req = httpTesting.expectOne('/api/auth/me');
       req.flush({ message: 'Unauthorized' }, { status: 401, statusText: 'Unauthorized' });
       expect(service.isAuthenticated()).toBeFalse();
@@ -70,9 +72,15 @@ describe('AuthService', () => {
         expect(res.data.user).toEqual(mockUser);
       });
 
+      const pkReq = httpTesting.expectOne('/api/auth/public-key');
+      expect(pkReq.request.method).toBe('GET');
+      pkReq.flush({ data: { public_key: '-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA...' } });
+
       const req = httpTesting.expectOne('/api/auth/login');
       expect(req.request.method).toBe('POST');
-      expect(req.request.body).toEqual(body);
+      expect(req.request.body.email).toBe('test@test.com');
+      expect(req.request.body.encrypted_password).toBeDefined();
+      expect(req.request.body.password).toBeUndefined();
       req.flush(mockLoginResponse);
 
       expect(service.getToken()).toBe('access-123');

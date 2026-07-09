@@ -116,7 +116,7 @@ describe('authInterceptor', () => {
   });
 
   it('retries original request after successful refresh', () => {
-    authMock.getToken.and.returnValues('expired-token', 'new-token');
+    authMock.getToken.and.returnValues('expired-token', 'new-token', 'new-token');
     authMock.refresh.and.returnValue(of({} as any));
 
     httpClient.get('/api/test').subscribe();
