@@ -80,6 +80,9 @@ pwIDAQAB
 
       (service as any).cachedPublicKey = VALID_RSA_PEM;
 
+      spyOn(crypto.subtle, 'importKey').and.resolveTo({} as CryptoKey);
+      spyOn(crypto.subtle, 'encrypt').and.resolveTo(new ArrayBuffer(256));
+
       service.login(body).subscribe(res => {
         expect(res.data.user).toEqual(mockUser);
       });
