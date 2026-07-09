@@ -1,8 +1,9 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { tap } from 'rxjs';
+import { from, tap, switchMap, map } from 'rxjs';
 import { environment } from '../../environments/environment';
+import { encryptPassword } from '../helpers/crypto';
 import type { ApiResponse, LoginRequest, LoginResponse, SignupRequest, User } from '../models';
 
 @Injectable({ providedIn: 'root' })
@@ -15,8 +16,10 @@ export class AuthService {
   readonly ready = signal(false);
 
   private accessToken: string | null = null;
+  private cachedPublicKey: string | null = null;
 
   initialize() {
+    this.fetchPublicKey();
     this.me().subscribe({
       next: () => {
         this.ready.set(true);
@@ -31,13 +34,34 @@ export class AuthService {
     });
   }
 
+  private fetchPublicKey() {
+    this.http.get<ApiResponse<{ public_key: string }>>(`${this.api}/public-key`).pipe(
+      tap((res) => { this.cachedPublicKey = res.data.public_key; }),
+    ).subscribe({ error: () => { /* non-critical, will retry on login */ } });
+  }
+
   login(body: LoginRequest) {
-    return this.http.post<LoginResponse>(`${this.api}/login`, body).pipe(
-      tap((res) => {
-        this.accessToken = res.data.session.access_token;
-        this.user.set(res.data.user);
-        this.isAuthenticated.set(true);
-      }),
+    const encryptedPassword$ = this.cachedPublicKey
+      ? from(encryptPassword(this.cachedPublicKey, body.password))
+      : this.http.get<ApiResponse<{ public_key: string }>>(`${this.api}/public-key`).pipe(
+          map((res) => res.data.public_key),
+          tap((pk) => { this.cachedPublicKey = pk; }),
+          switchMap((pk) => from(encryptPassword(pk, body.password))),
+        );
+
+    return encryptedPassword$.pipe(
+      switchMap((encryptedPassword) =>
+        this.http.post<LoginResponse>(`${this.api}/login`, {
+          email: body.email,
+          encrypted_password: encryptedPassword,
+        }).pipe(
+          tap((res) => {
+            this.accessToken = res.data.session.access_token;
+            this.user.set(res.data.user);
+            this.isAuthenticated.set(true);
+          }),
+        ),
+      ),
     );
   }
 

@@ -50,7 +50,6 @@ function loadIndex() {
     './routes/configRoutes': mockMiddleware(),
     './routes/monitoringRoutes': mockMiddleware(),
     './routes/reportsRoutes': mockMiddleware(),
-    './routes/analyticsRoutes': mockMiddleware(),
     './middleware/rateLimiter': {
       authLimiter: mockMiddleware(),
       signupLimiter: mockMiddleware(),
@@ -172,11 +171,6 @@ describe('Express app', () => {
   it('mounts reportsRoutes on /api/reports', () => {
     loadIndex();
     expect(mockApp.use).toHaveBeenCalledWith('/api/reports', expect.any(Function));
-  });
-
-  it('mounts analyticsRoutes on /api/analytics', () => {
-    loadIndex();
-    expect(mockApp.use).toHaveBeenCalledWith('/api/analytics', expect.any(Function));
   });
 
   it('mounts errorHandler middleware', () => {
@@ -316,7 +310,6 @@ describe('Express app', () => {
       './routes/configRoutes': mockMiddleware(),
       './routes/monitoringRoutes': mockMiddleware(),
       './routes/reportsRoutes': mockMiddleware(),
-      './routes/analyticsRoutes': mockMiddleware(),
       './middleware/rateLimiter': {
         authLimiter: mockMiddleware(),
         signupLimiter: mockMiddleware(),

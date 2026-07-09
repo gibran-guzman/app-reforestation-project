@@ -1,4 +1,4 @@
-import { TestBed } from '@angular/core/testing';
+import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
 import { AuthService } from './auth.service';
@@ -22,6 +22,16 @@ describe('AuthService', () => {
     },
   };
 
+  const VALID_RSA_PEM = `-----BEGIN PUBLIC KEY-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAnUKwFVEGDfin3YfkzKdp
+i6aUjAB7HewiHAQbKPhrWteEgGPg+iV/6W57PEczyWHx1vvcTa9Jt+/+UN/4/hS0
+2N4bBFDaHZhK8BBur17guWQpzaV0C9xnhYhwEbj4XAA+cUoJxEPeTUd62I1fQzug
+/nclIcozeXX01dvYFlow17Hq9xIr+XWDH5iucLgKKBuKTO0X7GlXcuebOjjYZd1j
+5Wz6urwNEcjYPwMTTD5BPw+Sq14oYrEfKeO1EJiwBQebwOf5Z86cigeAjtZCliVb
+FNyG5s3qCJzv/R4Mk9UpkmXwoNLSyzv7t+968SqhIrF8dO9/TGTceEdIpTbK3IkX
+pwIDAQAB
+-----END PUBLIC KEY-----`;
+
   beforeEach(() => {
     TestBed.configureTestingModule({
       providers: [provideHttpClient(), provideHttpClientTesting()],
@@ -42,6 +52,7 @@ describe('AuthService', () => {
     it('calls me() and sets authenticated on success', () => {
       const service = TestBed.inject(AuthService);
       service.initialize();
+      httpTesting.expectOne('/api/auth/public-key');
       const req = httpTesting.expectOne('/api/auth/me');
       req.flush({ data: { ...mockUser, access_token: 'access-123' } });
       expect(service.user()).toEqual(mockUser);
@@ -53,6 +64,7 @@ describe('AuthService', () => {
       const service = TestBed.inject(AuthService);
       service.initialize();
       service.isAuthenticated.set(true);
+      httpTesting.expectOne('/api/auth/public-key');
       const req = httpTesting.expectOne('/api/auth/me');
       req.flush({ message: 'Unauthorized' }, { status: 401, statusText: 'Unauthorized' });
       expect(service.isAuthenticated()).toBeFalse();
@@ -62,23 +74,32 @@ describe('AuthService', () => {
   });
 
   describe('login', () => {
-    it('sends POST request and stores tokens in memory', () => {
+    it('sends POST request and stores tokens in memory', fakeAsync(() => {
       const service = TestBed.inject(AuthService);
       const body = { email: 'test@test.com', password: 'pwd' };
+
+      (service as any).cachedPublicKey = VALID_RSA_PEM;
+
+      spyOn(crypto.subtle, 'importKey').and.resolveTo({} as CryptoKey);
+      spyOn(crypto.subtle, 'encrypt').and.resolveTo(new ArrayBuffer(256));
 
       service.login(body).subscribe(res => {
         expect(res.data.user).toEqual(mockUser);
       });
 
+      tick();
+
       const req = httpTesting.expectOne('/api/auth/login');
       expect(req.request.method).toBe('POST');
-      expect(req.request.body).toEqual(body);
+      expect(req.request.body.email).toBe('test@test.com');
+      expect(req.request.body.encrypted_password).toBeDefined();
+      expect(req.request.body.password).toBeUndefined();
       req.flush(mockLoginResponse);
 
       expect(service.getToken()).toBe('access-123');
       expect(service.user()).toEqual(mockUser);
       expect(service.isAuthenticated()).toBeTrue();
-    });
+    }));
   });
 
   describe('signup', () => {

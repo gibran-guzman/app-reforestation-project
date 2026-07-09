@@ -67,15 +67,16 @@ describe('authInterceptor', () => {
     expect(routerSpy.navigate).toHaveBeenCalledWith(['/login']);
   });
 
-  it('clears session on 401 even without prior token', () => {
+  it('does not attempt refresh on 401 when no token exists', () => {
     httpClient.get('/api/test').subscribe({
       error: () => {},
     });
     const req = httpTesting.expectOne('/api/test');
     req.flush({ message: 'Unauthorized' }, { status: 401, statusText: 'Unauthorized' });
 
-    expect(authMock.clearSession).toHaveBeenCalled();
-    expect(routerSpy.navigate).toHaveBeenCalledWith(['/login']);
+    expect(authMock.refresh).not.toHaveBeenCalled();
+    expect(authMock.clearSession).not.toHaveBeenCalled();
+    expect(routerSpy.navigate).not.toHaveBeenCalled();
   });
 
   it('redirects to /dashboard on 403 error', () => {
@@ -115,7 +116,7 @@ describe('authInterceptor', () => {
   });
 
   it('retries original request after successful refresh', () => {
-    authMock.getToken.and.returnValues('expired-token', 'new-token');
+    authMock.getToken.and.returnValues('expired-token', 'new-token', 'new-token');
     authMock.refresh.and.returnValue(of({} as any));
 
     httpClient.get('/api/test').subscribe();

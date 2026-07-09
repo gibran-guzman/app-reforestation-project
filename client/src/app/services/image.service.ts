@@ -32,8 +32,10 @@ export class ImageService {
         ctx.drawImage(img, 0, 0, width, height);
         canvas.toBlob((blob) => {
           if (!blob) { reject(new Error('Error al comprimir la imagen')); return; }
-          const name = file.name.replace(/\.[^.]+$/, '.webp');
-          resolve(new File([blob], name, { type: 'image/webp' }));
+          const actualType = blob.type || 'image/webp';
+          const ext = actualType === 'image/png' ? '.png' : '.webp';
+          const name = file.name.replace(/\.[^.]+$/, ext);
+          resolve(new File([blob], name, { type: actualType }));
         }, 'image/webp', COMPRESS_QUALITY);
       };
       img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Error al cargar la imagen')); };
