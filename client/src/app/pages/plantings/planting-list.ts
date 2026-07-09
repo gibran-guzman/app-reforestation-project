@@ -48,4 +48,8 @@ export default class PlantingList implements OnInit {
   zeroBasedPageRange(total: number): number[] {
     return Array.from({ length: total }, (_, i) => i);
   }
+
+  onPhotoError(id: number) {
+    this.photoErrors.update(errors => ({ ...errors, [id]: true }));
+  }
 }
