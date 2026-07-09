@@ -19,7 +19,7 @@ const create = async (data) => {
 const findAll = async () => {
   const cached = listCache.get('all');
   if (cached) return cached;
-  const result = await db.query(`SELECT ${columns.join(', ')} FROM species ORDER BY scientific_name LIMIT ${MAX_LIST_LIMIT}`);
+  const result = await db.query(`SELECT ${columns.join(', ')} FROM species ORDER BY created_at DESC LIMIT ${MAX_LIST_LIMIT}`);
   listCache.set('all', result.rows);
   return result.rows;
 };
