@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, computed, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { ConnectivityService } from '../../services/connectivity.service';
@@ -20,6 +20,9 @@ export class Navbar {
   protected offline = inject(OfflineService);
   readonly collapsed = signal(true);
   readonly dropdownOpen = signal(false);
+
+  readonly ROLE_LABELS: Record<string, string> = { admin: 'Administrador', technician: 'Técnico' };
+  readonly roleLabel = computed(() => this.ROLE_LABELS[this.auth.user()?.role ?? ''] || this.auth.user()?.role || '—');
 
   toggleCollapse() {
     this.collapsed.update(v => !v);

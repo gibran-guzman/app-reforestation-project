@@ -249,7 +249,7 @@ describe('MapPage', () => {
     expect(mockCircleMarker.bindPopup).toHaveBeenCalled();
   });
 
-  it('renderMarkers omits img tag when photo_url is null', () => {
+  it('renderMarkers shows species name and scientific name in header', () => {
     const fixture = TestBed.createComponent(MapPage);
     const comp = fixture.componentInstance;
     comp['initMap']();
@@ -265,8 +265,8 @@ describe('MapPage', () => {
         geometry: { type: 'Point', coordinates: [-78.5, -0.22] },
         properties: {
           planting_id: 4,
-          species_name: 'Test',
-          scientific_name: 'Test sp.',
+          species_name: 'Arrayán',
+          scientific_name: 'Myrcianthes sp.',
           zone_name: 'Zone',
           planted_at: '2024-01-15',
           survival_status: 'alive',
@@ -280,6 +280,8 @@ describe('MapPage', () => {
 
     comp['renderMarkers'](geoJson);
     const popupEl = mockCircleMarker.bindPopup.calls.mostRecent().args[0] as HTMLElement;
+    expect(popupEl.querySelector('.map-popup-name')?.textContent).toBe('Arrayán');
+    expect(popupEl.querySelector('.map-popup-scientific')?.textContent).toBe('Myrcianthes sp.');
     expect(popupEl.querySelector('.map-popup-photo')).toBeNull();
     expect(mockCircleMarker.bindPopup).toHaveBeenCalled();
   });

@@ -165,58 +165,53 @@ export default class MapPage {
 
     const header = document.createElement('div');
     header.className = 'map-popup-header';
-    header.style.borderLeft = `4px solid ${color}`;
 
-    const nameStrong = document.createElement('strong');
-    nameStrong.textContent = p.species_name;
-    header.appendChild(nameStrong);
+    const nameEl = document.createElement('strong');
+    nameEl.className = 'map-popup-name';
+    nameEl.textContent = p.species_name;
+    header.appendChild(nameEl);
 
-    const statusSpan = document.createElement('span');
-    statusSpan.className = 'map-popup-status';
-    statusSpan.style.background = color;
-    statusSpan.textContent = STATUS_LABELS[p.survival_status];
-    header.appendChild(statusSpan);
+    const sciEl = document.createElement('div');
+    sciEl.className = 'map-popup-scientific';
+    sciEl.textContent = p.scientific_name || '';
+    header.appendChild(sciEl);
 
     wrapper.appendChild(header);
 
     const body = document.createElement('div');
     body.className = 'map-popup-body';
 
-    body.appendChild(this.popupRow('Nombre científico', p.scientific_name, true));
-    body.appendChild(this.popupRow('Zona', p.zone_name));
-    body.appendChild(this.popupRow('Plantado', planted));
-    body.appendChild(this.popupRow('Últ. monitoreo', lastMon));
+    const statusEl = document.createElement('div');
+    statusEl.className = 'map-popup-status-row';
+    const dot = document.createElement('span');
+    dot.className = 'map-popup-dot';
+    dot.style.background = color;
+    statusEl.appendChild(dot);
+    const statusText = document.createElement('span');
+    statusText.className = 'map-popup-status-text';
+    statusText.textContent = STATUS_LABELS[p.survival_status] || 'Sin monitoreo';
+    statusEl.appendChild(statusText);
+    body.appendChild(statusEl);
 
-    if (p.photo_url) {
-      const img = document.createElement('img');
-      img.src = p.photo_url;
-      img.alt = 'Foto';
-      img.className = 'map-popup-photo';
-      img.loading = 'lazy';
-      img.onerror = () => { img.style.display = 'none'; };
-      body.appendChild(img);
-    }
+    body.appendChild(this.infoRow('Zona', p.zone_name || '—'));
+    body.appendChild(this.infoRow('Plantado', planted));
+    body.appendChild(this.infoRow('Últ. monitoreo', lastMon));
 
     wrapper.appendChild(body);
     return wrapper;
   }
 
-  private popupRow(label: string, value: string, italic = false): HTMLElement {
+  private infoRow(label: string, value: string): HTMLElement {
     const row = document.createElement('div');
-    row.className = 'map-popup-row';
-
-    const labelSpan = document.createElement('span');
-    labelSpan.className = 'map-popup-label';
-    labelSpan.textContent = label;
-    row.appendChild(labelSpan);
-
-    const valueSpan = document.createElement('span');
-    valueSpan.className = 'map-popup-value';
-    const valueEl = italic ? document.createElement('em') : document.createElement('span');
+    row.className = 'map-popup-info-row';
+    const labelEl = document.createElement('span');
+    labelEl.className = 'map-popup-info-label';
+    labelEl.textContent = label;
+    row.appendChild(labelEl);
+    const valueEl = document.createElement('span');
+    valueEl.className = 'map-popup-info-value';
     valueEl.textContent = value;
-    valueSpan.appendChild(valueEl);
-    row.appendChild(valueSpan);
-
+    row.appendChild(valueEl);
     return row;
   }
 }

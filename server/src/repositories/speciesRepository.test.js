@@ -43,7 +43,7 @@ describe('speciesRepository', () => {
 
       expect(result).toHaveLength(2);
       expect(mockDb.query).toHaveBeenCalledWith(
-        expect.stringContaining('ORDER BY scientific_name'),
+        expect.stringContaining('ORDER BY created_at DESC'),
       );
     });
 
