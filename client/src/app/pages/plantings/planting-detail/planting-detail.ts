@@ -26,6 +26,7 @@ export default class PlantingDetail implements OnInit {
   loading = signal(true);
   error = signal('');
   showForm = signal(false);
+  photoError = signal(false);
   saving = signal(false);
   saveError = signal('');
 

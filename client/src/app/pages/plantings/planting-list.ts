@@ -22,6 +22,7 @@ export default class PlantingList implements OnInit {
   loading = signal(true);
   error = signal('');
   currentPage = signal(1);
+  photoErrors = signal<Record<number, boolean>>({});
 
   ngOnInit() {
     this.loadPage(1);
