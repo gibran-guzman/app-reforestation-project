@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, OnInit, signal, computed, ElementRef, viewChild, effect, untracked, DestroyRef } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, OnInit, signal, computed, ElementRef, viewChild, effect, DestroyRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
@@ -70,7 +70,7 @@ export default class Dashboard implements OnInit {
 
     effect(() => {
       const data = this.evolution();
-      const chartRef = untracked(this.evolutionChartRef);
+      const chartRef = this.evolutionChartRef();
       if (data.length > 0 && chartRef) {
         this.renderEvolutionChart(data, chartRef.nativeElement);
       }
