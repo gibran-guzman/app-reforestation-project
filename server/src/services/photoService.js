@@ -6,7 +6,18 @@ const { PHOTO_BUCKET: BUCKET } = require('../config/constants');
 
 const ensureBucket = async () => {
   const { data: buckets } = await supabase.storage.listBuckets();
-  if (!buckets?.find((b) => b.name === BUCKET)) {
+  const existing = buckets?.find((b) => b.name === BUCKET);
+  if (existing) {
+    const { error } = await supabase.storage.updateBucket(BUCKET, {
+      public: true,
+      fileSizeLimit: 5 * 1024 * 1024,
+    });
+    if (error) {
+      logger.error({ error }, 'Error al actualizar el bucket de almacenamiento');
+      throw new PhotoUploadError('Error al configurar permisos del bucket');
+    }
+    logger.info({ bucket: BUCKET }, 'Bucket de almacenamiento actualizado');
+  } else {
     const { error } = await supabase.storage.createBucket(BUCKET, {
       public: true,
       fileSizeLimit: 5 * 1024 * 1024,

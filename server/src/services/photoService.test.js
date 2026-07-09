@@ -13,6 +13,7 @@ const mockSupabaseClient = {
   storage: {
     listBuckets: vi.fn(),
     createBucket: vi.fn(),
+    updateBucket: vi.fn(),
     from: vi.fn(() => mockStorageBucket),
   },
 };
@@ -41,14 +42,32 @@ describe('photoService', () => {
       });
     });
 
-    it('does not create bucket if it already exists', async () => {
+    it('updates existing bucket to ensure public access', async () => {
       mockSupabaseClient.storage.listBuckets.mockResolvedValue({
         data: [{ name: 'planting-photos' }],
         error: null,
       });
+      mockSupabaseClient.storage.updateBucket.mockResolvedValue({ data: { message: 'ok' }, error: null });
 
       await photoService.ensureBucket();
       expect(mockSupabaseClient.storage.createBucket).not.toHaveBeenCalled();
+      expect(mockSupabaseClient.storage.updateBucket).toHaveBeenCalledWith('planting-photos', {
+        public: true,
+        fileSizeLimit: 5 * 1024 * 1024,
+      });
+    });
+
+    it('throws error if update bucket fails', async () => {
+      mockSupabaseClient.storage.listBuckets.mockResolvedValue({
+        data: [{ name: 'planting-photos' }],
+        error: null,
+      });
+      mockSupabaseClient.storage.updateBucket.mockResolvedValue({
+        data: null,
+        error: new Error('Permission denied'),
+      });
+
+      await expect(photoService.ensureBucket()).rejects.toThrow();
     });
 
     it('throws error if create bucket fails', async () => {

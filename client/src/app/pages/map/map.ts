@@ -192,6 +192,8 @@ export default class MapPage {
       img.src = p.photo_url;
       img.alt = 'Foto';
       img.className = 'map-popup-photo';
+      img.loading = 'lazy';
+      img.onerror = () => { img.style.display = 'none'; };
       body.appendChild(img);
     }
 

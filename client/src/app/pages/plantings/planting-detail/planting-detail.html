@@ -12,8 +12,8 @@
     <div class="row g-4">
       <div class="col-lg-6">
         <div class="card shadow-sm">
-          @if (p.photo_url) {
-            <img [src]="p.photo_url" alt="Foto de {{ p.species_name || 'plantación' }}" class="card-img-top detail-photo">
+          @if (p.photo_url && !photoError()) {
+            <img [src]="p.photo_url" alt="Foto de {{ p.species_name || 'plantación' }}" class="card-img-top detail-photo" loading="lazy" (error)="photoError.set(true)">
           }
           <div class="card-body">
             <h4 class="card-title mb-1">{{ p.species_name || 'Sin especie' }}</h4>
