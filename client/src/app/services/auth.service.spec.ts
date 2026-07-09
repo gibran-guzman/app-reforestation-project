@@ -22,6 +22,16 @@ describe('AuthService', () => {
     },
   };
 
+  const VALID_RSA_PEM = `-----BEGIN PUBLIC KEY-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAnUKwFVEGDfin3YfkzKdp
+i6aUjAB7HewiHAQbKPhrWteEgGPg+iV/6W57PEczyWHx1vvcTa9Jt+/+UN/4/hS0
+2N4bBFDaHZhK8BBur17guWQpzaV0C9xnhYhwEbj4XAA+cUoJxEPeTUd62I1fQzug
+/nclIcozeXX01dvYFlow17Hq9xIr+XWDH5iucLgKKBuKTO0X7GlXcuebOjjYZd1j
+5Wz6urwNEcjYPwMTTD5BPw+Sq14oYrEfKeO1EJiwBQebwOf5Z86cigeAjtZCliVb
+FNyG5s3qCJzv/R4Mk9UpkmXwoNLSyzv7t+968SqhIrF8dO9/TGTceEdIpTbK3IkX
+pwIDAQAB
+-----END PUBLIC KEY-----`;
+
   beforeEach(() => {
     TestBed.configureTestingModule({
       providers: [provideHttpClient(), provideHttpClientTesting()],
@@ -74,7 +84,7 @@ describe('AuthService', () => {
 
       const pkReq = httpTesting.expectOne('/api/auth/public-key');
       expect(pkReq.request.method).toBe('GET');
-      pkReq.flush({ data: { public_key: '-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA...' } });
+      pkReq.flush({ data: { public_key: VALID_RSA_PEM } });
 
       const req = httpTesting.expectOne('/api/auth/login');
       expect(req.request.method).toBe('POST');
