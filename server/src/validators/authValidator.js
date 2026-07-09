@@ -49,7 +49,7 @@ const validateSignup = (data) => {
 
 const validateLogin = (data) => {
   const errors = [];
-  const { email, password } = data || {};
+  const { email, password, encrypted_password } = data || {};
 
   if (!email || typeof email !== 'string') {
     errors.push({ field: 'email', message: 'El correo electrónico es requerido' });
@@ -57,7 +57,11 @@ const validateLogin = (data) => {
     errors.push({ field: 'email', message: 'El correo electrónico no tiene un formato válido' });
   }
 
-  if (!password || typeof password !== 'string') {
+  if (encrypted_password) {
+    if (typeof encrypted_password !== 'string' || encrypted_password.length === 0) {
+      errors.push({ field: 'encrypted_password', message: 'La contraseña cifrada no es válida' });
+    }
+  } else if (!password || typeof password !== 'string') {
     errors.push({ field: 'password', message: 'La contraseña es requerida' });
   }
 
@@ -65,7 +69,10 @@ const validateLogin = (data) => {
     throw new ValidationError(errors);
   }
 
-  return { email: email.trim(), password };
+  return {
+    email: email.trim(),
+    ...(encrypted_password ? { encrypted_password } : { password }),
+  };
 };
 
 module.exports = { validateSignup, validateLogin };
