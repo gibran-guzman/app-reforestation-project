@@ -15,7 +15,6 @@ describe('appRoutes', () => {
     expect(paths).toContain('zones');
     expect(paths).toContain('plantings');
     expect(paths).toContain('map');
-    expect(paths).toContain('heatmap');
     expect(paths).toContain('reports');
     expect(paths).toContain('');
   });

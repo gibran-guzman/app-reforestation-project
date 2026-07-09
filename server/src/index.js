@@ -25,7 +25,6 @@ const photoRoutes = require('./routes/photoRoutes');
 const configRoutes = require('./routes/configRoutes');
 const monitoringRoutes = require('./routes/monitoringRoutes');
 const reportsRoutes = require('./routes/reportsRoutes');
-const analyticsRoutes = require('./routes/analyticsRoutes');
 const { authLimiter, signupLimiter, writeLimiter } = require('./middleware/rateLimiter');
 const errorHandler = require('./middleware/errorHandler');
 const pinoHttp = require('pino-http');
@@ -137,7 +136,6 @@ function startWorker() {
   app.use('/api/config', configRoutes);
   app.use('/api/monitoring', monitoringRoutes);
   app.use('/api/reports', reportsRoutes);
-  app.use('/api/analytics', analyticsRoutes);
 
   if (isProduction) {
     const publicPath = path.resolve(__dirname, '../../public');
