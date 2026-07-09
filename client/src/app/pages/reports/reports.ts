@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, OnInit, signal, ElementRef, viewChild, effect, untracked, DestroyRef } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, OnInit, signal, ElementRef, viewChild, effect, DestroyRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
@@ -54,8 +54,8 @@ export default class Reports implements OnInit {
     effect(() => {
       const report = this.report();
       const sStats = this.speciesStats();
-      const survivalRef = untracked(this.survivalChartRef);
-      const speciesRef = untracked(this.speciesChartRef);
+      const survivalRef = this.survivalChartRef();
+      const speciesRef = this.speciesChartRef();
       if (report && survivalRef) {
         this.renderSurvivalChart(report, survivalRef.nativeElement);
       }
