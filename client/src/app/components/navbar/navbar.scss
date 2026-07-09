@@ -88,6 +88,27 @@
   }
 }
 
+.dropdown-profile {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 12px 10px;
+  border-bottom: 1px solid #E2E4DE;
+  margin-bottom: 4px;
+  list-style: none;
+}
+
+.dropdown-profile-name {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #1A2E1A;
+}
+
+.dropdown-profile-email {
+  font-size: 0.75rem;
+  color: #6c757d;
+}
+
 .dropdown-divider {
   margin: 0.25rem 0;
   border-color: #E2E4DE;

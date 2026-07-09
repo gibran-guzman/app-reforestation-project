@@ -60,7 +60,15 @@
           <span class="d-none d-lg-inline">{{ auth.user()?.full_name || auth.user()?.email }}</span>
         </a>
         <ul class="dropdown-menu dropdown-menu-end" [class.show]="dropdownOpen()">
-          <li><span class="dropdown-item-text small d-flex align-items-center gap-2"><span class="role-badge" [class.role-admin]="auth.user()?.role === 'admin'" [class.role-tech]="auth.user()?.role === 'technician'">{{ roleLabel() }}</span></span></li>
+          <li class="dropdown-profile">
+            <div class="dropdown-profile-name">{{ auth.user()?.full_name || auth.user()?.email }}</div>
+            @if (auth.user()?.full_name) {
+              <div class="dropdown-profile-email">{{ auth.user()?.email }}</div>
+            }
+            <div class="d-flex align-items-center gap-2 mt-1">
+              <span class="role-badge" [class.role-admin]="auth.user()?.role === 'admin'" [class.role-tech]="auth.user()?.role === 'technician'">{{ roleLabel() }}</span>
+            </div>
+          </li>
           @if (auth.user()?.role === 'admin') {
             <li><a class="dropdown-item" routerLink="/register" (click)="closeNav()">Crear usuario</a></li>
           }
