@@ -206,7 +206,7 @@ export default class MapPage {
     row.className = 'map-popup-info-row';
     const labelEl = document.createElement('span');
     labelEl.className = 'map-popup-info-label';
-    labelEl.textContent = label;
+    labelEl.textContent = label + ':';
     row.appendChild(labelEl);
     const valueEl = document.createElement('span');
     valueEl.className = 'map-popup-info-value';
