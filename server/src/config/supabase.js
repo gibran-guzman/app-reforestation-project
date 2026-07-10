@@ -1,3 +1,7 @@
+if (process.env.NODE_ENV !== 'production') {
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+}
+
 const { createClient } = require('@supabase/supabase-js');
 const ws = require('ws');
 const logger = require('../utils/logger');
