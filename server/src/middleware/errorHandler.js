@@ -26,6 +26,21 @@ const errorHandler = (err, req, res, next) => {
     return res.status(400).json({ error: 'Parámetro de consulta inválido' });
   }
 
+  if (err.type === 'entity.parse.failed') {
+    logger.warn({ err: err.message }, 'Malformed JSON request body');
+    return res.status(400).json({ error: 'El cuerpo de la solicitud no es JSON válido' });
+  }
+
+  if (err.code === 'LIMIT_FILE_SIZE') {
+    logger.warn({ err: err.message }, 'Uploaded file exceeds size limit');
+    return res.status(413).json({ error: 'El archivo supera el tamaño máximo permitido' });
+  }
+
+  if (err.code === 'LIMIT_FILE_COUNT' || err.code === 'LIMIT_UNEXPECTED_FILE') {
+    logger.warn({ err: err.message }, 'Unexpected file upload field');
+    return res.status(400).json({ error: 'Archivo inesperado en la solicitud' });
+  }
+
   const context = {
     err: err.message,
     method: req.method,
@@ -34,7 +49,7 @@ const errorHandler = (err, req, res, next) => {
   };
   logger.error(context, 'Unhandled internal error');
 
-  const statusCode = err.status || err.statusCode || 500;
+  const statusCode = 500;
 
   res.status(statusCode).json({
     error: process.env.NODE_ENV === 'production'

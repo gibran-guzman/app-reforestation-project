@@ -9,7 +9,7 @@ const mockAuthRepository = {
 };
 const mockSupabaseClient = {
   auth: {
-    admin: { createUser: vi.fn(), deleteUser: vi.fn() },
+    admin: { createUser: vi.fn(), deleteUser: vi.fn(), signOut: vi.fn() },
   },
 };
 const mockSupabaseAnonClient = {
@@ -183,5 +183,36 @@ describe('authService.login - non-specific errors', () => {
 
     expect(err.status).toBe(500);
     expect(err.message).toBe('Error al iniciar sesión. Intenta de nuevo.');
+  });
+});
+
+describe('authService.logout', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('revokes the refresh token via admin API', async () => {
+    mockSupabaseClient.auth.admin.signOut.mockResolvedValue({ data: null, error: null });
+
+    await authService.logout('refresh-xyz');
+
+    expect(mockSupabaseClient.auth.admin.signOut).toHaveBeenCalledWith('refresh-xyz');
+  });
+
+  it('resolves even when the token is missing', async () => {
+    await expect(authService.logout()).resolves.toBeUndefined();
+    expect(mockSupabaseClient.auth.admin.signOut).not.toHaveBeenCalled();
+  });
+
+  it('does not throw when revocation returns an error', async () => {
+    mockSupabaseClient.auth.admin.signOut.mockResolvedValue({ data: null, error: new Error('revoked already') });
+
+    await expect(authService.logout('refresh-xyz')).resolves.toBeUndefined();
+  });
+
+  it('does not throw when revocation throws', async () => {
+    mockSupabaseClient.auth.admin.signOut.mockRejectedValue(new Error('network down'));
+
+    await expect(authService.logout('refresh-xyz')).resolves.toBeUndefined();
   });
 });

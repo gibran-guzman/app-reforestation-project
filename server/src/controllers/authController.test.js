@@ -3,8 +3,8 @@ import { createRequire } from 'module';
 const cjsRequire = createRequire(import.meta.url);
 const proxyquire = cjsRequire('proxyquire').noPreserveCache();
 
-const mockService = { signup: vi.fn(), login: vi.fn(), refresh: vi.fn() };
-const { signup, login, getMe, refresh } = proxyquire('./authController', {
+const mockService = { signup: vi.fn(), login: vi.fn(), refresh: vi.fn(), logout: vi.fn() };
+const { signup, login, getMe, refresh, logout } = proxyquire('./authController', {
   '../services/authService': mockService,
 });
 
@@ -64,14 +64,14 @@ describe('authController', () => {
   });
 
   describe('getMe', () => {
-    it('returns authenticated user data with access token', async () => {
+    it('returns authenticated user data without exposing access token', async () => {
       req.user = { id: 'user-123', email: 'test@test.com', role: 'technician', full_name: 'Test', created_at: '2026-01-01' };
       req.accessToken = 'my-access-token';
 
       await getMe(req, res, next);
 
       expect(res.json).toHaveBeenCalledWith({
-        data: { id: 'user-123', email: 'test@test.com', role: 'technician', full_name: 'Test', created_at: '2026-01-01', access_token: 'my-access-token' },
+        data: { id: 'user-123', email: 'test@test.com', role: 'technician', full_name: 'Test', created_at: '2026-01-01' },
       });
     });
 
@@ -105,6 +105,46 @@ describe('authController', () => {
       await refresh(req, res, next);
 
       expect(mockService.refresh).toHaveBeenCalledWith({ refresh_token: 'cookie-rtoken' });
+    });
+  });
+
+  describe('logout', () => {
+    it('revokes the refresh token server-side and clears cookies', async () => {
+      mockService.logout.mockResolvedValue(undefined);
+      req.body = {};
+      req.cookies = { refresh_token: 'rtoken' };
+
+      await logout(req, res, next);
+
+      expect(mockService.logout).toHaveBeenCalledWith('rtoken');
+      expect(res.clearCookie).toHaveBeenCalled();
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+        message: 'Sesión cerrada correctamente',
+      }));
+    });
+
+    it('uses body refresh_token when cookie is absent', async () => {
+      mockService.logout.mockResolvedValue(undefined);
+      req.body = { refresh_token: 'body-rtoken' };
+      req.cookies = {};
+
+      await logout(req, res, next);
+
+      expect(mockService.logout).toHaveBeenCalledWith('body-rtoken');
+    });
+
+    it('clears cookies even if revocation fails', async () => {
+      mockService.logout.mockRejectedValue(new Error('revoke failed'));
+      req.body = {};
+      req.cookies = { refresh_token: 'rtoken' };
+
+      await logout(req, res, next);
+
+      expect(next).not.toHaveBeenCalled();
+      expect(res.clearCookie).toHaveBeenCalled();
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+        message: 'Sesión cerrada correctamente',
+      }));
     });
   });
 });

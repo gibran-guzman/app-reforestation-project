@@ -120,7 +120,8 @@ describe('validateCreatePlanting', () => {
   });
 
   it('throws on missing initial_survival_status', () => {
-    const { initial_survival_status, ...rest } = validData;
+    const rest = { ...validData };
+    delete rest.initial_survival_status;
     expect(() => validateCreatePlanting(rest)).toThrow(ValidationError);
   });
 

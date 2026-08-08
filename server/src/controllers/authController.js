@@ -1,6 +1,7 @@
 const authService = require('../services/authService');
 const cryptoService = require('../services/cryptoService');
 const asyncHandler = require('../utils/asyncHandler');
+const logger = require('../utils/logger');
 const { respond } = require('../utils/response');
 const { setSessionCookies, clearSessionCookies } = require('../config/cookie');
 
@@ -10,14 +11,14 @@ const signup = asyncHandler(async (req, res) => {
 });
 
 const getPublicKey = asyncHandler(async (req, res) => {
-  const publicKey = cryptoService.getPublicKey();
+  const publicKey = await cryptoService.getPublicKey();
   respond(res, { public_key: publicKey });
 });
 
 const login = asyncHandler(async (req, res) => {
   const body = { ...req.body };
   if (body.encrypted_password) {
-    body.password = cryptoService.decryptPassword(body.encrypted_password);
+    body.password = await cryptoService.decryptPassword(body.encrypted_password);
     delete body.encrypted_password;
   }
   const result = await authService.login(body);
@@ -27,7 +28,7 @@ const login = asyncHandler(async (req, res) => {
 
 const getMe = asyncHandler(async (req, res) => {
   const { id, email, role, full_name, created_at } = req.user;
-  respond(res, { id, email, role, full_name, created_at, access_token: req.accessToken });
+  respond(res, { id, email, role, full_name, created_at });
 });
 
 const refresh = asyncHandler(async (req, res) => {
@@ -38,6 +39,12 @@ const refresh = asyncHandler(async (req, res) => {
 });
 
 const logout = asyncHandler(async (req, res) => {
+  const refreshToken = req.body.refresh_token || req.cookies?.refresh_token;
+  try {
+    await authService.logout(refreshToken);
+  } catch (err) {
+    logger.warn({ err }, 'Error al revocar la sesión durante logout');
+  }
   clearSessionCookies(res);
   respond(res, null, { message: 'Sesión cerrada correctamente' });
 });

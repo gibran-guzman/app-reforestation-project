@@ -7,6 +7,23 @@ on:
     branches: [main]
 
 jobs:
+  required-env:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check required Supabase secrets are configured
+        env:
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          if [ -z "$SUPABASE_ANON_KEY" ]; then
+            echo "::error::SUPABASE_ANON_KEY secret is required but not configured"
+            exit 1
+          fi
+          if [ -z "$SUPABASE_SERVICE_ROLE_KEY" ]; then
+            echo "::error::SUPABASE_SERVICE_ROLE_KEY secret is required but not configured"
+            exit 1
+          fi
+
   server:
     runs-on: ubuntu-latest
     defaults:

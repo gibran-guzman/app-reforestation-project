@@ -7,8 +7,12 @@ const columns = [
   'photo_url', 'monitored_by', 'created_at',
 ];
 
-const create = async (data) => {
-  const result = await db.query(`
+const create = async (clientOrData, maybeData) => {
+  const client = typeof clientOrData.query === 'function' ? clientOrData : null;
+  const data = client ? maybeData : clientOrData;
+  const run = client ? (text, params) => client.query(text, params) : (text, params) => db.query(text, params);
+
+  const result = await run(`
     INSERT INTO monitoring_records (planting_site_id, visit_date, ph, humidity, soil_texture, survival_status, vigor, notes, photo_url, monitored_by)
     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
     RETURNING ${columns.join(', ')}

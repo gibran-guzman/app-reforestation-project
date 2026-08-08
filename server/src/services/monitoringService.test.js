@@ -9,6 +9,10 @@ const mockPlantingRepository = { findById: vi.fn() };
 const monitoringService = proxyquire('./monitoringService', {
   '../repositories/monitoringRepository': mockMonitoringRepository,
   '../repositories/plantingRepository': mockPlantingRepository,
+  '../utils/signPhoto': {
+    signPhotoRow: vi.fn(async (row) => row),
+    signPhotoRows: vi.fn(async (rows) => rows),
+  },
 });
 
 describe('monitoringService', () => {
@@ -45,7 +49,7 @@ describe('monitoringService', () => {
   });
 
   describe('getByPlantingSiteId', () => {
-    it('returns monitoring history', async () => {
+    it('returns monitoring history with pagination', async () => {
       mockPlantingRepository.findById.mockResolvedValue({ id: 1 });
       mockMonitoringRepository.findByPlantingSiteId.mockResolvedValue({
         rows: [
@@ -55,8 +59,15 @@ describe('monitoringService', () => {
         total: 2,
       });
 
-      const result = await monitoringService.getByPlantingSiteId(1);
-      expect(result).toHaveLength(2);
+      const result = await monitoringService.getByPlantingSiteId(1, 1, 50);
+      expect(result).toEqual({
+        rows: [
+          { id: 1, survival_status: 'alive', visit_date: '2026-06-15' },
+          { id: 2, survival_status: 'dead', visit_date: '2026-07-01' },
+        ],
+        total: 2,
+      });
+      expect(mockMonitoringRepository.findByPlantingSiteId).toHaveBeenCalledWith(1, 1, 50);
     });
 
     it('returns empty list if no monitoring records', async () => {
@@ -64,7 +75,7 @@ describe('monitoringService', () => {
       mockMonitoringRepository.findByPlantingSiteId.mockResolvedValue({ rows: [], total: 0 });
 
       const result = await monitoringService.getByPlantingSiteId(1);
-      expect(result).toEqual([]);
+      expect(result).toEqual({ rows: [], total: 0 });
     });
 
     it('throws not found if planting does not exist', async () => {

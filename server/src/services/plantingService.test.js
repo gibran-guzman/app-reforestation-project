@@ -5,18 +5,27 @@ const proxyquire = cjsRequire('proxyquire').noPreserveCache();
 
 const mockPlantingRepository = {
   create: vi.fn(), findAll: vi.fn(), findById: vi.fn(),
-  findByConflictKey: vi.fn(), update: vi.fn(), isPointInZone: vi.fn(),
+  upsert: vi.fn(), isPointInZone: vi.fn(),
   updatePhotoUrl: vi.fn(), findGeoJson: vi.fn(),
 };
 const mockSpeciesRepository = { findById: vi.fn(), findByIds: vi.fn() };
 const mockZoneRepository = { findById: vi.fn(), findByIds: vi.fn() };
 const mockMonitoringRepository = { create: vi.fn() };
+const mockClient = { query: vi.fn() };
+const mockDb = {
+  withTransaction: vi.fn(async (callback) => callback(mockClient)),
+};
 
 const plantingService = proxyquire('./plantingService', {
   '../repositories/plantingRepository': mockPlantingRepository,
   '../repositories/speciesRepository': mockSpeciesRepository,
   '../repositories/zoneRepository': mockZoneRepository,
   '../repositories/monitoringRepository': mockMonitoringRepository,
+  '../config/db': mockDb,
+  '../utils/signPhoto': {
+    signPhotoRow: vi.fn(async (row) => row),
+    signPhotoRows: vi.fn(async (rows) => rows),
+  },
 });
 
 describe('plantingService', () => {
@@ -42,9 +51,11 @@ describe('plantingService', () => {
       const result = await plantingService.create(validPayload, 'user-123');
       expect(result.id).toBe(10);
       expect(mockPlantingRepository.create).toHaveBeenCalledWith(
+        mockClient,
         expect.objectContaining({ planted_by: 'user-123' }),
       );
       expect(mockMonitoringRepository.create).toHaveBeenCalledWith(
+        mockClient,
         expect.objectContaining({ planting_site_id: 10, survival_status: 'alive' }),
       );
     });
@@ -153,7 +164,7 @@ describe('plantingService', () => {
       mockZoneRepository.findByIds.mockResolvedValue([{ id: 1, name: 'Zona Norte', geometry: { type: 'Polygon', coordinates: [[[-78.6, -0.3], [-78.5, -0.3], [-78.5, -0.2], [-78.6, -0.2], [-78.6, -0.3]]] } }]);
       mockSpeciesRepository.findByIds.mockResolvedValue([{ id: 1, common_name: 'Cedro' }]);
       mockPlantingRepository.isPointInZone.mockResolvedValue(true);
-      mockPlantingRepository.create.mockResolvedValue({ id: 10, ...validItem });
+      mockPlantingRepository.upsert.mockResolvedValue({ id: 10, ...validItem, inserted: true });
 
       const results = await plantingService.syncBatch([validItem], 'user-123');
       expect(results).toHaveLength(1);
@@ -164,26 +175,24 @@ describe('plantingService', () => {
       mockZoneRepository.findByIds.mockResolvedValue([{ id: 1, name: 'Zona Norte', geometry: { type: 'Polygon', coordinates: [[[-78.6, -0.3], [-78.5, -0.3], [-78.5, -0.2], [-78.6, -0.2], [-78.6, -0.3]]] } }]);
       mockSpeciesRepository.findByIds.mockResolvedValue([{ id: 1, common_name: 'Cedro' }]);
       mockPlantingRepository.isPointInZone.mockResolvedValue(true);
-      mockPlantingRepository.create.mockRejectedValue({ code: '23505' });
-      mockPlantingRepository.findByConflictKey.mockResolvedValue({ id: 5, planted_by: 'user-123' });
-      mockPlantingRepository.update.mockResolvedValue({ id: 5, ...validItem });
+      mockPlantingRepository.upsert.mockResolvedValue({ id: 5, ...validItem, inserted: false });
 
       const results = await plantingService.syncBatch([validItem], 'user-123');
       expect(results[0].status).toBe('success');
       expect(results[0].conflict).toBe('resolved');
       expect(results[0].data.id).toBe(5);
+      expect(mockPlantingRepository.upsert).toHaveBeenCalledWith(mockClient, expect.objectContaining({ planted_by: 'user-123' }));
     });
 
-    it('reports error if conflicting record belongs to another user', async () => {
+    it('does not mark conflict when upsert inserts a new row', async () => {
       mockZoneRepository.findByIds.mockResolvedValue([{ id: 1, name: 'Zona Norte', geometry: { type: 'Polygon', coordinates: [[[-78.6, -0.3], [-78.5, -0.3], [-78.5, -0.2], [-78.6, -0.2], [-78.6, -0.3]]] } }]);
       mockSpeciesRepository.findByIds.mockResolvedValue([{ id: 1, common_name: 'Cedro' }]);
       mockPlantingRepository.isPointInZone.mockResolvedValue(true);
-      mockPlantingRepository.create.mockRejectedValue({ code: '23505' });
-      mockPlantingRepository.findByConflictKey.mockResolvedValue({ id: 5, planted_by: 'other-user' });
+      mockPlantingRepository.upsert.mockResolvedValue({ id: 10, ...validItem, inserted: true });
 
       const results = await plantingService.syncBatch([validItem], 'user-123');
-      expect(results[0].status).toBe('error');
-      expect(results[0].error).toContain('El registro en conflicto pertenece a otro usuario');
+      expect(results[0].status).toBe('success');
+      expect(results[0].conflict).toBeUndefined();
     });
 
     it('reports error if zone does not exist in batch', async () => {
@@ -217,7 +226,7 @@ describe('plantingService', () => {
       mockZoneRepository.findByIds.mockResolvedValue([{ id: 1, name: 'Zona Norte', geometry: { type: 'Polygon', coordinates: [[[-78.6, -0.3], [-78.5, -0.3], [-78.5, -0.2], [-78.6, -0.2], [-78.6, -0.3]]] } }]);
       mockSpeciesRepository.findByIds.mockResolvedValue([{ id: 1, common_name: 'Cedro' }]);
       mockPlantingRepository.isPointInZone.mockResolvedValue(true);
-      mockPlantingRepository.create.mockResolvedValue({ id: 10 });
+      mockPlantingRepository.upsert.mockResolvedValue({ id: 10, inserted: true });
 
       const items = [validItem, { ...validItem, zone_id: 999 }, validItem];
       const results = await plantingService.syncBatch(items, 'user-123');
@@ -227,15 +236,16 @@ describe('plantingService', () => {
       expect(results[2].status).toBe('success');
     });
 
-    it('handles non-unique-violation error during create', async () => {
+    it('does not leak internal DB error during upsert', async () => {
       mockZoneRepository.findByIds.mockResolvedValue([{ id: 1, name: 'Zona Norte', geometry: { type: 'Polygon', coordinates: [[[-78.6, -0.3], [-78.5, -0.3], [-78.5, -0.2], [-78.6, -0.2], [-78.6, -0.3]]] } }]);
       mockSpeciesRepository.findByIds.mockResolvedValue([{ id: 1, common_name: 'Cedro' }]);
       mockPlantingRepository.isPointInZone.mockResolvedValue(true);
-      mockPlantingRepository.create.mockRejectedValue(new Error('DB constraint error'));
+      mockPlantingRepository.upsert.mockRejectedValue(new Error('DB constraint error'));
 
       const results = await plantingService.syncBatch([validItem], 'user-123');
       expect(results[0].status).toBe('error');
-      expect(results[0].error).toContain('DB constraint error');
+      expect(results[0].error).toBe('Error al guardar el registro en la base de datos');
+      expect(results[0].error).not.toContain('DB constraint error');
     });
 
     it('handles pre-fetch errors', async () => {

@@ -31,14 +31,48 @@ describe('monitoringController', () => {
   });
 
   describe('getByPlantingSiteId', () => {
-    it('returns monitoring history', async () => {
-      mockService.getByPlantingSiteId.mockResolvedValue([{ id: 1, survival_status: 'alive' }]);
+    it('returns monitoring history with pagination', async () => {
+      mockService.getByPlantingSiteId.mockResolvedValue({ rows: [{ id: 1, survival_status: 'alive' }], total: 1 });
       req.params.plantingSiteId = '1';
+      req.query = {};
 
       await controller.getByPlantingSiteId(req, res, next);
 
-      expect(mockService.getByPlantingSiteId).toHaveBeenCalledWith(1);
-      expect(res.json).toHaveBeenCalledWith({ data: [{ id: 1, survival_status: 'alive' }] });
+      expect(mockService.getByPlantingSiteId).toHaveBeenCalledWith(1, 1, 50);
+      expect(res.json).toHaveBeenCalledWith({
+        data: [{ id: 1, survival_status: 'alive' }],
+        meta: { page: 1, limit: 50, total: 1, totalPages: 1 },
+      });
+    });
+
+    it('respects page and limit query params', async () => {
+      mockService.getByPlantingSiteId.mockResolvedValue({ rows: [], total: 0 });
+      req.params.plantingSiteId = '1';
+      req.query = { page: '3', limit: '20' };
+
+      await controller.getByPlantingSiteId(req, res, next);
+
+      expect(mockService.getByPlantingSiteId).toHaveBeenCalledWith(1, 3, 20);
+    });
+
+    it('caps limit at MAX_PAGE_SIZE', async () => {
+      mockService.getByPlantingSiteId.mockResolvedValue({ rows: [], total: 0 });
+      req.params.plantingSiteId = '1';
+      req.query = { page: '1', limit: '500' };
+
+      await controller.getByPlantingSiteId(req, res, next);
+
+      expect(mockService.getByPlantingSiteId).toHaveBeenCalledWith(1, 1, 100);
+    });
+
+    it('caps page at MAX_PAGE', async () => {
+      mockService.getByPlantingSiteId.mockResolvedValue({ rows: [], total: 0 });
+      req.params.plantingSiteId = '1';
+      req.query = { page: '999999999', limit: '10' };
+
+      await controller.getByPlantingSiteId(req, res, next);
+
+      expect(mockService.getByPlantingSiteId).toHaveBeenCalledWith(1, 100000, 10);
     });
   });
 
@@ -77,6 +111,7 @@ describe('monitoringController', () => {
       const error = new Error('Get history failed');
       mockService.getByPlantingSiteId.mockRejectedValue(error);
       req.params.plantingSiteId = '1';
+      req.query = {};
 
       await controller.getByPlantingSiteId(req, res, next);
 

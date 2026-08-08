@@ -321,7 +321,13 @@ describe('Express app', () => {
     });
     const helmetCall = helmetMock.mock.calls[0][0];
     expect(helmetCall.contentSecurityPolicy).not.toBe(false);
-    expect(helmetCall.contentSecurityPolicy.directives.defaultSrc).toEqual(["'self'"]);
+    const csp = helmetCall.contentSecurityPolicy.directives;
+    expect(csp.defaultSrc).toEqual(["'self'"]);
+    expect(csp.scriptSrc).toEqual(["'self'"]);
+    expect(csp.styleSrc).not.toContain('https://cdn.ngrok.com');
+    expect(csp.fontSrc).not.toContain('https://assets.ngrok.com');
+    expect(csp.imgSrc).not.toContain('https://cdnjs.cloudflare.com');
+    expect(csp.connectSrc).toEqual(["'self'", "https://*.tile.openstreetmap.org", "wss://*.supabase.co", "https://*.supabase.co"]);
     delete process.env.NODE_ENV;
   });
 });

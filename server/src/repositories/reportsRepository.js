@@ -24,8 +24,7 @@ const getSurvivalRate = async (filters = {}) => {
 };
 
 const getSurvivalRateBySpecies = async (filters = {}) => {
-  const { conditions, params } = buildWhereClause(filters, 'ps');
-  const joinClause = conditions.length > 0 ? `AND ${conditions.join(' AND ')}` : '';
+  const { where, params } = buildWhereClause(filters, 'ps');
 
   const result = await db.query(`
     ${latestMonitoringCte}
@@ -37,8 +36,9 @@ const getSurvivalRateBySpecies = async (filters = {}) => {
       COUNT(CASE WHEN lm.survival_status = 'struggling' THEN 1 END)::int AS struggling,
       COUNT(CASE WHEN lm.survival_status = 'dead' THEN 1 END)::int AS dead
     FROM species s
-    LEFT JOIN planting_sites ps ON ps.species_id = s.id ${joinClause}
+    LEFT JOIN planting_sites ps ON ps.species_id = s.id
     LEFT JOIN latest_monitoring lm ON lm.planting_site_id = ps.id
+    ${where}
     GROUP BY s.id, s.common_name, s.scientific_name
     ORDER BY total_planted DESC
   `, params);
@@ -47,8 +47,7 @@ const getSurvivalRateBySpecies = async (filters = {}) => {
 };
 
 const getSurvivalRateByZone = async (filters = {}) => {
-  const { conditions, params } = buildWhereClause(filters, 'ps');
-  const joinClause = conditions.length > 0 ? `AND ${conditions.join(' AND ')}` : '';
+  const { where, params } = buildWhereClause(filters, 'ps');
 
   const result = await db.query(`
     ${latestMonitoringCte}
@@ -60,8 +59,9 @@ const getSurvivalRateByZone = async (filters = {}) => {
       COUNT(CASE WHEN lm.survival_status = 'struggling' THEN 1 END)::int AS struggling,
       COUNT(CASE WHEN lm.survival_status = 'dead' THEN 1 END)::int AS dead
     FROM intervention_zones z
-    LEFT JOIN planting_sites ps ON ps.zone_id = z.id ${joinClause}
+    LEFT JOIN planting_sites ps ON ps.zone_id = z.id
     LEFT JOIN latest_monitoring lm ON lm.planting_site_id = ps.id
+    ${where}
     GROUP BY z.id, z.name
     ORDER BY total_plantings DESC
   `, params);

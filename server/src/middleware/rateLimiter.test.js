@@ -9,8 +9,15 @@ const rateLimitMock = vi.fn((opts) => ({
   getKey: vi.fn(),
 }));
 
+class MockPostgresRateLimitStore {
+  constructor({ windowMs }) {
+    this.windowMs = windowMs;
+  }
+}
+
 const { authLimiter, signupLimiter, photoLimiter, writeLimiter } = proxyquire('./rateLimiter', {
   'express-rate-limit': rateLimitMock,
+  './rateLimitStore': { PostgresRateLimitStore: MockPostgresRateLimitStore },
 });
 
 describe('rateLimiter', () => {
@@ -63,5 +70,12 @@ describe('rateLimiter', () => {
     expect(photoLimiter.max).toBe(30);
     expect(photoLimiter.standardHeaders).toBe(true);
     expect(photoLimiter.legacyHeaders).toBe(false);
+  });
+
+  it('uses a PostgresRateLimitStore on every limiter', () => {
+    expect(authLimiter.store).toBeInstanceOf(MockPostgresRateLimitStore);
+    expect(signupLimiter.store).toBeInstanceOf(MockPostgresRateLimitStore);
+    expect(photoLimiter.store).toBeInstanceOf(MockPostgresRateLimitStore);
+    expect(writeLimiter.store).toBeInstanceOf(MockPostgresRateLimitStore);
   });
 });

@@ -1,10 +1,5 @@
-if (process.env.NODE_ENV !== 'production') {
-  process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
-}
-
 const { createClient } = require('@supabase/supabase-js');
 const ws = require('ws');
-const logger = require('../utils/logger');
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -14,7 +9,13 @@ if (!supabaseUrl || !supabaseServiceKey) {
   throw new Error('SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be defined in environment');
 }
 
-const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+if (!supabaseAnonKey) {
+  throw new Error(
+    'SUPABASE_ANON_KEY must be defined in environment — used for user-facing auth (login/signup) with RLS isolation',
+  );
+}
+
+const clientOptions = {
   auth: {
     autoRefreshToken: false,
     persistSession: false,
@@ -22,22 +23,9 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey, {
   realtime: {
     transport: ws,
   },
-});
+};
 
-if (!supabaseAnonKey) {
-  logger.warn('SUPABASE_ANON_KEY no definida — supabaseAnon usará la service role key. Configúrala para un correcto aislamiento de permisos.');
-}
-
-const supabaseAnon = supabaseAnonKey
-  ? createClient(supabaseUrl, supabaseAnonKey, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
-      realtime: {
-        transport: ws,
-      },
-    })
-  : supabase;
+const supabase = createClient(supabaseUrl, supabaseServiceKey, clientOptions);
+const supabaseAnon = createClient(supabaseUrl, supabaseAnonKey, clientOptions);
 
 module.exports = { supabase, supabaseAnon };

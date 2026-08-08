@@ -42,9 +42,9 @@ describe('parseQueryFilters', () => {
     expect(result).toEqual({ from: '2026-01-01', to: '2026-06-30' });
   });
 
-  it('parses interval', () => {
+  it('ignores unsupported filters like interval', () => {
     const result = parseQueryFilters({ interval: 'month' });
-    expect(result).toEqual({ interval: 'month' });
+    expect(result).toEqual({});
   });
 
   it('returns empty object when no filters', () => {

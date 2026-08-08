@@ -7,22 +7,25 @@ const parseId = require('../utils/parseId');
 const logger = require('../utils/logger');
 
 const MAGIC_BYTES = {
-  'image/jpeg': [0xFF, 0xD8, 0xFF],
-  'image/png': [0x89, 0x50, 0x4E, 0x47],
-  'image/webp': [0x52, 0x49, 0x46, 0x46],
+  'image/jpeg': [{ offset: 0, bytes: [0xFF, 0xD8, 0xFF] }],
+  'image/png': [{ offset: 0, bytes: [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A] }],
+  'image/webp': [
+    { offset: 0, bytes: [0x52, 0x49, 0x46, 0x46] },
+    { offset: 8, bytes: [0x57, 0x45, 0x42, 0x50] },
+  ],
 };
 
-const matchesMagicBytes = (buffer, expected) => {
-  if (buffer.length < expected.length) return false;
-  for (let i = 0; i < expected.length; i++) {
-    if (buffer[i] !== expected[i]) return false;
+const matchesSignature = (buffer, { offset, bytes }) => {
+  if (buffer.length < offset + bytes.length) return false;
+  for (let i = 0; i < bytes.length; i++) {
+    if (buffer[offset + i] !== bytes[i]) return false;
   }
   return true;
 };
 
 const validateFileContent = (file) => {
-  const expected = MAGIC_BYTES[file.mimetype];
-  if (!expected || !matchesMagicBytes(file.buffer, expected)) {
+  const signatures = MAGIC_BYTES[file.mimetype];
+  if (!signatures || !signatures.every((sig) => matchesSignature(file.buffer, sig))) {
     throw new AppError('El archivo no coincide con el formato de imagen declarado', 400);
   }
 };
@@ -38,10 +41,10 @@ const upload = asyncHandler(async (req, res) => {
 
   await plantingService.getById(id);
 
-  const { publicUrl, filePath } = await photoService.uploadPhoto(id, req.file);
+  const { filePath } = await photoService.uploadPhoto(id, req.file);
 
   try {
-    const updated = await plantingService.updatePhotoUrl(id, publicUrl);
+    const updated = await plantingService.updatePhotoUrl(id, filePath);
     respond(res, { photo_url: updated.photo_url }, { message: 'Foto subida correctamente' });
   } catch (error) {
     try {

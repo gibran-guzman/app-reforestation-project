@@ -32,6 +32,22 @@ describe('plantingRepository', () => {
     });
   });
 
+  describe('upsert', () => {
+    it('inserts or updates on conflict key and returns the row', async () => {
+      const row = { ...fakeColumnsRow, inserted: true };
+      mockDb.query.mockResolvedValue({ rows: [row] });
+
+      const data = { zone_id: 10, species_id: 20, location: { lng: -78.524, lat: -0.229 }, planted_at: '2026-06-01', planted_by: 'user-1', initial_ph: 6.5, initial_humidity: 70, initial_soil_texture: 'loam' };
+      const result = await plantingRepository.upsert(data);
+
+      expect(result).toEqual(row);
+      expect(mockDb.query).toHaveBeenCalledWith(
+        expect.stringContaining('ON CONFLICT (zone_id, species_id, planted_at, planted_by)'),
+        [10, 20, -78.524, -0.229, '2026-06-01', 'user-1', 6.5, 70, 'loam'],
+      );
+    });
+  });
+
   describe('findById', () => {
     it('returns the planting site with joins when found', async () => {
       const row = { ...fakeColumnsRow, species_name: 'Oak', zone_name: 'Zone A' };
@@ -52,76 +68,6 @@ describe('plantingRepository', () => {
       const result = await plantingRepository.findById(999);
 
       expect(result).toBeNull();
-    });
-  });
-
-  describe('findByConflictKey', () => {
-    it('returns matching site when found', async () => {
-      mockDb.query.mockResolvedValue({ rows: [fakeColumnsRow] });
-
-      const result = await plantingRepository.findByConflictKey(10, 20, '2026-06-01', 'user-1');
-
-      expect(result).toEqual(fakeColumnsRow);
-      expect(mockDb.query).toHaveBeenCalledWith(
-        expect.stringContaining('zone_id = $1 AND species_id = $2'),
-        [10, 20, '2026-06-01', 'user-1'],
-      );
-    });
-
-    it('returns null when no conflict', async () => {
-      mockDb.query.mockResolvedValue({ rows: [] });
-
-      const result = await plantingRepository.findByConflictKey(10, 20, '2026-06-01', 'user-1');
-
-      expect(result).toBeNull();
-    });
-  });
-
-  describe('update', () => {
-    it('updates specified fields and returns updated record', async () => {
-      const updatedRow = { ...fakeColumnsRow, initial_ph: 7 };
-      mockDb.query.mockResolvedValue({ rows: [updatedRow] });
-
-      const result = await plantingRepository.update(1, { initial_ph: 7 });
-
-      expect(result).toEqual(updatedRow);
-      expect(mockDb.query).toHaveBeenCalledWith(
-        expect.stringContaining('UPDATE planting_sites'),
-        [7, 1],
-      );
-    });
-
-    it('updates initial_humidity and initial_soil_texture', async () => {
-      mockDb.query.mockResolvedValue({ rows: [{ ...fakeColumnsRow }] });
-
-      await plantingRepository.update(1, { initial_humidity: 80, initial_soil_texture: 'clay' });
-
-      const params = mockDb.query.mock.calls[0][1];
-      expect(params).toContain(80);
-      expect(params).toContain('clay');
-    });
-
-    it('updates location', async () => {
-      mockDb.query.mockResolvedValue({ rows: [{ ...fakeColumnsRow }] });
-
-      await plantingRepository.update(1, { location: { lng: -78.5, lat: -0.2 } });
-
-      expect(mockDb.query).toHaveBeenCalledWith(
-        expect.stringContaining('ST_SetSRID(ST_MakePoint'),
-        [-78.5, -0.2, 1],
-      );
-    });
-
-    it('returns existing record when no fields to update', async () => {
-      mockDb.query.mockResolvedValue({ rows: [fakeColumnsRow] });
-
-      const result = await plantingRepository.update(1, {});
-
-      expect(result).toEqual(fakeColumnsRow);
-      expect(mockDb.query).toHaveBeenCalledWith(
-        expect.stringContaining('SELECT'),
-        [1],
-      );
     });
   });
 
