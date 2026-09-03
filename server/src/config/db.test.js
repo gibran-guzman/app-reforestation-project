@@ -54,11 +54,11 @@ describe('db config', () => {
     expect(db.query).toBeDefined();
   });
 
-  it('sets ssl with rejectUnauthorized false by default', () => {
+  it('does not enable ssl by default (local connections)', () => {
     loadDb({ DATABASE_URL: 'postgres://user:pass@localhost:5432/db' });
 
     const poolOpts = mockPg.Pool.mock.calls[0][0];
-    expect(poolOpts.ssl).toEqual({ rejectUnauthorized: true });
+    expect(poolOpts.ssl).toBeUndefined();
   });
 
   it('sets ssl with rejectUnauthorized false when DB_SSL_REJECT_UNAUTHORIZED is false', () => {
@@ -71,19 +71,28 @@ describe('db config', () => {
     expect(poolOpts.ssl).toEqual({ rejectUnauthorized: false });
   });
 
-  it('sets ssl to undefined when DATABASE_URL includes sslmode=require', () => {
+  it('sets ssl with rejectUnauthorized true when DB_SSL_REJECT_UNAUTHORIZED is true', () => {
+    loadDb({
+      DATABASE_URL: 'postgres://user:pass@localhost:5432/db',
+      DB_SSL_REJECT_UNAUTHORIZED: 'true',
+    });
+
+    const poolOpts = mockPg.Pool.mock.calls[0][0];
+    expect(poolOpts.ssl).toEqual({ rejectUnauthorized: true });
+  });
+
+  it('enables verified ssl when DATABASE_URL includes sslmode=require', () => {
     loadDb({
       DATABASE_URL: 'postgres://user:pass@host:5432/db?sslmode=require',
     });
 
     const poolOpts = mockPg.Pool.mock.calls[0][0];
-    expect(poolOpts.ssl).toBeUndefined();
+    expect(poolOpts.ssl).toEqual({ rejectUnauthorized: true });
   });
 
-  it('handles DATABASE_URL with sslmode=require even when DB_SSL_REJECT_UNAUTHORIZED is not false', () => {
+  it('keeps ssl disabled when DATABASE_URL includes sslmode=disable', () => {
     loadDb({
-      DATABASE_URL: 'postgres://user:pass@host:5432/db?sslmode=require',
-      DB_SSL_REJECT_UNAUTHORIZED: 'true',
+      DATABASE_URL: 'postgres://user:pass@localhost:5432/db?sslmode=disable',
     });
 
     const poolOpts = mockPg.Pool.mock.calls[0][0];

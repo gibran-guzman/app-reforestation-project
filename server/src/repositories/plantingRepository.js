@@ -21,11 +21,44 @@ const listColumns = [
   'iz.name AS zone_name',
 ];
 
-const create = async (data) => {
-  const result = await db.query(`
+const create = async (clientOrData, maybeData) => {
+  const client = typeof clientOrData.query === 'function' ? clientOrData : null;
+  const data = client ? maybeData : clientOrData;
+  const run = client ? (text, params) => client.query(text, params) : (text, params) => db.query(text, params);
+
+  const result = await run(`
     INSERT INTO planting_sites (zone_id, species_id, location, planted_at, planted_by, initial_ph, initial_humidity, initial_soil_texture)
     VALUES ($1, $2, ST_SetSRID(ST_MakePoint($3, $4), 4326), $5, $6, $7, $8, $9)
     RETURNING ${columns.join(', ')}
+  `, [
+    data.zone_id,
+    data.species_id,
+    data.location.lng,
+    data.location.lat,
+    data.planted_at,
+    data.planted_by,
+    data.initial_ph,
+    data.initial_humidity,
+    data.initial_soil_texture,
+  ]);
+  return result.rows[0];
+};
+
+const upsert = async (clientOrData, maybeData) => {
+  const client = typeof clientOrData.query === 'function' ? clientOrData : null;
+  const data = client ? maybeData : clientOrData;
+  const run = client ? (text, params) => client.query(text, params) : (text, params) => db.query(text, params);
+
+  const result = await run(`
+    INSERT INTO planting_sites (zone_id, species_id, location, planted_at, planted_by, initial_ph, initial_humidity, initial_soil_texture)
+    VALUES ($1, $2, ST_SetSRID(ST_MakePoint($3, $4), 4326), $5, $6, $7, $8, $9)
+    ON CONFLICT (zone_id, species_id, planted_at, planted_by)
+    DO UPDATE SET
+      location = EXCLUDED.location,
+      initial_ph = EXCLUDED.initial_ph,
+      initial_humidity = EXCLUDED.initial_humidity,
+      initial_soil_texture = EXCLUDED.initial_soil_texture
+    RETURNING ${columns.join(', ')}, (xmax = 0) AS inserted
   `, [
     data.zone_id,
     data.species_id,
@@ -49,39 +82,6 @@ const findById = async (id) => {
     WHERE ps.id = $1
   `, [id]);
   return result.rows[0] || null;
-};
-
-const findByConflictKey = async (zoneId, speciesId, plantedAt, plantedBy) => {
-  const result = await db.query(`
-    SELECT ${columns.join(', ')}
-    FROM planting_sites
-    WHERE zone_id = $1 AND species_id = $2 AND planted_at::date = $3::date AND planted_by = $4
-    LIMIT 1
-  `, [zoneId, speciesId, plantedAt, plantedBy]);
-  return result.rows[0] || null;
-};
-
-const update = async (id, data) => {
-  const sets = [];
-  const values = [];
-  let i = 1;
-
-  if (data.initial_ph !== undefined) { sets.push(`initial_ph = $${i++}`); values.push(data.initial_ph); }
-  if (data.initial_humidity !== undefined) { sets.push(`initial_humidity = $${i++}`); values.push(data.initial_humidity); }
-  if (data.initial_soil_texture !== undefined) { sets.push(`initial_soil_texture = $${i++}`); values.push(data.initial_soil_texture); }
-  if (data.location !== undefined) {
-    sets.push(`location = ST_SetSRID(ST_MakePoint($${i++}, $${i++}), 4326)`);
-    values.push(data.location.lng, data.location.lat);
-  }
-
-  if (sets.length === 0) return findById(id);
-
-  values.push(id);
-  const result = await db.query(`
-    UPDATE planting_sites SET ${sets.join(', ')} WHERE id = $${i}
-    RETURNING ${columns.join(', ')}
-  `, values);
-  return result.rows[0];
 };
 
 const isPointInZone = async (lat, lng, zoneId) => {
@@ -159,4 +159,4 @@ const updatePhotoUrl = async (id, photoUrl) => {
   return result.rows[0];
 };
 
-module.exports = { create, findAll, findById, findByConflictKey, update, isPointInZone, updatePhotoUrl, findGeoJson };
+module.exports = { create, upsert, findAll, findById, isPointInZone, updatePhotoUrl, findGeoJson };

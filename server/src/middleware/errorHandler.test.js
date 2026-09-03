@@ -75,13 +75,13 @@ describe('errorHandler middleware', () => {
     });
   });
 
-  it('uses error status property if it exists', () => {
+  it('always responds 500 for non-app errors regardless of err.status', () => {
     const err = new Error('Custom');
     err.status = 429;
 
     errorHandler(err, req, res, next);
 
-    expect(res.status).toHaveBeenCalledWith(429);
+    expect(res.status).toHaveBeenCalledWith(500);
   });
 
   it('defaults to 500 if no status', () => {
@@ -92,6 +92,16 @@ describe('errorHandler middleware', () => {
     expect(res.status).toHaveBeenCalledWith(500);
   });
 
+  it('maps malformed JSON body to 400 Bad Request', () => {
+    const err = new Error('Unexpected token } in JSON');
+    err.type = 'entity.parse.failed';
+
+    errorHandler(err, req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({ error: 'El cuerpo de la solicitud no es JSON válido' });
+  });
+
   it('maps postgres 22P02 to 400 Bad Request', () => {
     const err = new Error('Invalid input syntax');
     err.code = '22P02';
@@ -100,5 +110,25 @@ describe('errorHandler middleware', () => {
 
     expect(res.status).toHaveBeenCalledWith(400);
     expect(res.json).toHaveBeenCalledWith({ error: 'Parámetro de consulta inválido' });
+  });
+
+  it('maps multer LIMIT_FILE_SIZE to 413 Payload Too Large', () => {
+    const err = new Error('File too large');
+    err.code = 'LIMIT_FILE_SIZE';
+
+    errorHandler(err, req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(413);
+    expect(res.json).toHaveBeenCalledWith({ error: 'El archivo supera el tamaño máximo permitido' });
+  });
+
+  it('maps multer LIMIT_UNEXPECTED_FILE to 400 Bad Request', () => {
+    const err = new Error('Unexpected field');
+    err.code = 'LIMIT_UNEXPECTED_FILE';
+
+    errorHandler(err, req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({ error: 'Archivo inesperado en la solicitud' });
   });
 });

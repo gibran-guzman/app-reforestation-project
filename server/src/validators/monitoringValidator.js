@@ -1,6 +1,6 @@
 const { ValidationError } = require('../errors/AppError');
 const { SOIL_TEXTURES, SOIL_TEXTURE_VALUES, SURVIVAL_STATUS_LABELS, SURVIVAL_STATUS_VALUES, VIGOR_LABELS, VIGOR_VALUES, MAX_NOTE_LENGTH } = require('../config/constants');
-const { validateRange } = require('../utils/validators');
+const { validateRange, todayLocal, validatePhotoUrl } = require('../utils/validators');
 
 const SOIL_TEXTURE_NAMES = SOIL_TEXTURES.map(t => t.label).join(', ');
 const SURVIVAL_STATUS_NAMES = SURVIVAL_STATUS_LABELS.map(l => l.label).join(', ');
@@ -46,13 +46,16 @@ const validateCreateMonitoring = (data) => {
     errors.push({ field: 'notes', message: `Las notas no deben exceder ${MAX_NOTE_LENGTH} caracteres` });
   }
 
+  const photoUrlErr = validatePhotoUrl(data.photo_url);
+  if (photoUrlErr) errors.push(photoUrlErr);
+
   if (errors.length > 0) {
     throw new ValidationError(errors);
   }
 
   return {
     planting_site_id: data.planting_site_id,
-    visit_date: data.visit_date || new Date().toISOString().split('T')[0],
+    visit_date: data.visit_date || todayLocal(),
     ph: data.ph != null ? Number(data.ph) : null,
     humidity: data.humidity != null ? Number(data.humidity) : null,
     soil_texture: data.soil_texture || null,

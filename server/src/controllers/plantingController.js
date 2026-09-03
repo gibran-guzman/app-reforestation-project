@@ -3,7 +3,7 @@ const { parseQueryFilters } = require('../utils/queryBuilder');
 const asyncHandler = require('../utils/asyncHandler');
 const { respond, respondPaginated } = require('../utils/response');
 const parseId = require('../utils/parseId');
-const { MAX_BATCH_ITEMS, DEFAULT_PAGE, DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE } = require('../config/constants');
+const { MAX_BATCH_ITEMS, DEFAULT_PAGE, MAX_PAGE, DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE } = require('../config/constants');
 
 const create = asyncHandler(async (req, res) => {
   const planting = await plantingService.create(req.body, req.user.id);
@@ -23,7 +23,7 @@ const syncBatch = asyncHandler(async (req, res) => {
 });
 
 const getAll = asyncHandler(async (req, res) => {
-  const page = Math.max(DEFAULT_PAGE, parseInt(req.query.page, 10) || DEFAULT_PAGE);
+  const page = Math.min(MAX_PAGE, Math.max(DEFAULT_PAGE, parseInt(req.query.page, 10) || DEFAULT_PAGE));
   const limit = Math.min(MAX_PAGE_SIZE, Math.max(1, parseInt(req.query.limit, 10) || DEFAULT_PAGE_SIZE));
   const filters = parseQueryFilters(req.query);
   const result = await plantingService.getAll(page, limit, filters);

@@ -62,7 +62,6 @@ const parseQueryFilters = (query) => {
     filters.to = query.to;
   }
 
-  if (query.interval) filters.interval = query.interval;
   return filters;
 };
 

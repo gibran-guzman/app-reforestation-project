@@ -2,6 +2,7 @@ const monitoringRepository = require('../repositories/monitoringRepository');
 const plantingRepository = require('../repositories/plantingRepository');
 const { NotFoundError } = require('../errors/AppError');
 const logger = require('../utils/logger');
+const { signPhotoRow, signPhotoRows } = require('../utils/signPhoto');
 
 const create = async (body, userId) => {
   const planting = await plantingRepository.findById(body.planting_site_id);
@@ -15,17 +16,18 @@ const create = async (body, userId) => {
   });
 
   logger.info({ monitoring_id: record.id, planting_site_id: record.planting_site_id }, 'Monitoring record created');
-  return record;
+  return signPhotoRow(record);
 };
 
-const getByPlantingSiteId = async (plantingSiteId) => {
+const getByPlantingSiteId = async (plantingSiteId, page = 1, limit = 50) => {
   const planting = await plantingRepository.findById(plantingSiteId);
   if (!planting) {
     throw new NotFoundError('Plantación no encontrada');
   }
 
-  const { rows } = await monitoringRepository.findByPlantingSiteId(plantingSiteId);
-  return rows;
+  const result = await monitoringRepository.findByPlantingSiteId(plantingSiteId, page, limit);
+  result.rows = await signPhotoRows(result.rows);
+  return result;
 };
 
 const getById = async (id) => {
@@ -33,7 +35,7 @@ const getById = async (id) => {
   if (!record) {
     throw new NotFoundError('Registro de monitoreo no encontrado');
   }
-  return record;
+  return signPhotoRow(record);
 };
 
 module.exports = { create, getByPlantingSiteId, getById };

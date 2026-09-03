@@ -5,7 +5,7 @@ const proxyquire = cjsRequire('proxyquire').noPreserveCache();
 
 const mockStorageBucket = {
   upload: vi.fn(),
-  getPublicUrl: vi.fn(() => ({ data: { publicUrl: 'https://example.com/photo.jpg' } })),
+  createSignedUrl: vi.fn(() => ({ data: { signedUrl: 'https://example.com/signed/photo.jpg?token=abc' }, error: null })),
   remove: vi.fn(),
 };
 
@@ -37,12 +37,12 @@ describe('photoService', () => {
 
       await photoService.ensureBucket();
       expect(mockSupabaseClient.storage.createBucket).toHaveBeenCalledWith('planting-photos', {
-        public: true,
+        public: false,
         fileSizeLimit: 5 * 1024 * 1024,
       });
     });
 
-    it('updates existing bucket to ensure public access', async () => {
+    it('updates existing bucket to ensure private access', async () => {
       mockSupabaseClient.storage.listBuckets.mockResolvedValue({
         data: [{ name: 'planting-photos' }],
         error: null,
@@ -52,7 +52,7 @@ describe('photoService', () => {
       await photoService.ensureBucket();
       expect(mockSupabaseClient.storage.createBucket).not.toHaveBeenCalled();
       expect(mockSupabaseClient.storage.updateBucket).toHaveBeenCalledWith('planting-photos', {
-        public: true,
+        public: false,
         fileSizeLimit: 5 * 1024 * 1024,
       });
     });
@@ -90,12 +90,12 @@ describe('photoService', () => {
       buffer: Buffer.from('fake-image-data'),
     };
 
-    it('uploads photo and returns publicUrl and filePath', async () => {
+    it('uploads photo and returns filePath', async () => {
       mockStorageBucket.upload.mockResolvedValue({ data: {}, error: null });
 
       const result = await photoService.uploadPhoto(1, mockFile);
-      expect(result.publicUrl).toBe('https://example.com/photo.jpg');
       expect(result.filePath).toMatch(/^plantings\/1\//);
+      expect(result.publicUrl).toBeUndefined();
       expect(mockStorageBucket.upload).toHaveBeenCalledTimes(1);
     });
 
@@ -107,18 +107,46 @@ describe('photoService', () => {
       expect(uploadCall).toMatch(/\.png$/);
     });
 
-    it('defaults to webp for unknown mimetype', async () => {
+    it('rejects unknown mimetype instead of defaulting to webp', async () => {
       mockStorageBucket.upload.mockResolvedValue({ data: {}, error: null });
 
-      await photoService.uploadPhoto(1, { mimetype: 'image/gif', buffer: Buffer.from('gif-data') });
-      const uploadCall = mockStorageBucket.upload.mock.calls[0][0];
-      expect(uploadCall).toMatch(/\.webp$/);
+      await expect(
+        photoService.uploadPhoto(1, { mimetype: 'image/gif', buffer: Buffer.from('gif-data') }),
+      ).rejects.toThrow('Tipo de archivo no permitido');
+      expect(mockStorageBucket.upload).not.toHaveBeenCalled();
     });
 
     it('throws error if storage upload fails', async () => {
       mockStorageBucket.upload.mockResolvedValue({ data: null, error: new Error('Storage full') });
 
       await expect(photoService.uploadPhoto(1, mockFile)).rejects.toThrow();
+    });
+  });
+
+  describe('getSignedUrl', () => {
+    it('returns signed url for a filePath', async () => {
+      mockStorageBucket.createSignedUrl.mockResolvedValue({
+        data: { signedUrl: 'https://example.com/signed/plantings/1/photo.jpg?token=abc' },
+        error: null,
+      });
+
+      const url = await photoService.getSignedUrl('plantings/1/photo.jpg');
+
+      expect(mockStorageBucket.createSignedUrl).toHaveBeenCalledWith('plantings/1/photo.jpg', 3600);
+      expect(url).toBe('https://example.com/signed/plantings/1/photo.jpg?token=abc');
+    });
+
+    it('returns null for empty path', async () => {
+      const url = await photoService.getSignedUrl(null);
+      expect(url).toBeNull();
+      expect(mockStorageBucket.createSignedUrl).not.toHaveBeenCalled();
+    });
+
+    it('returns null if signing fails', async () => {
+      mockStorageBucket.createSignedUrl.mockResolvedValue({ data: null, error: new Error('Sign failed') });
+
+      const url = await photoService.getSignedUrl('plantings/1/photo.jpg');
+      expect(url).toBeNull();
     });
   });
 

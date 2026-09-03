@@ -75,4 +75,21 @@ describe('logger', () => {
 
     expect(pinoOpts.transport).toBeUndefined();
   });
+
+  it('redacts sensitive fields from log output', () => {
+    loadLogger({});
+
+    expect(pinoOpts.redact).toBeDefined();
+    expect(pinoOpts.redact.censor).toBe('[REDACTED]');
+    expect(pinoOpts.redact.paths).toEqual(
+      expect.arrayContaining([
+        'password',
+        'encrypted_password',
+        'refresh_token',
+        'access_token',
+        'req.headers.cookie',
+        'req.headers.authorization',
+      ]),
+    );
+  });
 });

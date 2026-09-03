@@ -123,4 +123,18 @@ const refresh = async (body) => {
   };
 };
 
-module.exports = { signup, login, refresh };
+const logout = async (refreshToken) => {
+  if (refreshToken) {
+    try {
+      const { error } = await supabase.auth.admin.signOut(refreshToken);
+      if (error) {
+        logger.warn({ err: error }, 'Error al revocar la sesión en Supabase durante logout');
+      }
+    } catch (err) {
+      logger.warn({ err }, 'Error inesperado al revocar la sesión en Supabase durante logout');
+    }
+  }
+  logger.info({ has_refresh_token: Boolean(refreshToken) }, 'User logged out');
+};
+
+module.exports = { signup, login, refresh, logout };

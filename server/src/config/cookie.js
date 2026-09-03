@@ -1,6 +1,6 @@
 const COOKIE_OPTIONS = {
   httpOnly: true,
-  secure: true,
+  secure: process.env.NODE_ENV === 'production' || process.env.COOKIE_SECURE === 'true',
   sameSite: 'lax',
   path: '/',
 };

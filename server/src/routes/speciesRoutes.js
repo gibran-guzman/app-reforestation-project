@@ -5,8 +5,8 @@ const { authenticate, authorize } = require('../middleware/auth');
 const validate = require('../middleware/validate');
 const { validateCreateSpecies, validateUpdateSpecies } = require('../validators/speciesValidator');
 
-router.get('/', speciesController.list);
-router.get('/:id', speciesController.getById);
+router.get('/', authenticate, speciesController.list);
+router.get('/:id', authenticate, speciesController.getById);
 router.post('/', authenticate, authorize('admin'), validate(validateCreateSpecies), speciesController.createSpecies);
 router.put('/:id', authenticate, authorize('admin'), validate(validateUpdateSpecies), speciesController.update);
 router.delete('/:id', authenticate, authorize('admin'), speciesController.remove);

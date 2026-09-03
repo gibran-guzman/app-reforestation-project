@@ -2,10 +2,12 @@ const plantingRepository = require('../repositories/plantingRepository');
 const speciesRepository = require('../repositories/speciesRepository');
 const zoneRepository = require('../repositories/zoneRepository');
 const monitoringRepository = require('../repositories/monitoringRepository');
+const db = require('../config/db');
 const { AppError, NotFoundError, ValidationError } = require('../errors/AppError');
-const pgCodes = require('../errors/pgCodes');
 const logger = require('../utils/logger');
 const { CONCURRENCY_LIMIT } = require('../config/constants');
+const { validateSyncItem } = require('../validators/plantingValidator');
+const { signPhotoRows, signPhotoRow } = require('../utils/signPhoto');
 
 const create = async (body, userId) => {
   const [zone, species] = await Promise.all([
@@ -39,22 +41,26 @@ const create = async (body, userId) => {
     }
   }
 
-  const planting = await plantingRepository.create({
-    zone_id: body.zone_id,
-    species_id: body.species_id,
-    location: body.location,
-    planted_at: body.planted_at,
-    initial_ph: body.initial_ph,
-    initial_humidity: body.initial_humidity,
-    initial_soil_texture: body.initial_soil_texture,
-    planted_by: userId,
-  });
+  const planting = await db.withTransaction(async (client) => {
+    const created = await plantingRepository.create(client, {
+      zone_id: body.zone_id,
+      species_id: body.species_id,
+      location: body.location,
+      planted_at: body.planted_at,
+      initial_ph: body.initial_ph,
+      initial_humidity: body.initial_humidity,
+      initial_soil_texture: body.initial_soil_texture,
+      planted_by: userId,
+    });
 
-  await monitoringRepository.create({
-    planting_site_id: planting.id,
-    survival_status: body.initial_survival_status,
-    visit_date: body.planted_at || planting.planted_at,
-    monitored_by: userId,
+    await monitoringRepository.create(client, {
+      planting_site_id: created.id,
+      survival_status: body.initial_survival_status,
+      visit_date: body.planted_at || created.planted_at,
+      monitored_by: userId,
+    });
+
+    return created;
   });
 
   logger.info({ planting_id: planting.id, zone_id: planting.zone_id, species_id: planting.species_id, initial_status: body.initial_survival_status }, 'Planting site registered');
@@ -63,12 +69,23 @@ const create = async (body, userId) => {
 
 const processItem = async (item, i, zoneMap, speciesMap, userId) => {
   try {
-    const zone = zoneMap.get(item.zone_id);
+    const validation = validateSyncItem(item);
+    if (!validation.valid) {
+      return {
+        index: i,
+        status: 'error',
+        error: validation.errors.map((e) => e.message).join('; '),
+        fields: validation.errors,
+      };
+    }
+    const clean = validation.data;
+
+    const zone = zoneMap.get(clean.zone_id);
     if (!zone) {
       return { index: i, status: 'error', error: 'Zona de intervención no encontrada' };
     }
 
-    const species = speciesMap.get(item.species_id);
+    const species = speciesMap.get(clean.species_id);
     if (!species) {
       return { index: i, status: 'error', error: 'Especie no encontrada' };
     }
@@ -77,9 +94,9 @@ const processItem = async (item, i, zoneMap, speciesMap, userId) => {
       let inside;
       try {
         inside = await plantingRepository.isPointInZone(
-          item.location.lat,
-          item.location.lng,
-          item.zone_id,
+          clean.location.lat,
+          clean.location.lng,
+          clean.zone_id,
         );
       } catch {
         return { index: i, status: 'error', error: 'Error al validar la ubicación contra la zona de intervención' };
@@ -90,31 +107,41 @@ const processItem = async (item, i, zoneMap, speciesMap, userId) => {
     }
 
     try {
-      const planting = await plantingRepository.create({ ...item, planted_by: userId });
-      logger.info({ planting_id: planting.id }, 'Planting created via sync');
-      return { index: i, status: 'success', data: planting };
-    } catch (err) {
-      if (err.code === pgCodes.UNIQUE_VIOLATION) {
-        const existing = await plantingRepository.findByConflictKey(
-          item.zone_id,
-          item.species_id,
-          item.planted_at,
-          userId,
-        );
-        if (!existing || existing.planted_by !== userId) {
-          return { index: i, status: 'error', error: 'El registro en conflicto pertenece a otro usuario' };
+      const planting = await db.withTransaction(async (client) => {
+        const upserted = await plantingRepository.upsert(client, { ...clean, planted_by: userId });
+        if (clean.initial_survival_status) {
+          await monitoringRepository.create(client, {
+            planting_site_id: upserted.id,
+            survival_status: clean.initial_survival_status,
+            visit_date: clean.planted_at || upserted.planted_at,
+            monitored_by: userId,
+          });
         }
-        const updated = await plantingRepository.update(existing.id, { ...item });
-        logger.info({ planting_id: updated.id }, 'Planting updated via sync (last writer wins)');
-        return { index: i, status: 'success', data: updated, conflict: 'resolved' };
-      }
-      throw err;
+        return upserted;
+      });
+
+      const inserted = planting.inserted === true;
+      logger.info({ planting_id: planting.id, conflict: !inserted }, 'Planting upserted via sync');
+      return {
+        index: i,
+        status: 'success',
+        data: planting,
+        ...(inserted ? {} : { conflict: 'resolved' }),
+      };
+    } catch (err) {
+      logger.warn({ err, index: i }, 'Error al procesar ítem del sync en la base de datos');
+      return {
+        index: i,
+        status: 'error',
+        error: 'Error al guardar el registro en la base de datos',
+      };
     }
   } catch (error) {
+    logger.warn({ err: error, index: i }, 'Error inesperado al procesar ítem del sync');
     return {
       index: i,
       status: 'error',
-      error: error?.message || (typeof error === 'string' ? error : 'Error al procesar el registro'),
+      error: 'Error al procesar el registro',
     };
   }
 };
@@ -155,7 +182,9 @@ const syncBatch = async (items, userId) => {
 };
 
 const getAll = async (page, limit, filters = {}) => {
-  return plantingRepository.findAll(page, limit, filters);
+  const result = await plantingRepository.findAll(page, limit, filters);
+  result.rows = await signPhotoRows(result.rows);
+  return result;
 };
 
 const getById = async (id) => {
@@ -163,13 +192,13 @@ const getById = async (id) => {
   if (!planting) {
     throw new NotFoundError('Plantación no encontrada');
   }
-  return planting;
+  return signPhotoRow(planting);
 };
 
 const updatePhotoUrl = async (id, photoUrl) => {
   const updated = await plantingRepository.updatePhotoUrl(id, photoUrl);
   if (!updated) throw new NotFoundError('Plantación no encontrada');
-  return updated;
+  return signPhotoRow(updated);
 };
 
 const getGeoJson = async (filters = {}) => {

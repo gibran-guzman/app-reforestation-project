@@ -1,4 +1,5 @@
 const rateLimit = require('express-rate-limit');
+const { PostgresRateLimitStore } = require('./rateLimitStore');
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -6,6 +7,7 @@ const authLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Demasiadas solicitudes. Intenta de nuevo en 15 minutos.' },
+  store: new PostgresRateLimitStore({ windowMs: 15 * 60 * 1000 }),
 });
 
 const signupLimiter = rateLimit({
@@ -14,6 +16,7 @@ const signupLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Demasiados intentos de registro. Intenta de nuevo en 1 hora.' },
+  store: new PostgresRateLimitStore({ windowMs: 60 * 60 * 1000 }),
 });
 
 const photoLimiter = rateLimit({
@@ -22,6 +25,7 @@ const photoLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Demasiadas subidas de fotos. Intenta de nuevo en 15 minutos.' },
+  store: new PostgresRateLimitStore({ windowMs: 15 * 60 * 1000 }),
 });
 
 const writeLimiter = rateLimit({
@@ -31,6 +35,7 @@ const writeLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Demasiadas solicitudes de escritura. Intenta de nuevo en 15 minutos.' },
+  store: new PostgresRateLimitStore({ windowMs: 15 * 60 * 1000 }),
 });
 
 module.exports = { authLimiter, signupLimiter, photoLimiter, writeLimiter };

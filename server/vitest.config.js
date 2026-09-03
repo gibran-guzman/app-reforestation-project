@@ -8,6 +8,7 @@ export default defineConfig({
     env: {
       SUPABASE_URL: 'http://localhost:54321',
       SUPABASE_SERVICE_ROLE_KEY: 'test-key',
+      SUPABASE_ANON_KEY: 'test-anon-key',
       TZ: 'UTC',
     },
     coverage: {

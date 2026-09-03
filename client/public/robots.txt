@@ -1,4 +1,4 @@
 User-agent: *
 Disallow: /
 
-Sitemap: https://unjustly-vantage-june.ngrok-free.dev/sitemap.xml
+Sitemap: https://TU-URL-SEENODE.seenode.app/sitemap.xml

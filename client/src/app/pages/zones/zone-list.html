@@ -17,17 +17,17 @@
   } @else {
     <div class="row g-3">
       @for (z of zones(); track z.id) {
-        <div class="col-md-6 col-lg-4">
-          <div class="card shadow-sm h-100">
+        <div class="col-md-6 col-lg-4 col-xl-3">
+          <div class="card zone-card shadow-sm h-100">
             <div class="card-body">
-              <h5 class="card-title">{{ z.name }}</h5>
-              <p class="card-text text-muted">{{ z.description || 'Sin descripción' }}</p>
-              <p class="card-text">
+              <h6 class="card-title fw-semibold mb-1">{{ z.name }}</h6>
+              <p class="card-text small text-muted mb-1">{{ z.description || 'Sin descripción' }}</p>
+              <p class="card-text mb-0">
                 <small class="text-muted">Creada {{ z.created_at | date }}</small>
               </p>
             </div>
             @if (auth.user()?.role === 'admin') {
-              <div class="card-footer bg-transparent d-flex gap-2 justify-content-end">
+              <div class="card-footer bg-transparent border-top-0 pt-0 d-flex gap-2 justify-content-end">
                 <a [routerLink]="['/zones', z.id, 'edit']" class="btn btn-sm btn-outline-secondary">Editar</a>
                 <button class="btn btn-sm btn-outline-danger" (click)="deleteZone(z.id)">Eliminar</button>
               </div>

@@ -11,6 +11,7 @@ import type { Zone } from '../../models';
   selector: 'app-zone-list',
   imports: [RouterLink, DatePipe],
   templateUrl: './zone-list.html',
+  styleUrl: './zone-list.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export default class ZoneList implements OnInit {

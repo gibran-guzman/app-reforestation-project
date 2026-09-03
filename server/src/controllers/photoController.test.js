@@ -67,6 +67,55 @@ describe('photoController', () => {
       expect(mockPhotoService.uploadPhoto).not.toHaveBeenCalled();
     });
 
+    it('accepts a valid webp with RIFF and WEBP signatures', async () => {
+      mockPlantingService.getById.mockResolvedValue({ id: 1 });
+      mockPhotoService.uploadPhoto.mockResolvedValue({ publicUrl: 'https://example.com/photo.webp', filePath: 'plantings/1/photo.webp' });
+      mockPlantingService.updatePhotoUrl.mockResolvedValue({ id: 1, photo_url: 'https://example.com/photo.webp' });
+      const webp = Buffer.concat([
+        Buffer.from([0x52, 0x49, 0x46, 0x46]),
+        Buffer.alloc(4),
+        Buffer.from([0x57, 0x45, 0x42, 0x50]),
+        Buffer.alloc(8),
+      ]);
+      req.file = { buffer: webp, mimetype: 'image/webp' };
+
+      await controller.upload(req, res, next);
+
+      expect(mockPhotoService.uploadPhoto).toHaveBeenCalled();
+    });
+
+    it('rejects a fake webp that only has RIFF but no WEBP marker', async () => {
+      const riffOnly = Buffer.concat([
+        Buffer.from([0x52, 0x49, 0x46, 0x46]),
+        Buffer.alloc(16),
+      ]);
+      req.file = { buffer: riffOnly, mimetype: 'image/webp' };
+
+      await controller.upload(req, res, next);
+
+      expect(next).toHaveBeenCalledWith(expect.any(Error));
+      expect(next.mock.calls[0][0].message).toContain('formato de imagen');
+      expect(mockPhotoService.uploadPhoto).not.toHaveBeenCalled();
+    });
+
+    it('rejects a truncated PNG with partial signature', async () => {
+      req.file = { buffer: Buffer.from([0x89, 0x50, 0x4E]), mimetype: 'image/png' };
+
+      await controller.upload(req, res, next);
+
+      expect(next).toHaveBeenCalledWith(expect.any(Error));
+      expect(next.mock.calls[0][0].message).toContain('formato de imagen');
+    });
+
+    it('rejects an unknown mimetype before upload', async () => {
+      req.file = { buffer: Buffer.from([0xFF, 0xD8, 0xFF]), mimetype: 'image/gif' };
+
+      await controller.upload(req, res, next);
+
+      expect(next).toHaveBeenCalledWith(expect.any(Error));
+      expect(next.mock.calls[0][0].message).toContain('formato de imagen');
+    });
+
     it('passes error to next if uploadPhoto fails', async () => {
       mockPlantingService.getById.mockResolvedValue({ id: 1 });
       mockPhotoService.uploadPhoto.mockRejectedValue(new Error('Upload failed'));
