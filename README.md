@@ -269,11 +269,11 @@ git clone <repo>
 pnpm --dir server install
 npm --prefix client install
 
-# 2. Configurar variables de entorno
-cp server/.env.example server/.env
-# Editar: DATABASE_URL (Supabase → Project Settings → Database → Connection string → URI),
-# CORS_ORIGIN, SUPABASE_URL, SUPABASE_ANON_KEY
-# Opcional: SENTRY_DSN, SESSION_SECRET, CLUSTER_ENABLED
+# 2. Configurar variables de entorno (plantilla única de producción)
+cp server/.env.production.example server/.env
+# Editar: DATABASE_URL, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_ANON_KEY,
+# LOGIN_ENCRYPTION_PRIVATE_KEY y CORS_ORIGIN
+# Para desarrollo local, cambia NODE_ENV=development y CORS_ORIGIN=http://localhost:4200
 
 # 3. Ejecutar migraciones de base de datos (se aplican sobre el PostgreSQL de Supabase)
 pnpm --dir server migrate
@@ -337,22 +337,20 @@ npm --prefix client install
    - `npm run build:seenode` instala las dependencias del server (prod) y del cliente, compila Angular y copia el build a `./public` (la carpeta que Express sirve automáticamente).
    - El servidor escucha en `process.env.PORT || 3000`, por eso el puerto debe ser `3000`.
 
-3. Añade estas variables de entorno en el dashboard:
+3. Añade estas variables de entorno en el dashboard (plantilla en `server/.env.production.example`):
 
    ```
    NODE_ENV=production
-   PORT=3000
    CORS_ORIGIN=https://TU-URL-SEENODE.seenode.app   # reemplaza por tu URL real
    DATABASE_URL=postgresql://postgres.<PROJECT_REF>:<PASSWORD>@aws-0-<REGION>.pooler.supabase.com:6543/postgres?sslmode=require
+   DB_SSL_REJECT_UNAUTHORIZED=true
    SUPABASE_URL=https://<PROJECT_REF>.supabase.co
    SUPABASE_SERVICE_ROLE_KEY=<SERVICE_ROLE_KEY>
    SUPABASE_ANON_KEY=<ANON_KEY>
    LOGIN_ENCRYPTION_PRIVATE_KEY=<clave-rsa-base64>
-   # Opcional:
-   SENTRY_DSN=
    ```
 
-   > ⚠️ `NODE_ENV=production` es obligatorio: activa el CSP de Helmet, las cookies `secure`, el CORS restringido y la redirección SPA (sirve `index.html` desde `./public`).
+   > ⚠️ `NODE_ENV=production` es obligatorio: activa el CSP de Helmet, las cookies `secure`, el CORS restringido y la redirección SPA (sirve `index.html` desde `./public`). `LOGIN_ENCRYPTION_PRIVATE_KEY` también es imprescindible para no perder los logins en cada reinicio.
 
 ### 3. Ejecutar migraciones
 
