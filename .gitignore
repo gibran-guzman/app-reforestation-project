@@ -8,7 +8,9 @@ build/
 tmp/
 temp/
 out-tsc/
-public/build/
+
+# Build del cliente servido por Express (se genera en build)
+/public/
 
 # Angular specific
 .angular/

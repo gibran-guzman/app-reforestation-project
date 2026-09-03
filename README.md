@@ -14,7 +14,7 @@ Sistema de Control para Proyectos de Reforestación Ambiental en la Parroquia Ru
 |------|-----------|---------|
 | Frontend | Angular + Bootstrap 5 + TypeScript | 20 |
 | Backend | Node.js + Express | 4.22.2 |
-| Base de datos | PostgreSQL + PostGIS | 16+ |
+| Base de datos | PostgreSQL + PostGIS (gestionado por Supabase) | 16+ |
 | Infraestructura | Supabase | — |
 | Mapas | Leaflet | — |
 | Logger | Pino | — |
@@ -262,8 +262,7 @@ app-reforestation-project/
 # Requisitos
 # - Node.js >= 22 (server), >= 20 (client)
 # - pnpm >= 11
-# - PostgreSQL 16+ con PostGIS
-# - Una cuenta en Supabase (o PostgreSQL local)
+# - Una cuenta en Supabase (la base de datos es el PostgreSQL de Supabase, con PostGIS)
 
 # 1. Clonar e instalar
 git clone <repo>
@@ -272,10 +271,11 @@ npm --prefix client install
 
 # 2. Configurar variables de entorno
 cp server/.env.example server/.env
-# Editar: DATABASE_URL, CORS_ORIGIN, SUPABASE_URL, SUPABASE_ANON_KEY
+# Editar: DATABASE_URL (Supabase → Project Settings → Database → Connection string → URI),
+# CORS_ORIGIN, SUPABASE_URL, SUPABASE_ANON_KEY
 # Opcional: SENTRY_DSN, SESSION_SECRET, CLUSTER_ENABLED
 
-# 3. Ejecutar migraciones de base de datos
+# 3. Ejecutar migraciones de base de datos (se aplican sobre el PostgreSQL de Supabase)
 pnpm --dir server migrate
 
 # 4. Iniciar servidor (http://localhost:3000)
@@ -308,6 +308,65 @@ docker run -p 3000:3000 -e CLUSTER_ENABLED=true ... app-reforestation
 ```
 
 El servidor Express sirve el build de producción de Angular desde `/app/public`. Las migraciones se ejecutan con `node-pg-migrate` antes de iniciar el servidor.
+
+---
+
+## ☁️ Despliegue en Seenode (reemplaza VPS + ngrok)
+
+Seenode hospeda el servidor Express **y** sirve el build estático de Angular desde una sola URL pública con SSL. Es el reemplazo directo del esquema `VPS + ngrok`: ya no necesitas un túnel ni un dominio ngrok efímero.
+
+### 1. Prepara el proyecto localmente
+
+```bash
+# Instalar dependencias (una sola vez)
+pnpm --dir server install
+npm --prefix client install
+```
+
+### 2. Crea el Web Service desde el dashboard de Seenode
+
+1. En [cloud.seenode.com](https://cloud.seenode.com) crea un **Web Service** y conecta tu repositorio de GitHub/GitLab.
+2. Configura los comandos y el puerto (el proyecto ya trae los scripts en `package.json`):
+
+   | Campo | Valor |
+   |-------|-------|
+   | **Build Command** | `npm run build:seenode` |
+   | **Start Command** | `node server/src/index.js` |
+   | **Port** | `3000` |
+
+   - `npm run build:seenode` instala las dependencias del server (prod) y del cliente, compila Angular y copia el build a `./public` (la carpeta que Express sirve automáticamente).
+   - El servidor escucha en `process.env.PORT || 3000`, por eso el puerto debe ser `3000`.
+
+3. Añade estas variables de entorno en el dashboard:
+
+   ```
+   NODE_ENV=production
+   PORT=3000
+   CORS_ORIGIN=https://TU-URL-SEENODE.seenode.app   # reemplaza por tu URL real
+   DATABASE_URL=postgresql://postgres.<PROJECT_REF>:<PASSWORD>@aws-0-<REGION>.pooler.supabase.com:6543/postgres?sslmode=require
+   SUPABASE_URL=https://<PROJECT_REF>.supabase.co
+   SUPABASE_SERVICE_ROLE_KEY=<SERVICE_ROLE_KEY>
+   SUPABASE_ANON_KEY=<ANON_KEY>
+   LOGIN_ENCRYPTION_PRIVATE_KEY=<clave-rsa-base64>
+   # Opcional:
+   SENTRY_DSN=
+   ```
+
+   > ⚠️ `NODE_ENV=production` es obligatorio: activa el CSP de Helmet, las cookies `secure`, el CORS restringido y la redirección SPA (sirve `index.html` desde `./public`).
+
+### 3. Ejecutar migraciones
+
+Cuando tengas `DATABASE_URL` configurado, ejecuta las migraciones una vez:
+
+```bash
+npm run migrate
+```
+
+(o desde el dashboard de Seenode añade `migrate` al Start Command la primera vez: `node server/src/db/migrate.js && node server/src/index.js`).
+
+### 4. Despliegue automático
+
+Cada push a la rama conectada vuelve a construir y desplegar automáticamente. Actualiza tu URL real en `client/src/index.html` (canonical), `client/public/robots.txt` y `client/public/sitemap.xml` (que hoy usan un marcador `TU-URL-SEENODE.seenode.app`).
 
 ---
 

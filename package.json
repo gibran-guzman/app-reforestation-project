@@ -8,7 +8,11 @@
     "dev:client": "npm --prefix client start",
     "lint:server": "pnpm --dir server lint",
     "install:all": "pnpm --dir server install && npm --prefix client install",
-    "prepare": "husky"
+    "prepare": "husky",
+    "build": "node scripts/build-client.js",
+    "build:seenode": "pnpm --dir server install --prod && npm --prefix client ci && node scripts/build-client.js",
+    "start": "node server/src/index.js",
+    "migrate": "node server/src/db/migrate.js"
   },
   "lint-staged": {
     "server/src/**/*.js": [

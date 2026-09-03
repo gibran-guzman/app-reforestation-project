@@ -13,7 +13,13 @@ if (!DATABASE_URL) {
 }
 
 async function run() {
-  const pool = new Pool({ connectionString: DATABASE_URL });
+  const sslMode = /[?&]sslmode=([^&#]+)/.exec(DATABASE_URL || '')?.[1];
+  const pool = new Pool({
+    connectionString: DATABASE_URL,
+    ssl: (sslMode === 'require' || sslMode === 'verify-ca' || sslMode === 'verify-full')
+      ? { rejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED !== 'false' }
+      : undefined,
+  });
 
   try {
     await runner({
