@@ -2,6 +2,7 @@ const { Pool } = require('pg');
 const logger = require('../utils/logger');
 
 const sslMode = /[?&]sslmode=([^&#]+)/.exec(process.env.DATABASE_URL || '')?.[1];
+const isSupabase = /supabase\.co/i.test(process.env.DATABASE_URL || '');
 
 let ssl;
 if (process.env.DB_SSL_REJECT_UNAUTHORIZED === 'true') {
@@ -9,7 +10,7 @@ if (process.env.DB_SSL_REJECT_UNAUTHORIZED === 'true') {
 } else if (process.env.DB_SSL_REJECT_UNAUTHORIZED === 'false') {
   ssl = { rejectUnauthorized: false };
 } else if (sslMode === 'require' || sslMode === 'verify-ca' || sslMode === 'verify-full') {
-  ssl = { rejectUnauthorized: true };
+  ssl = { rejectUnauthorized: !isSupabase };
 } else {
   ssl = undefined;
 }
