@@ -14,12 +14,10 @@ if (!DATABASE_URL) {
 
 async function run() {
   const sslMode = /[?&]sslmode=([^&#]+)/.exec(DATABASE_URL || '')?.[1];
-  const strictSSL = process.env.DB_SSL_REJECT_UNAUTHORIZED !== 'false';
-  const isSupabase = /supabase\.co/i.test(DATABASE_URL);
   const pool = new Pool({
     connectionString: DATABASE_URL,
     ssl: (sslMode === 'require' || sslMode === 'verify-ca' || sslMode === 'verify-full')
-      ? { rejectUnauthorized: strictSSL && !isSupabase }
+      ? { rejectUnauthorized: false }
       : undefined,
   });
 
