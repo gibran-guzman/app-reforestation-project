@@ -327,7 +327,9 @@ describe('Express app', () => {
     expect(csp.styleSrc).not.toContain('https://cdn.ngrok.com');
     expect(csp.fontSrc).not.toContain('https://assets.ngrok.com');
     expect(csp.imgSrc).not.toContain('https://cdnjs.cloudflare.com');
-    expect(csp.connectSrc).toEqual(["'self'", "https://*.tile.openstreetmap.org", "wss://*.supabase.co", "https://*.supabase.co"]);
+    expect(csp.connectSrc).toEqual(["'self'", "https://*.tile.openstreetmap.org", "wss://*.supabase.co", "https://*.supabase.co", "https://fonts.googleapis.com", "https://fonts.gstatic.com"]);
+    expect(csp.styleSrc).toContain('https://fonts.googleapis.com');
+    expect(csp.fontSrc).toContain('https://fonts.gstatic.com');
     delete process.env.NODE_ENV;
   });
 });
