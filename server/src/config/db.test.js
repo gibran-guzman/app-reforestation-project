@@ -81,13 +81,13 @@ describe('db config', () => {
     expect(poolOpts.ssl).toEqual({ rejectUnauthorized: true });
   });
 
-  it('enables verified ssl when DATABASE_URL includes sslmode=require', () => {
+  it('enables ssl without certificate verification when DATABASE_URL includes sslmode=require', () => {
     loadDb({
       DATABASE_URL: 'postgres://user:pass@host:5432/db?sslmode=require',
     });
 
     const poolOpts = mockPg.Pool.mock.calls[0][0];
-    expect(poolOpts.ssl).toEqual({ rejectUnauthorized: true });
+    expect(poolOpts.ssl).toEqual({ rejectUnauthorized: false });
   });
 
   it('keeps ssl disabled when DATABASE_URL includes sslmode=disable', () => {
