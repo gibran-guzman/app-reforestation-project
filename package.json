@@ -10,7 +10,7 @@
     "install:all": "pnpm --dir server install && npm --prefix client install",
     "prepare": "husky",
     "build": "node scripts/build-client.js",
-    "build:seenode": "node scripts/build-seenode.js",
+    "build:prod": "node scripts/build.js",
     "start": "node server/src/index.js",
     "migrate": "node server/src/db/migrate.js"
   },

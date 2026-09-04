@@ -12,7 +12,7 @@ function run(cmd, args, opts = {}) {
   console.log(`\n> ${cmd} ${args.join(' ')}`);
   const res = spawnSync(cmd, args, { stdio: 'inherit', cwd: opts.cwd || root });
   if (res.status !== 0) {
-    console.error(`\n[build-seenode] FALLO ejecutando: ${cmd} ${args.join(' ')} (code ${res.status})`);
+    console.error(`\n[build] FALLO ejecutando: ${cmd} ${args.join(' ')} (code ${res.status})`);
     process.exit(res.status || 1);
   }
 }
@@ -22,7 +22,7 @@ function pnpmAvailable() {
 }
 
 // 1. Instalar dependencias del SERVER
-console.log('\n[build-seenode] 1/4 Instalando dependencias del server...');
+console.log('\n[build] 1/4 Instalando dependencias del server...');
 if (pnpmAvailable()) {
   run('pnpm', ['--dir', 'server', 'install', '--prod'], { cwd: root });
 } else {
@@ -34,7 +34,7 @@ if (pnpmAvailable()) {
 }
 
 // 2. Instalar dependencias del CLIENT
-console.log('\n[build-seenode] 2/4 Instalando dependencias del client...');
+console.log('\n[build] 2/4 Instalando dependencias del client...');
 if (existsSync(resolve(clientDir, 'package-lock.json'))) {
   run('npm', ['ci'], { cwd: clientDir });
 } else {
@@ -42,17 +42,17 @@ if (existsSync(resolve(clientDir, 'package-lock.json'))) {
 }
 
 // 3. Compilar Angular en producción
-console.log('\n[build-seenode] 3/4 Compilando Angular (producción)...');
+console.log('\n[build] 3/4 Compilando Angular (producción)...');
 run('npm', ['run', 'build', '--', '--configuration', 'production'], { cwd: clientDir });
 
 // 4. Copiar el build a ./public (lo que sirve Express)
-console.log('\n[build-seenode] 4/4 Copiando build a ./public...');
+console.log('\n[build] 4/4 Copiando build a ./public...');
 if (!existsSync(sourceDir)) {
-  console.error(`[build-seenode] No se encontró el build de Angular en ${sourceDir}`);
+  console.error(`[build] No se encontró el build de Angular en ${sourceDir}`);
   process.exit(1);
 }
 rmSync(outputDir, { recursive: true, force: true });
 mkdirSync(outputDir, { recursive: true });
 cpSync(sourceDir, outputDir, { recursive: true });
 
-console.log(`\n[build-seenode] Build completado. Estáticos en: ${outputDir}`);
+console.log(`\n[build] Build completado. Estáticos en: ${outputDir}`);
