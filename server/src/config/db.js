@@ -1,27 +1,21 @@
 const { Pool } = require('pg');
 const logger = require('../utils/logger');
-
-const sslMode = /[?&]sslmode=([^&#]+)/.exec(process.env.DATABASE_URL || '')?.[1];
+const { buildPoolConfig } = require('./dbConnection');
 
 let ssl;
 if (process.env.DB_SSL_REJECT_UNAUTHORIZED === 'true') {
   ssl = { rejectUnauthorized: true };
 } else if (process.env.DB_SSL_REJECT_UNAUTHORIZED === 'false') {
   ssl = { rejectUnauthorized: false };
-} else if (sslMode === 'require' || sslMode === 'verify-ca' || sslMode === 'verify-full') {
-  ssl = { rejectUnauthorized: false };
-} else {
-  ssl = undefined;
 }
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+const pool = new Pool(buildPoolConfig(process.env.DATABASE_URL, {
   max: 10,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 10000,
   statement_timeout: 30000,
   ssl,
-});
+}));
 
 pool.on('error', (err) => {
   logger.error({ err }, 'Unexpected database pool error');
