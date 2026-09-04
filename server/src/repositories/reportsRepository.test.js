@@ -111,6 +111,7 @@ describe('reportsRepository', () => {
 
       expect(result).toHaveLength(1000);
       expect(mockDb.query).toHaveBeenCalledTimes(1);
+      expect(mockDb.query.mock.calls[0][0]).toContain('ORDER BY ps.id ASC');
     });
 
     it('passes limit as last parameter', async () => {

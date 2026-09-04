@@ -86,6 +86,8 @@ describe('reportsService', () => {
   });
 
   describe('generatePdf', () => {
+    const getPageCount = (pdfBuffer) => (pdfBuffer.toString('latin1').match(/\/Type \/Page\b/g) || []).length;
+
     it('generates a PDF buffer', async () => {
       mockReportsRepository.getAllPlantingsForReport.mockResolvedValue([
         { id: 1, species_name: 'Cedro', zone_name: 'Zona Norte', planted_at: '2026-06-01', survival_status: 'alive', initial_ph: 6.5 },
@@ -95,6 +97,7 @@ describe('reportsService', () => {
       const pdfBuffer = await reportsService.generatePdf({});
       expect(Buffer.isBuffer(pdfBuffer)).toBe(true);
       expect(pdfBuffer.length).toBeGreaterThan(0);
+      expect(getPageCount(pdfBuffer)).toBe(1);
     });
 
     it('generates PDF even with no data', async () => {

@@ -1,5 +1,10 @@
 const reportsRepository = require('../repositories/reportsRepository');
 const PDFDocument = require('pdfkit');
+const { SURVIVAL_STATUS_LABELS } = require('../config/constants');
+
+const survivalStatusLabels = Object.fromEntries(
+  SURVIVAL_STATUS_LABELS.map(({ value, label }) => [value, label])
+);
 
 const getSurvivalRate = async (filters = {}) => {
   const [overall, bySpecies, byZone] = await Promise.all([
@@ -24,6 +29,16 @@ const generatePdf = async (filters = {}) => {
   const bold = 'Helvetica-Bold';
   const pageWidth = doc.page.width - 100;
   const startX = 50;
+  const detailTableWidth = 420;
+  const detailTableStartX = (doc.page.width - detailTableWidth) / 2;
+  const formatDate = (date) => date
+    ? new Date(`${date}T00:00:00`).toLocaleDateString('es-EC', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      timeZone: 'America/Guayaquil',
+    })
+    : '—';
 
   const addFooter = () => {
     const range = doc.bufferedPageRange();
@@ -34,14 +49,14 @@ const generatePdf = async (filters = {}) => {
       doc.text(
         `GAD Municipal de Lloa — Página ${i + 1} de ${pageCount}`,
         startX,
-        doc.page.height - 40,
-        { align: 'center', width: pageWidth }
+        doc.page.height - 72,
+        { align: 'center', width: pageWidth, lineBreak: false }
       );
       doc.text(
         `Generado el ${new Date().toLocaleDateString('es-EC', { timeZone: 'America/Guayaquil' })}`,
         startX,
-        doc.page.height - 30,
-        { align: 'center', width: pageWidth }
+        doc.page.height - 61,
+        { align: 'center', width: pageWidth, lineBreak: false }
       );
       doc.fillColor('#000');
     }
@@ -62,7 +77,7 @@ const generatePdf = async (filters = {}) => {
   };
 
   const addSummaryTable = () => {
-    doc.fontSize(14).font(bold).text('Resumen General', { underline: true });
+    doc.fontSize(14).font(bold).text('Resumen General', { align: 'center', underline: true, width: pageWidth });
     doc.moveDown(0.5);
 
     const totals = [
@@ -76,7 +91,7 @@ const generatePdf = async (filters = {}) => {
 
     doc.fontSize(10).font(font);
     totals.forEach((t) => {
-      doc.text(`${t.label}: ${t.value}`, { indent: 20 });
+      doc.text(`${t.label}: ${t.value}`, { align: 'center', width: pageWidth });
     });
     doc.moveDown(1);
   };
@@ -84,7 +99,7 @@ const generatePdf = async (filters = {}) => {
   const addBarChart = () => {
     if (overall.monitored === 0) return;
 
-    doc.fontSize(14).font(bold).text('Distribución de Supervivencia', { underline: true });
+    doc.fontSize(14).font(bold).text('Distribución de Supervivencia', { align: 'center', underline: true, width: pageWidth });
     doc.moveDown(0.8);
 
     const chartY = doc.y;
@@ -100,7 +115,9 @@ const generatePdf = async (filters = {}) => {
     ];
 
     bars.forEach((bar, i) => {
-      const x = startX + i * (barWidth + barGap);
+      const chartWidth = bars.length * barWidth + (bars.length - 1) * barGap;
+      const chartStartX = (doc.page.width - chartWidth) / 2;
+      const x = chartStartX + i * (barWidth + barGap);
       const barH = (bar.value / maxValue) * maxBarHeight;
       const barY = chartY + (maxBarHeight - barH);
 
@@ -117,11 +134,11 @@ const generatePdf = async (filters = {}) => {
 
   const addDetailTable = () => {
     if (data.length === 0) {
-      doc.fontSize(10).font(font).text('No hay registros para mostrar.');
+      doc.fontSize(10).font(font).text('No hay registros para mostrar.', { align: 'center', width: pageWidth });
       return;
     }
 
-    doc.fontSize(14).font(bold).text('Detalle de Plantaciones', { underline: true });
+    doc.fontSize(14).font(bold).text('Detalle de Plantaciones', { align: 'center', underline: true, width: pageWidth });
     doc.moveDown(0.5);
 
     const columns = [
@@ -135,9 +152,9 @@ const generatePdf = async (filters = {}) => {
 
     let y = doc.y;
     doc.fontSize(8).font(bold);
-    let x = startX;
+    let x = detailTableStartX;
     columns.forEach((col) => {
-      doc.text(col.header, x, y, { width: col.width, align: 'left' });
+      doc.text(col.header, x, y, { width: col.width, align: 'center' });
       x += col.width;
     });
 
@@ -151,19 +168,19 @@ const generatePdf = async (filters = {}) => {
         y = 50;
       }
 
-      x = startX;
-      const status = row.survival_status || '—';
-      doc.text(String(row.id), x, y, { width: 30 });
+      x = detailTableStartX;
+      const status = survivalStatusLabels[row.survival_status] || '—';
+      doc.text(String(row.id), x, y, { width: 30, align: 'center' });
       x += 30;
-      doc.text(row.species_name || '—', x, y, { width: 100 });
+      doc.text(row.species_name || '—', x, y, { width: 100, align: 'center' });
       x += 100;
-      doc.text(row.zone_name || '—', x, y, { width: 100 });
+      doc.text(row.zone_name || '—', x, y, { width: 100, align: 'center' });
       x += 100;
-      doc.text(row.planted_at ? new Date(row.planted_at).toLocaleDateString() : '—', x, y, { width: 80 });
+      doc.text(formatDate(row.planted_at), x, y, { width: 80, align: 'center' });
       x += 80;
-      doc.text(status, x, y, { width: 70 });
+      doc.text(status, x, y, { width: 70, align: 'center' });
       x += 70;
-      doc.text(row.initial_ph != null ? String(row.initial_ph) : '—', x, y, { width: 40 });
+      doc.text(row.initial_ph != null ? String(row.initial_ph) : '—', x, y, { width: 40, align: 'center' });
 
       y += 14;
     }

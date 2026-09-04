@@ -89,7 +89,7 @@ const getAllPlantingsForReport = async (filters = {}, limit = MAX_REPORT_LIMIT) 
     LEFT JOIN intervention_zones iz ON iz.id = ps.zone_id
     LEFT JOIN latest_monitoring lm ON lm.planting_site_id = ps.id
     ${where}
-    ORDER BY ps.created_at DESC
+    ORDER BY ps.id ASC
     LIMIT $1
   `, [...params, limit]);
 
