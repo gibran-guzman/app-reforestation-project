@@ -1,423 +1,220 @@
-# Lloa Reforestation — Plataforma de Trazabilidad Ambiental
+# Lloa Reforestation
 
-Sistema de Control para Proyectos de Reforestación Ambiental en la Parroquia Rural Lloa, Pichincha.
+Plataforma web para registrar y dar seguimiento a proyectos de reforestación. Centraliza especies, zonas, plantaciones, fotografías y monitoreos de supervivencia para proporcionar trazabilidad ambiental y reportes operativos.
 
-> Respuesta tecnológica a la crisis forestal en las laderas del volcán Guagua Pichincha.  
-> Automatiza el seguimiento de áreas intervenidas para reducir la tasa de mortalidad de plántulas (>60% actual)  
-> mediante monitoreo edafológico, georreferenciación y seguimiento fitosanitario sistemático.
+El proyecto está compuesto por un frontend Angular y una API REST en Node.js/Express. La persistencia usa PostgreSQL y la autenticación, el almacenamiento de fotografías y las políticas de acceso se integran con Supabase.
 
----
+## Requisitos previos
 
-## Stack Tecnológico
+- Node.js 22 LTS o compatible con la imagen `node:22-alpine` del proyecto.
+- `pnpm` 11.1.1 para el servidor y el workspace raíz.
+- npm, incluido con Node.js, para el cliente Angular.
+- Una instancia PostgreSQL 16 o superior con PostGIS habilitado.
+- Un proyecto Supabase con Auth y permisos para usar Storage.
+- Git, si se va a clonar el repositorio.
 
-| Capa | Tecnología | Versión |
-|------|-----------|---------|
-| Frontend | Angular + Bootstrap 5 + TypeScript | 20 |
-| Backend | Node.js + Express | 4.22.2 |
-| Base de datos | PostgreSQL + PostGIS (gestionado por Supabase) | 16+ |
-| Infraestructura | Supabase | — |
-| Mapas | Leaflet | — |
-| Logger | Pino | — |
-| Autenticación | JWT (Supabase Auth + HttpOnly cookies) | — |
-| Almacenamiento | Supabase Storage | — |
-| Subida de archivos | Multer | 2.1 |
-| Error tracking | Sentry (condicional) | 10 |
-| Migraciones | node-pg-migrate | — |
-| CI/CD | GitHub Actions | — |
-| Contenedor | Docker | — |
+La base de datos debe aceptar conexiones mediante `DATABASE_URL`. Las migraciones crean las tablas, índices, políticas y funciones espaciales necesarias.
 
----
+## Instalación local
 
-## ⚙️ Estado Actual — Fase 1 Completa (Sprints 1-3)
-
-### Sprint 1 — Infraestructura ✅
-- [x] Estructura monorepo (client + server)
-- [x] Servidor Express 4 con capas: routes → controller → service → repository
-- [x] Pool de conexiones PostgreSQL configurado
-- [x] Endpoint `POST /api/species` con validación de entrada
-- [x] Logger estructurado (pino)
-- [x] Middleware global de errores con discriminación por tipo
-- [x] Seguridad básica: helmet, CORS restringido
-- [x] Scaffold Angular 20 con Bootstrap 5 y routing
-- [x] Linter (ESLint) configurado y pasando en 0 warnings/errors
-
-### Sprint 2 — Autenticación + Modelo Geoespacial ✅
-- [x] Integración Supabase Auth (signup, login, refresh token, /me)
-- [x] Middleware de autenticación (`authenticate`) y autorización por roles (`authorize`)
-- [x] Roles: Admin y Técnico
-- [x] Protección de rutas backend con JWT
-- [x] Extensión PostGIS habilitada + migración `001_initial_schema.sql`
-- [x] Tabla `intervention_zones` con geometría `Polygon, SRID 4326` + índice GIST
-- [x] Tabla `planting_sites` con `location GEOMETRY(Point, 4326)` + índice GIST
-- [x] Tabla `monitoring_records` con control de supervivencia
-- [x] Tabla `profiles` extendida de Supabase Auth con RLS
-- [x] Funciones SQL: `is_point_in_zone()`, `find_zone_by_point()`
-- [x] CRUD completo `intervention_zones` (5 endpoints)
-- [x] Validación de entrada con `express-validator`
-
-### Sprint 3 — Gestión de Zonas y Especies ✅
-- [x] CRUD `intervention_zones` — listar, obtener, crear, actualizar, eliminar
-- [x] CRUD `species_catalog` — listar, obtener, crear, actualizar, eliminar
-
----
-
-## Roadmap — 18 Sprints / ~340 horas
-
-### Fase 1: Fundamentos de Datos (Sprints 1-3)
-
-| Sprint | Horas | Historias | Descripción |
-|--------|-------|-----------|-------------|
-| **1** ✅ | 20 | — | Infraestructura, monorepo, DB pool, API base, scaffold Angular |
-| **2** ✅ | 25 | HU5, HU4 | PostGIS + modelo geoespacial + autenticación JWT + roles |
-| **3** ✅ | 20 | HU5 (cont.) | CRUD zonas de intervención + CRUD catálogo de especies (admin) |
-
-**HU4 — Autenticación segura**
-- [x] Integrar Supabase Auth
-- [x] Roles: Admin, Técnico
-- [x] Login + refresh token con Supabase
-- [x] Tokens en HttpOnly cookies (elimina vector XSS de localStorage)
-- [x] `POST /api/auth/logout` limpia cookies
-- [x] Rate limiting en auth endpoints
-- [x] Protección de rutas backend con middleware (cookie + header)
-- [x] Protección de rutas frontend (guards)
-- [x] Interceptor HTTP con `withCredentials: true`
-- [ ] Registro de usuarios solo por Admin (endpoint existe sin restricción)
-
-**HU5 — Modelado geoespacial**
-- [x] Activar extensión PostGIS
-- [x] Tabla `intervention_zones` con geometría (Polygon, SRID 4326)
-- [x] Tabla `planting_sites` con columna `location GEOMETRY(Point, 4326)`
-- [x] Índice espacial (`GIST`)
-- [x] Validación de coordenadas (funciones SQL `is_point_in_zone`, `find_zone_by_point`)
-
-**Nuevo — Gestión de zonas y especies**
-- [x] CRUD `intervention_zones` (nombre, polígono, responsable)
-- [x] CRUD `species_catalog` — listar, obtener, crear, actualizar, eliminar
-
----
-
-### Fase 2: Captura en Campo (Sprints 4-8)
-
-| Sprint | Horas | Historias | Descripción |
-|--------|-------|-----------|-------------|
-| **4** ✅ | 25 | HU1 | Formulario de registro de plántula + geolocalización GPS + galería de plantaciones |
-| **5** | 20 | HU2 | Service Worker + IndexedDB + detección de conectividad |
-| **6** | 20 | HU2 | Sincronización automática + resolución de conflictos |
-| **7** ✅ | 15 | HU1 | Captura de foto + almacenamiento (Supabase Storage) + compresión client-side |
-| **8** | 20 | HU3 | Consulta de historial con filtros y trazabilidad |
-
-**HU1 — Registro de nueva plántula**
-- [x] Formulario con campos:
-  - Especie (selector desde `species_catalog`)
-  - Zona de intervención
-  - Variables edafológicas: pH, textura, humedad
-  - Fecha de siembra
-- [x] Captura GPS automática (Geolocation API) con reintento
-- [x] Fallback: ingreso manual de coordenadas + clic/arrastre en mapa Leaflet
-- [x] Foto de la plántula (opcional) con compresión client-side (Canvas → WebP)
-- [x] Validación completa del lado cliente y servidor
-- [x] Vista de galería con thumbnails de todas las plantaciones
-
-**HU2 — Sincronización offline**
-- [x] Almacenamiento local en IndexedDB (Dexie.js)
-- [x] Cola de sincronización con reintentos (backoff exponencial)
-- [x] Badge visual de registros pendientes
-- [ ] Resolución de conflictos (último escritor gana + notificación)
-- [x] Sincronización de fotos (background sync si es posible)
-- [ ] Service Worker con estrategia "Network First, fallback to Cache"
-
-**HU3 — Consulta de historial**
-- [ ] Vista de trazabilidad por plántula (línea de tiempo)
-- [ ] Filtros: zona, especie, rango de fechas, estado de salud
-- [ ] Paginación + búsqueda
-- [ ] Detalle de cada medición: foto, coordenadas, variables, evolución
-
----
-
-### Fase 3: Reportes y Analítica (Sprints 9-14)
-
-| Sprint | Horas | Historias | Descripción |
-|--------|-------|-----------|-------------|
-| **9** | 20 | HU6 | Endpoints de estadísticas + generación PDF server-side |
-| **10** | 15 | HU6 | Exportación Excel + dashboard básico |
-| **11** | 20 | HU7 | Integración Leaflet + mapa de puntos de siembra |
-| **12** | 20 | HU7 | Mapa de calor de mortalidad con filtros |
-| **13** | 15 | — | Dashboard general: cards de resumen, gráficos de evolución |
-| **14** | 15 | — | Refinamiento UI/UX, responsive, accesibilidad |
-
-**HU6 — Generación de reportes**
-- [ ] Endpoint `GET /api/reports/survival-rate` con filtros
-- [ ] Generación PDF (puppeteer o pdfkit)
-- [ ] Generación Excel (exceljs)
-- [ ] Dashboard con resúmenes estadísticos
-- [ ] Tabla de tasa de supervivencia por zona y especie
-
-**HU7 — Mapa de calor de mortalidad**
-- [ ] Mapa Leaflet con tiles OpenStreetMap
-- [ ] Capa de puntos de siembra con íconos por estado
-- [ ] Capa de calor (Leaflet.heat) para mortalidad
-- [ ] Filtros: especie, período, zona
-- [ ] Popup con detalle al hacer clic en cada punto
-
----
-
-### Fase 4: Cierre y Documentación (Sprints 15-18)
-
-| Sprint | Horas | Descripción |
-|--------|-------|-------------|
-| **15** | 20 | Pruebas de usuario + QA + correcciones |
-| **16** | 15 | Documentación técnica (API docs, arquitectura, despliegue) |
-| **17** | 15 | Despliegue en producción (Supabase + Vercel/Netlify) |
-| **18** | 10 | Buffer de contingencia |
-
----
-
-## 📐 Arquitectura — Flujo de Datos
-
-```
-┌─────────────────────────────────────────────────────────┐
-│                     CLIENTE (PWA)                        │
-│                                                         │
-│  ┌──────────┐   ┌──────────┐   ┌────────────────────┐  │
-│  │ Angular  │   │  Leaflet │   │  Service Worker     │  │
-│  │ (UI)     │   │  (Mapas) │   │  + IndexedDB        │  │
-│  └────┬─────┘   └──────────┘   └─────────┬──────────┘  │
-│       │          tokens en                │              │
-│       │          memoria (no localStorage)│  Sync Queue  │
-│       │          HTTP/REST                │              │
-│       ▼          withCredentials: true    ▼              │
-└─────────────────────────────────────────────────────────┘
-               │ HttpOnly cookies (JWT)      │
-               │                              │
-               └──────────────┬───────────────┘
-                              ▼
-┌─────────────────────────────────────────────────────────┐
-│                   SERVER (Express 4.22.2)                │
-│                                                         │
-│  ┌──────────┐   ┌──────────┐   ┌────────────────────┐  │
-│  │  Routes  │──▶│Controller│──▶│     Service         │  │
-│  └──────────┘   └──────────┘   └─────────┬──────────┘  │
-│                                          │              │
-│                                 ┌────────▼────────┐     │
-│                                 │   Validator +    │     │
-│                                 │   Repository     │     │
-│                                 └────────┬────────┘     │
-│                                          │              │
-│  ┌───────────────────────────────────────┘              │
-│  │  Middleware: cookie-parser → Auth (cookie/header)    │
-│  │  → pino-http → ErrorHandler → rate-limit → Sentry   │
-│  │  Cluster (opt-in) | requestTimeout: 30s              │
-└──┼──────────────────────────────────────────────────────┘
-   │
-   ▼
-┌─────────────────────────────────────────────────────────┐
-│            SUPABASE (PostgreSQL + PostGIS)               │
-│                                                         │
-│  species_catalog │ intervention_zones │ planting_sites  │
-│  soil_readings   │ health_monitoring  │ users           │
-│                                                         │
-│  Migraciones: node-pg-migrate (001, 002)                │
-└─────────────────────────────────────────────────────────┘
-```
-
----
-
-## 📁 Estructura del Proyecto
-
-```
-app-reforestation-project/
-├── .github/workflows/               # CI/CD (GitHub Actions)
-├── client/                          # Angular 20 PWA
-│   └── src/app/
-│       ├── components/              # Componentes reutilizables
-│       ├── pages/                   # Páginas (rutas)
-│       ├── services/                # Servicios HTTP + offline
-│       ├── guards/                  # Route guards (auth, admin)
-│       ├── interceptors/            # Auth interceptor (withCredentials)
-│       └── models/                  # Interfaces TypeScript
-│
-├── server/                          # API Express 4.22.2
-│   └── src/
-│       ├── config/                  # DB, env, cookie helper
-│       ├── controllers/             # Capa de presentación (req/res)
-│       ├── services/                # Lógica de negocio
-│       ├── repositories/            # Acceso a datos (SQL)
-│       ├── validators/              # Validación de entrada
-│       ├── middleware/              # Auth (cookie/header), error handler
-│       ├── utils/                   # Logger, response helpers
-│       ├── errors/                  # Clases de error custom
-│       ├── routes/                  # Definición de rutas
-│       └── db/                      # Migraciones (node-pg-migrate)
-│
-├── Dockerfile                       # Multi-stage build
-├── .dockerignore
-└── package.json                     # Orquestación monorepo
-```
-
----
-
-## 🚀 Cómo empezar
+Ejecuta estos comandos desde la raíz del repositorio:
 
 ```bash
-# Requisitos
-# - Node.js >= 22 (server), >= 20 (client)
-# - pnpm >= 11
-# - Una cuenta en Supabase (la base de datos es el PostgreSQL de Supabase, con PostGIS)
-
-# 1. Clonar e instalar
-git clone <repo>
-pnpm --dir server install
-npm --prefix client install
-
-# 2. Configurar variables de entorno (plantilla única de producción)
-cp server/.env.production.example server/.env
-# Editar: DATABASE_URL, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_ANON_KEY,
-# LOGIN_ENCRYPTION_PRIVATE_KEY y CORS_ORIGIN
-# Para desarrollo local, cambia NODE_ENV=development y CORS_ORIGIN=http://localhost:4200
-
-# 3. Ejecutar migraciones de base de datos (se aplican sobre el PostgreSQL de Supabase)
-pnpm --dir server migrate
-
-# 4. Iniciar servidor (http://localhost:3000)
-pnpm --dir server start
-
-# 5. Iniciar cliente (http://localhost:4200)
-npm --prefix client start
+corepack enable
+corepack install --global pnpm@11.1.1
+pnpm install
+pnpm install:all
+cp server/.env.production.example .env
+cp .env server/.env
 ```
 
----
+Edita `.env` y reemplaza los valores de ejemplo. Para trabajar en desarrollo, usa al menos:
 
-## 🐳 Despliegue con Docker
+```dotenv
+NODE_ENV=development
+CORS_ORIGIN=http://localhost:4200
+```
+
+`server/.env` es necesario porque el script de migraciones carga ese archivo explícitamente. Si modificas `.env`, vuelve a copiarlo a `server/.env` antes de migrar.
+
+Ejecuta las migraciones:
 
 ```bash
-# Construir imagen multi-stage
-docker build -t app-reforestation .
-
-# Ejecutar (las migraciones corren automáticamente al iniciar)
-docker run -p 3000:3000 \
-  -e DATABASE_URL=postgres://... \
-  -e SUPABASE_URL=https://... \
-  -e SUPABASE_ANON_KEY=... \
-  -e CORS_ORIGIN=http://localhost:4200 \
-  -e SENTRY_DSN=... \
-  -e SESSION_SECRET=... \
-  app-reforestation
-
-# Modo cluster (usa todos los CPUs)
-docker run -p 3000:3000 -e CLUSTER_ENABLED=true ... app-reforestation
+pnpm migrate
 ```
 
-El servidor Express sirve el build de producción de Angular desde `/app/public`. Las migraciones se ejecutan con `node-pg-migrate` antes de iniciar el servidor.
-
----
-
-## ☁️ Despliegue en Railway (reemplaza VPS + ngrok)
-
-Railway hospeda el servidor Express **y** sirve el build estático de Angular desde una sola URL pública con SSL. Es el reemplazo directo del esquema `VPS + ngrok`: ya no necesitas un túnel ni un dominio ngrok efímero.
-
-### 1. Prepara el proyecto localmente
+Inicia la API en una terminal:
 
 ```bash
-# Instalar dependencias (una sola vez)
-pnpm --dir server install
-npm --prefix client install
+pnpm dev:server
 ```
 
-### 2. Crea el Web Service desde el dashboard de Railway
-
-1. En [railway.app](https://railway.app) crea un proyecto y un **Web Service**, conectando tu repositorio de GitHub.
-2. Configura los comandos y el puerto (el proyecto ya trae los scripts en `package.json`):
-
-   | Campo | Valor |
-   |-------|-------|
-   | **Root Directory** | `/` |
-   | **Build Command** | `npm run build:prod` |
-   | **Start Command** | `node server/src/index.js` |
-   | **Port** | `3000` |
-
-   - `npm run build:prod` instala las dependencias del server (prod) y del cliente, compila Angular y copia el build a `./public` (la carpeta que Express sirve automáticamente).
-   - El servidor escucha en `process.env.PORT || 3000`, por eso el puerto debe ser `3000`.
-
-3. Añade estas variables de entorno en el dashboard (plantilla en `server/.env.production.example`):
-
-   ```
-   NODE_ENV=production
-   CORS_ORIGIN=https://TU-URL.railway.app   # reemplaza por tu URL real
-   DATABASE_URL=postgresql://postgres.<PROJECT_REF>:<PASSWORD>@aws-0-<REGION>.pooler.supabase.com:6543/postgres?sslmode=require
-   DB_SSL_REJECT_UNAUTHORIZED=false
-   SUPABASE_URL=https://<PROJECT_REF>.supabase.co
-   SUPABASE_SERVICE_ROLE_KEY=<SERVICE_ROLE_KEY>
-   SUPABASE_ANON_KEY=<ANON_KEY>
-   LOGIN_ENCRYPTION_PRIVATE_KEY=<clave-rsa-base64>
-   ```
-
-   > ⚠️ `NODE_ENV=production` es obligatorio: activa el CSP de Helmet, las cookies `secure`, el CORS restringido y la redirección SPA (sirve `index.html` desde `./public`). `LOGIN_ENCRYPTION_PRIVATE_KEY` también es imprescindible para no perder los logins en cada reinicio.
-
-### 4. Ejecutar migraciones
-
-Cuando tengas `DATABASE_URL` configurado, ejecuta las migraciones una vez:
+Inicia Angular en otra terminal:
 
 ```bash
-npm run migrate
+pnpm dev:client
 ```
 
-### 5. Despliegue automático
+La aplicación estará disponible en `http://localhost:4200`. El proxy de Angular redirige `/api` hacia `http://localhost:3000`.
 
-Cada push a la rama conectada (`main`) vuelve a construir y desplegar automáticamente. Actualiza tu URL real en `client/src/index.html` (canonical), `client/public/robots.txt` y `client/public/sitemap.xml` (que hoy usan un marcador `TU-URL.railway.app`).
+## Uso rápido
 
----
+Comprueba que la API puede acceder a la base de datos:
 
-## 🤖 CI/CD
+```bash
+curl -i http://localhost:3000/health
+```
 
-El workflow de GitHub Actions (`.github/workflows/ci.yml`) ejecuta en cada PR/push a `main`:
+La respuesta correcta es HTTP `200` con un cuerpo similar a:
 
-| Job | Pasos |
-|-----|-------|
-| **Server** | `pnpm lint` + `pnpm test` (526 tests) |
-| **Client** | `npm test` (349 tests, ChromeHeadless) + `npm run build --production` |
+```json
+{"status":"ok","service":"Lloa Reforestation API"}
+```
 
----
+Consulta una configuración pública sin autenticación:
 
-## 📄 API Endpoints (Progresivos)
+```bash
+curl http://localhost:3000/api/config/soil-textures
+```
 
-| Método | Ruta | HU | Estado |
-|--------|------|----|--------|
-| `GET` | `/health` | — | ✅ |
-| `POST` | `/api/species` | — | ✅ |
-| `POST` | `/api/auth/signup` | HU4 | ✅ |
-| `POST` | `/api/auth/login` | HU4 | ✅ |
-| `POST` | `/api/auth/refresh` | HU4 | ✅ |
-| `POST` | `/api/auth/logout` | HU4 | ✅ |
-| `GET` | `/api/auth/me` | HU4 | ✅ |
-| `GET` | `/api/zones` | — | ✅ |
-| `GET` | `/api/zones/:id` | — | ✅ |
-| `POST` | `/api/zones` | — | ✅ |
-| `PUT` | `/api/zones/:id` | — | ✅ |
-| `DELETE` | `/api/zones/:id` | — | ✅ |
-| `GET` | `/api/config` | — | ✅ |
-| `GET` | `/api/species` | — | ✅ |
-| `GET` | `/api/species/:id` | — | ✅ |
-| `PUT` | `/api/species/:id` | — | ✅ |
-| `DELETE` | `/api/species/:id` | — | ✅ |
-| `GET` | `/api/plantings` | HU1 | ✅ |
-| `POST` | `/api/plantings` | HU1 | ✅ |
-| `POST` | `/api/plantings/:id/photo` | HU1 | ✅ |
-| `GET` | `/api/plantings/:id` | HU3 | ✅ |
-| `POST` | `/api/plantings/sync` | HU2 | ✅ |
-| `GET` | `/api/reports/survival-rate` | HU6 | ✅ |
-| `GET` | `/api/reports/species-stats` | HU6 | ✅ |
-| `GET` | `/api/reports/zone-summary` | HU6 | ✅ |
-| `GET` | `/api/reports/evolution` | HU6 | ✅ |
-| `GET` | `/api/analytics/heatmap` | HU7 | ✅ |
+Para probar un flujo autenticado, usa un usuario existente de Supabase:
 
----
+```bash
+curl -i -c cookies.txt \
+	-H 'Content-Type: application/json' \
+	-d '{"email":"usuario@example.com","password":"tu-password"}' \
+	http://localhost:3000/api/auth/login
 
-## 📊 Criterios de Éxito
+curl -b cookies.txt http://localhost:3000/api/auth/me
+curl -b cookies.txt 'http://localhost:3000/api/plantings?page=1&limit=50'
+```
 
-- [ ] Tasa de mortalidad de plántulas < 40% al primer año
-- [ ] Sincronización offline funcional en zonas sin cobertura
-- [ ] Reportes exportables (PDF/Excel) para rendición de cuentas del GAD
-- [ ] Mapa de calor operativo con datos de campo reales
-- [x] Autenticación con roles (backend)
-- [ ] Auditoría de cambios
-- [ ] 0 regresiones de seguridad (helmet, CORS, JWT, rate limiting)
+El endpoint `/health` devuelve HTTP `503` si PostgreSQL no está disponible. Las rutas `/api/species`, `/api/zones`, `/api/plantings`, `/api/monitoring` y `/api/reports` requieren autenticación según la operación solicitada.
+
+## Variables de entorno
+
+Guarda las variables en `.env` para la ejecución desde la raíz y en `server/.env` para ejecutar el migrador directamente. No subas archivos `.env` ni claves privadas al repositorio.
+
+| Variable | Descripción | Ejemplo | Obligatoria |
+| --- | --- | --- | --- |
+| `DATABASE_URL` | URI de conexión a PostgreSQL. | `postgresql://postgres:password@localhost:5432/reforestation` | Sí |
+| `SUPABASE_URL` | URL del proyecto Supabase. | `https://project-ref.supabase.co` | Sí |
+| `SUPABASE_SERVICE_ROLE_KEY` | Clave de servicio para operaciones administrativas del backend. | `eyJhbGciOi...` | Sí |
+| `SUPABASE_ANON_KEY` | Clave pública usada por el flujo de autenticación de usuarios. | `eyJhbGciOi...` | Sí |
+| `NODE_ENV` | Entorno de ejecución. | `development` | No, `development` |
+| `PORT` | Puerto HTTP de Express. | `3000` | No, `3000` |
+| `CORS_ORIGIN` | Origen permitido por CORS. En desarrollo se usa `http://localhost:4200`; en producción debe declararse. | `https://app.example.com` | Sí en producción |
+| `DB_SSL_REJECT_UNAUTHORIZED` | Controla la validación del certificado TLS de PostgreSQL. | `false` | No |
+| `LOGIN_ENCRYPTION_PRIVATE_KEY` | Clave RSA privada persistente, codificada en Base64, para el cifrado del login. | `base64-encoded-PKCS8-PEM` | Sí en producción |
+| `COOKIE_SECURE` | Fuerza cookies `Secure` cuando vale `true`. En producción se activa automáticamente. | `true` | No |
+| `LOG_LEVEL` | Nivel de logs de Pino. | `info` | No, `info` |
+| `SENTRY_DSN` | DSN de Sentry. Si se omite, Sentry no se inicializa. | `https://public@sentry.example/1` | No |
+| `SENTRY_TRACES_SAMPLE_RATE` | Porcentaje decimal de trazas enviadas a Sentry. | `0.1` | No, `0.1` |
+| `CLUSTER_ENABLED` | Activa múltiples workers de Node.js cuando vale `true`. | `false` | No, `false` |
+| `WORKERS` | Número de workers cuando el clustering está activo. | `2` | No, número de CPUs |
+
+Para producción, genera una clave RSA persistente y conviértela a Base64:
+
+```bash
+openssl genrsa -out login.key 2048
+base64 -w0 login.key
+```
+
+No uses `SUPABASE_SERVICE_ROLE_KEY` ni `LOGIN_ENCRYPTION_PRIVATE_KEY` en el código del cliente.
+
+## Docker
+
+Configura `.env` en la raíz con las variables requeridas y ejecuta:
+
+```bash
+docker compose up --build
+```
+
+El contenedor ejecuta todas las migraciones pendientes antes de iniciar Express y publica la aplicación en `http://localhost:3000`. El build compila Angular en modo producción y Express sirve los archivos generados desde `public/`.
+
+Para detenerlo:
+
+```bash
+docker compose down
+```
+
+## Comandos principales
+
+| Comando | Descripción |
+| --- | --- |
+| `pnpm dev:server` | Inicia la API en modo desarrollo. |
+| `pnpm dev:client` | Inicia el servidor de desarrollo de Angular. |
+| `pnpm migrate` | Ejecuta las migraciones SQL pendientes. |
+| `pnpm build` | Compila Angular y copia el resultado a `public/`. |
+| `pnpm build:prod` | Instala dependencias de producción y genera el build completo. |
+| `pnpm start` | Inicia Express desde la raíz. |
+| `pnpm lint:server` | Ejecuta ESLint sobre el servidor. |
+| `docker compose up --build` | Construye y ejecuta la aplicación completa. |
+
+## Tests
+
+Ejecuta la suite del servidor:
+
+```bash
+pnpm --dir server test
+```
+
+Ejecuta los tests del cliente en Chrome Headless:
+
+```bash
+npm --prefix client test
+```
+
+Para desarrollo iterativo del servidor:
+
+```bash
+pnpm --dir server test:watch
+```
+
+También puedes validar el servidor con `pnpm lint:server` y el cliente con:
+
+```bash
+npm --prefix client exec tsc -- --noEmit --project client/tsconfig.app.json
+```
+
+## Estructura del proyecto
+
+```text
+.
+├── client/                 # Aplicación Angular, PWA, vistas y servicios HTTP
+│   ├── src/app/            # Componentes, páginas, guards, modelos y servicios
+│   ├── src/environments/   # Configuración de entorno del cliente
+│   └── public/             # Manifest, iconos, Leaflet y robots.txt
+├── server/                 # API REST Express
+│   ├── src/config/         # Base de datos, Supabase, cookies y constantes
+│   ├── src/controllers/    # Controladores HTTP
+│   ├── src/middleware/     # Autenticación, validación, límites y errores
+│   ├── src/repositories/   # Acceso a datos
+│   ├── src/routes/         # Rutas `/api`
+│   ├── src/services/       # Lógica de dominio e integraciones
+│   ├── src/db/migrations/  # Migraciones SQL versionadas
+│   └── scripts/sql/        # Seeds y scripts SQL operativos
+├── scripts/                # Automatización de builds raíz
+├── Dockerfile              # Build multi-stage de cliente y servidor
+├── docker-compose.yml      # Ejecución del servicio en Docker
+└── package.json            # Scripts y dependencias del workspace raíz
+```
+
+## Migraciones y datos iniciales
+
+Las migraciones se ejecutan en orden y registran su estado en la tabla `migrations`. Para cargar datos de referencia, revisa antes de ejecutar los scripts:
+
+- `server/scripts/sql/02-seed-gad-lloa.sql` reinicia datos de la aplicación y carga el dataset de GAD Lloa.
+- `server/scripts/sql/03-seed-supabase-production.sql` conserva datos ajenos al rango sembrado y requiere que los usuarios existan previamente en Supabase Auth.
+
+Los seeds pueden modificar o eliminar datos. Úsalos únicamente sobre la base de datos prevista.
+
+## Contribuir
+
+1. Crea una rama desde la rama principal: `feature/<descripcion>` o `fix/<descripcion>`.
+2. Instala dependencias con `pnpm install` y `pnpm install:all`.
+3. Ejecuta los tests y linters afectados antes de abrir el pull request.
+4. Mantén los cambios enfocados y describe el comportamiento modificado y cualquier cambio de configuración.
+5. No incluyas secretos, archivos `.env`, builds de `public/` ni artefactos de cobertura.
+
+Los hooks de Husky/lint-staged validan JavaScript del servidor y TypeScript del cliente en archivos staged.
