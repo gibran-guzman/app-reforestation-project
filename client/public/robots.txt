@@ -1,4 +1,4 @@
 User-agent: *
 Disallow: /
 
-Sitemap: https://TU-URL-SEENODE.seenode.app/sitemap.xml
+Sitemap: https://TU-URL.railway.app/sitemap.xml

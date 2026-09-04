@@ -311,9 +311,9 @@ El servidor Express sirve el build de producción de Angular desde `/app/public`
 
 ---
 
-## ☁️ Despliegue en Seenode (reemplaza VPS + ngrok)
+## ☁️ Despliegue en Railway (reemplaza VPS + ngrok)
 
-Seenode hospeda el servidor Express **y** sirve el build estático de Angular desde una sola URL pública con SSL. Es el reemplazo directo del esquema `VPS + ngrok`: ya no necesitas un túnel ni un dominio ngrok efímero.
+Railway hospeda el servidor Express **y** sirve el build estático de Angular desde una sola URL pública con SSL. Es el reemplazo directo del esquema `VPS + ngrok`: ya no necesitas un túnel ni un dominio ngrok efímero.
 
 ### 1. Prepara el proyecto localmente
 
@@ -323,27 +323,28 @@ pnpm --dir server install
 npm --prefix client install
 ```
 
-### 2. Crea el Web Service desde el dashboard de Seenode
+### 2. Crea el Web Service desde el dashboard de Railway
 
-1. En [cloud.seenode.com](https://cloud.seenode.com) crea un **Web Service** y conecta tu repositorio de GitHub/GitLab.
+1. En [railway.app](https://railway.app) crea un proyecto y un **Web Service**, conectando tu repositorio de GitHub.
 2. Configura los comandos y el puerto (el proyecto ya trae los scripts en `package.json`):
 
    | Campo | Valor |
    |-------|-------|
-   | **Build Command** | `npm run build:seenode` |
+   | **Root Directory** | `/` |
+   | **Build Command** | `npm run build:prod` |
    | **Start Command** | `node server/src/index.js` |
    | **Port** | `3000` |
 
-   - `npm run build:seenode` instala las dependencias del server (prod) y del cliente, compila Angular y copia el build a `./public` (la carpeta que Express sirve automáticamente).
+   - `npm run build:prod` instala las dependencias del server (prod) y del cliente, compila Angular y copia el build a `./public` (la carpeta que Express sirve automáticamente).
    - El servidor escucha en `process.env.PORT || 3000`, por eso el puerto debe ser `3000`.
 
 3. Añade estas variables de entorno en el dashboard (plantilla en `server/.env.production.example`):
 
    ```
    NODE_ENV=production
-   CORS_ORIGIN=https://TU-URL-SEENODE.seenode.app   # reemplaza por tu URL real
+   CORS_ORIGIN=https://TU-URL.railway.app   # reemplaza por tu URL real
    DATABASE_URL=postgresql://postgres.<PROJECT_REF>:<PASSWORD>@aws-0-<REGION>.pooler.supabase.com:6543/postgres?sslmode=require
-   DB_SSL_REJECT_UNAUTHORIZED=true
+   DB_SSL_REJECT_UNAUTHORIZED=false
    SUPABASE_URL=https://<PROJECT_REF>.supabase.co
    SUPABASE_SERVICE_ROLE_KEY=<SERVICE_ROLE_KEY>
    SUPABASE_ANON_KEY=<ANON_KEY>
@@ -352,7 +353,7 @@ npm --prefix client install
 
    > ⚠️ `NODE_ENV=production` es obligatorio: activa el CSP de Helmet, las cookies `secure`, el CORS restringido y la redirección SPA (sirve `index.html` desde `./public`). `LOGIN_ENCRYPTION_PRIVATE_KEY` también es imprescindible para no perder los logins en cada reinicio.
 
-### 3. Ejecutar migraciones
+### 4. Ejecutar migraciones
 
 Cuando tengas `DATABASE_URL` configurado, ejecuta las migraciones una vez:
 
@@ -360,11 +361,9 @@ Cuando tengas `DATABASE_URL` configurado, ejecuta las migraciones una vez:
 npm run migrate
 ```
 
-(o desde el dashboard de Seenode añade `migrate` al Start Command la primera vez: `node server/src/db/migrate.js && node server/src/index.js`).
+### 5. Despliegue automático
 
-### 4. Despliegue automático
-
-Cada push a la rama conectada vuelve a construir y desplegar automáticamente. Actualiza tu URL real en `client/src/index.html` (canonical), `client/public/robots.txt` y `client/public/sitemap.xml` (que hoy usan un marcador `TU-URL-SEENODE.seenode.app`).
+Cada push a la rama conectada (`main`) vuelve a construir y desplegar automáticamente. Actualiza tu URL real en `client/src/index.html` (canonical), `client/public/robots.txt` y `client/public/sitemap.xml` (que hoy usan un marcador `TU-URL.railway.app`).
 
 ---
 
