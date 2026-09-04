@@ -3,6 +3,7 @@ require('dotenv').config({ path: resolve(__dirname, '../../.env') });
 const { Pool } = require('pg');
 const { runner } = require('node-pg-migrate');
 const logger = require('../utils/logger');
+const { buildPoolConfig } = require('../config/dbConnection');
 
 const DIR = resolve(__dirname, 'migrations');
 const DATABASE_URL = process.env.DATABASE_URL;
@@ -13,13 +14,7 @@ if (!DATABASE_URL) {
 }
 
 async function run() {
-  const sslMode = /[?&]sslmode=([^&#]+)/.exec(DATABASE_URL || '')?.[1];
-  const pool = new Pool({
-    connectionString: DATABASE_URL,
-    ssl: (sslMode === 'require' || sslMode === 'verify-ca' || sslMode === 'verify-full')
-      ? { rejectUnauthorized: false }
-      : undefined,
-  });
+  const pool = new Pool(buildPoolConfig(DATABASE_URL));
 
   try {
     await runner({
