@@ -64,10 +64,10 @@ function startWorker() {
       directives: {
         defaultSrc: ["'self'"],
         baseUri: ["'self'"],
-        imgSrc: ["'self'", "blob:", "data:", "https://*.tile.openstreetmap.org", "https://*.supabase.co"],
+        imgSrc: ["'self'", "blob:", "data:", "https://server.arcgisonline.com", "https://*.supabase.co"],
         scriptSrc: ["'self'"],
         styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-        connectSrc: ["'self'", "https://*.tile.openstreetmap.org", "wss://*.supabase.co", "https://*.supabase.co", "https://fonts.googleapis.com", "https://fonts.gstatic.com"],
+        connectSrc: ["'self'", "https://server.arcgisonline.com", "wss://*.supabase.co", "https://*.supabase.co", "https://fonts.googleapis.com", "https://fonts.gstatic.com"],
         fontSrc: ["'self'", "https://fonts.gstatic.com"],
         objectSrc: ["'none'"],
         formAction: ["'self'"],
