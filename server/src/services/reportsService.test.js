@@ -85,6 +85,31 @@ describe('reportsService', () => {
     });
   });
 
+  describe('formatDate', () => {
+    it('formats a Postgres date object (local midnight) without shifting the day', () => {
+      expect(reportsService.formatDate(new Date(2026, 5, 1))).toBe('01/06/2026');
+    });
+
+    it('formats a date-only string without shifting the day', () => {
+      expect(reportsService.formatDate('2026-06-15')).toBe('15/06/2026');
+    });
+
+    it('formats an ISO datetime string', () => {
+      expect(reportsService.formatDate('2026-06-15T10:30:00')).toBe('15/06/2026');
+    });
+
+    it('returns an em dash for null/empty values', () => {
+      expect(reportsService.formatDate(null)).toBe('—');
+      expect(reportsService.formatDate(undefined)).toBe('—');
+      expect(reportsService.formatDate('')).toBe('—');
+    });
+
+    it('returns an em dash for invalid dates instead of "Invalid Date"', () => {
+      expect(reportsService.formatDate('not-a-date')).toBe('—');
+      expect(reportsService.formatDate('2026-13-99')).toBe('—');
+    });
+  });
+
   describe('generatePdf', () => {
     const getPageCount = (pdfBuffer) => (pdfBuffer.toString('latin1').match(/\/Type \/Page\b/g) || []).length;
 

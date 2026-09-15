@@ -6,6 +6,15 @@ const survivalStatusLabels = Object.fromEntries(
   SURVIVAL_STATUS_LABELS.map(({ value, label }) => [value, label])
 );
 
+const formatDate = (value) => {
+  if (!value) return '—';
+  const date = value instanceof Date ? value : new Date(value.includes('T') ? value : `${value}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return '—';
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  return `${day}/${month}/${date.getFullYear()}`;
+};
+
 const getSurvivalRate = async (filters = {}) => {
   const [overall, bySpecies, byZone] = await Promise.all([
     reportsRepository.getSurvivalRate(filters),
@@ -31,14 +40,13 @@ const generatePdf = async (filters = {}) => {
   const startX = 50;
   const detailTableWidth = 420;
   const detailTableStartX = (doc.page.width - detailTableWidth) / 2;
-  const formatDate = (date) => date
-    ? new Date(`${date}T00:00:00`).toLocaleDateString('es-EC', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      timeZone: 'America/Guayaquil',
-    })
-    : '—';
+
+  const drawCentered = (text, size, fontFamily = bold, underline = false) => {
+    const textWidth = doc.widthOfString(text, { font: fontFamily, size });
+    doc.font(fontFamily).fontSize(size);
+    doc.text(text, (doc.page.width - textWidth) / 2, doc.y, { underline });
+    doc.x = 50;
+  };
 
   const addFooter = () => {
     const range = doc.bufferedPageRange();
@@ -77,7 +85,7 @@ const generatePdf = async (filters = {}) => {
   };
 
   const addSummaryTable = () => {
-    doc.fontSize(14).font(bold).text('Resumen General', { align: 'center', underline: true, width: pageWidth });
+    drawCentered('Resumen General', 14, bold, true);
     doc.moveDown(0.5);
 
     const totals = [
@@ -99,7 +107,7 @@ const generatePdf = async (filters = {}) => {
   const addBarChart = () => {
     if (overall.monitored === 0) return;
 
-    doc.fontSize(14).font(bold).text('Distribución de Supervivencia', { align: 'center', underline: true, width: pageWidth });
+    drawCentered('Distribución de Supervivencia', 14, bold, true);
     doc.moveDown(0.8);
 
     const chartY = doc.y;
@@ -134,11 +142,11 @@ const generatePdf = async (filters = {}) => {
 
   const addDetailTable = () => {
     if (data.length === 0) {
-      doc.fontSize(10).font(font).text('No hay registros para mostrar.', { align: 'center', width: pageWidth });
+      drawCentered('No hay registros para mostrar.', 10, font);
       return;
     }
 
-    doc.fontSize(14).font(bold).text('Detalle de Plantaciones', { align: 'center', underline: true, width: pageWidth });
+    drawCentered('Detalle de Plantaciones', 14, bold, true);
     doc.moveDown(0.5);
 
     const columns = [
@@ -213,4 +221,4 @@ const getPlantingEvolution = async (filters = {}) => {
   return reportsRepository.getPlantingEvolution(filters);
 };
 
-module.exports = { getSurvivalRate, getSpeciesStats, getZoneSummary, generatePdf, getPlantingEvolution };
+module.exports = { formatDate, getSurvivalRate, getSpeciesStats, getZoneSummary, generatePdf, getPlantingEvolution };
